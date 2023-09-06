@@ -1,0 +1,18 @@
+server:
+  port: "9001"
+
+feishu:
+  # 应用ID
+  appId: "cli_a4cdca8a9238d00d"
+  # 应用密钥
+  appSecret: "Q8rnC3eIZTcScs30ttD8qh6NvgECQuqM"
+  # 群ID
+  chatId: "oc_17518f8653e322021f71e4f0ad3ac08b"
+  # Token
+  token: "t-g104959fSKIS5O4PMQZ4BKB4ZZE5QQPCS5RRC2AC"
+
+AlertManager:
+  url: "http://172.17.84.238:9093"
+  # 静默时长(单位分钟)
+  silenceTime: "120"
+
