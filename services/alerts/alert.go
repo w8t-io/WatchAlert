@@ -10,6 +10,7 @@ import (
 	"prometheus-manager/globals"
 	"prometheus-manager/models"
 	"prometheus-manager/utils"
+	"prometheus-manager/utils/sendAlertMessage"
 	"strings"
 )
 
@@ -82,6 +83,18 @@ func (amc *AlertManagerCollector) CreateAlertSilences(challengeInfo interface{})
 		return
 	}
 	globals.Logger.Sugar().Info("创建报警静默成功 ->", string(silencesValueJson))
+
+	var (
+		promAlertManager = make(map[string]interface{})
+	)
+	err = json.Unmarshal(globals.RespBody, &promAlertManager)
+	if err != nil {
+		globals.Logger.Sugar().Error("告警信息解析失败 ->", err)
+		return
+	}
+	promAlertManager["alerts"].([]interface{})[0].(map[string]interface{})["status"] = "silence"
+
+	sendAlertMessage.SendMsg(globals.AlertType, promAlertManager)
 
 }
 

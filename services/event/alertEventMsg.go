@@ -10,19 +10,23 @@ import (
 
 type AlertEventMsgCollector struct{}
 
+var (
+	promAlertManager = make(map[string]interface{})
+)
+
 func (aemc *AlertEventMsgCollector) AlertEventMsg(ctx *gin.Context) {
 
-	alertType := ctx.Query("type")
+	globals.AlertType = ctx.Query("type")
 
-	pAlertManagerJson := make(map[string]interface{})
 	resp, _ := ioutil.ReadAll(ctx.Request.Body)
+	globals.RespBody = resp
 
-	err := json.Unmarshal(resp, &pAlertManagerJson)
+	err := json.Unmarshal(resp, &promAlertManager)
 	if err != nil {
 		globals.Logger.Sugar().Error("告警信息解析失败 ->", err)
 		return
 	}
 
-	sendAlertMessage.SendMsg(alertType, pAlertManagerJson)
+	sendAlertMessage.SendMsg(globals.AlertType, promAlertManager)
 
 }

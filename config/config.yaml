@@ -3,16 +3,15 @@ server:
 
 feishu:
   # 应用ID
-  appId: "cli_a4cdca8a9238d00d"
+  appId: "cli_a47d40b4c1b8500b"
   # 应用密钥
-  appSecret: "Q8rnC3eIZTcScs30ttD8qh6NvgECQuqM"
+  appSecret: "6eRbSMvV2suwPveLOxsnvedIwSwhBT8U"
   # 群ID
-  chatId: "oc_17518f8653e322021f71e4f0ad3ac08b"
+  chatId: "oc_d3945d051a1b8b9df717c5674b62a27c"
   # Token
-  token: "t-g104959fSKIS5O4PMQZ4BKB4ZZE5QQPCS5RRC2AC"
+  token: "t-g10497bJKBHXGZ564SEW5RSDD36AGMZFQ5D5IIFU"
 
 AlertManager:
   url: "http://172.17.84.238:9093"
   # 静默时长(单位分钟)
   silenceTime: "120"
-

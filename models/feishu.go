@@ -37,12 +37,18 @@ type Configs struct {
 }
 
 type Elements struct {
-	Tag            string    `json:"tag"`
-	FlexMode       string    `json:"flexMode"`
-	BackgroupStyle string    `json:"background_style"`
-	Text           Texts     `json:"text"`
-	Actions        []Actions `json:"actions"`
-	Columns        []Columns `json:"columns"`
+	Tag            string             `json:"tag"`
+	FlexMode       string             `json:"flexMode"`
+	BackgroupStyle string             `json:"background_style"`
+	Text           Texts              `json:"text"`
+	Actions        []Actions          `json:"actions"`
+	Columns        []Columns          `json:"columns"`
+	Elements       []ElementsElements `json:"elements"`
+}
+
+type ElementsElements struct {
+	Tag     string `json:"tag"`
+	Content string `json:"content"`
 }
 
 type Columns struct {

@@ -6,6 +6,8 @@ import (
 )
 
 var (
-	Config models.App
-	Logger *zap.Logger
+	Config    models.App
+	Logger    *zap.Logger
+	AlertType string
+	RespBody  []byte
 )

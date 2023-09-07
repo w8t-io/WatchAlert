@@ -321,10 +321,12 @@ func feiShuMsgTemplate(v models.Alerts, ActionsValueStr models.CreateAlertSilenc
 					Tag: "hr",
 				},
 				{
-					Tag: "div",
-					Text: models.Texts{
-						Content: "🧑‍💻 即时设计 - 运维团队",
-						Tag:     "plain_text",
+					Tag: "note",
+					Elements: []models.ElementsElements{
+						{
+							Tag:     "plain_text",
+							Content: "🧑‍💻 即时设计 - 运维团队",
+						},
 					},
 				},
 			},
@@ -511,10 +513,12 @@ func feiShuMsgTemplate(v models.Alerts, ActionsValueStr models.CreateAlertSilenc
 					Tag: "hr",
 				},
 				{
-					Tag: "div",
-					Text: models.Texts{
-						Content: "🧑‍💻 即时设计 - 运维团队",
-						Tag:     "plain_text",
+					Tag: "note",
+					Elements: []models.ElementsElements{
+						{
+							Tag:     "plain_text",
+							Content: "🧑‍💻 即时设计 - 运维团队",
+						},
 					},
 				},
 			},
@@ -528,11 +532,218 @@ func feiShuMsgTemplate(v models.Alerts, ActionsValueStr models.CreateAlertSilenc
 		},
 	}
 
+	silenceMsgContent := fmt.Sprintf("静默时长: %v 分钟\n结束时间: %v\n", globals.Config.AlertManager.SilenceTime, ActionsValueStr.EndsAt)
+	silenceMsg := models.FeiShuMsg{
+		MsgType: "interactive",
+		Card: models.Cards{
+			Config: models.Configs{
+				WideScreenMode: true,
+				EnableForward:  true,
+			},
+			Elements: []models.Elements{
+				{
+					Tag:            "column_set",
+					FlexMode:       "none",
+					BackgroupStyle: "default",
+					Columns: []models.Columns{
+						{
+							Tag:           "column",
+							Width:         "weighted",
+							Weight:        1,
+							VerticalAlign: "top",
+							Elements: []models.ColumnsElements{
+								{
+									Tag: "div",
+									Text: models.Texts{
+										Content: "",
+										Tag:     "lark_md",
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Tag:            "column_set",
+					FlexMode:       "none",
+					BackgroupStyle: "default",
+					Columns: []models.Columns{
+						{
+							Tag:           "column",
+							Width:         "weighted",
+							Weight:        1,
+							VerticalAlign: "top",
+							Elements: []models.ColumnsElements{
+								{
+									Tag: "div",
+									Text: models.Texts{
+										Content: "**🫧 报警指纹：**\n" + v.Fingerprint,
+										Tag:     "lark_md",
+									},
+								},
+							},
+						},
+						{
+							Tag:           "column",
+							Width:         "weighted",
+							Weight:        1,
+							VerticalAlign: "top",
+							Elements: []models.ColumnsElements{
+								{
+									Tag: "div",
+									Text: models.Texts{
+										Content: "**🤖 报警类型：**\n" + v.Labels["alertname"],
+										Tag:     "lark_md",
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Tag:            "column_set",
+					FlexMode:       "none",
+					BackgroupStyle: "default",
+					Columns: []models.Columns{
+						{
+							Tag:           "column",
+							Width:         "weighted",
+							Weight:        1,
+							VerticalAlign: "top",
+							Elements: []models.ColumnsElements{
+								{
+									Tag: "div",
+									Text: models.Texts{
+										Content: "**📌 报警等级：**\n" + v.Labels["severity"],
+										Tag:     "lark_md",
+									},
+								},
+							},
+						},
+						{
+							Tag:           "column",
+							Width:         "weighted",
+							Weight:        1,
+							VerticalAlign: "top",
+							Elements: []models.ColumnsElements{
+								{
+									Tag: "div",
+									Text: models.Texts{
+										Content: "**🕘 开始时间：**\n" + v.StartsAt,
+										Tag:     "lark_md",
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Tag:            "column_set",
+					FlexMode:       "none",
+					BackgroupStyle: "default",
+					Columns: []models.Columns{
+						{
+							Tag:           "column",
+							Width:         "weighted",
+							Weight:        1,
+							VerticalAlign: "top",
+							Elements: []models.ColumnsElements{
+								{
+									Tag: "div",
+									Text: models.Texts{
+										Content: "**🕟 结束时间：**\n" + v.EndsAt,
+										Tag:     "lark_md",
+									},
+								},
+							},
+						},
+						{
+							Tag:           "column",
+							Width:         "weighted",
+							Weight:        1,
+							VerticalAlign: "top",
+							Elements: []models.ColumnsElements{
+								{
+									Tag: "div",
+									Text: models.Texts{
+										Content: "**🖥 报警主机：**\n" + v.Labels["instance"],
+										Tag:     "lark_md",
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Tag:            "column_set",
+					FlexMode:       "none",
+					BackgroupStyle: "default",
+					Columns: []models.Columns{
+						{
+							Tag:           "column",
+							Width:         "weighted",
+							Weight:        1,
+							VerticalAlign: "top",
+							Elements: []models.ColumnsElements{
+								{
+									Tag: "div",
+									Text: models.Texts{
+										Content: "**📝 报警事件：**\n" + v.Annotations.Description,
+										Tag:     "lark_md",
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Tag: "div",
+					Text: models.Texts{
+						Content: " ",
+						Tag:     "plain_text",
+					},
+				},
+				{
+					Tag: "hr",
+				},
+				{
+					Tag: "div",
+					Text: models.Texts{
+						Content: silenceMsgContent,
+						Tag:     "plain_text",
+					},
+				},
+				{
+					Tag: "hr",
+				},
+				{
+					Tag: "note",
+					Elements: []models.ElementsElements{
+						{
+							Tag:     "plain_text",
+							Content: "🧑‍💻 即时设计 - 运维团队",
+						},
+					},
+				},
+			},
+			Header: models.Headers{
+				Template: "yellow",
+				Title: models.Titles{
+					Content: "【静默中】一级报警 - 即时设计 🧘",
+					Tag:     "plain_text",
+				},
+			},
+		},
+	}
+
+	fmt.Println(firingMsg)
 	switch v.Status {
 	case "firing":
 		return firingMsg
 	case "resolved":
 		return resolvedMsg
+	case "silence":
+		return silenceMsg
 	}
 	return
 

@@ -4,11 +4,11 @@ var (
 	f FeiShu
 )
 
-func SendMsg(alertType string, alertMsg map[string]interface{}) {
+func SendMsg(alertType string, resp map[string]interface{}) {
 
 	switch alertType {
 	case "feishu":
-		f.PushFeiShu(alertMsg)
+		f.PushFeiShu(resp)
 	}
 
 }
