@@ -14,7 +14,7 @@ RUN go mod tidy && \
     go build -o alertEventMgr ./main.go && \
     chmod 777 alertEventMgr
 
-FROM registry.js.design/base/busybox:glibc
+FROM registry.js.design/base/alpine:3.16
 
 RUN mkdir -p /app/config
 
