@@ -1,4 +1,4 @@
-FROM golang:1.18 AS build
+FROM registry.js.design/base/golang:1.18 AS build
 
 ENV GO111MODULE=on \
     CGO_ENABLED=0 \
@@ -14,7 +14,7 @@ RUN go mod tidy && \
     go build -o alertEventMgr ./main.go && \
     chmod 777 alertEventMgr
 
-FROM busybox:glibc
+FROM registry.js.design/base/busybox:glibc
 
 RUN mkdir -p /app/config
 
