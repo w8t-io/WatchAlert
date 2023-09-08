@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 // Alert 接收Prometheus推送的告警
 type Alert struct {
 	Alerts   []Alerts `json:"alerts"`
@@ -8,11 +10,11 @@ type Alert struct {
 
 type Alerts struct {
 	Annotations  Annotations       `json:"annotations"`
-	EndsAt       string            `json:"endsAt"`
+	EndsAt       time.Time         `json:"endsAt"`
 	Fingerprint  string            `json:"fingerprint"`
 	GeneratorURL string            `json:"generatorURL"`
 	Labels       map[string]string `json:"labels"`
-	StartsAt     string            `json:"startsAt"`
+	StartsAt     time.Time         `json:"startsAt"`
 	Status       string            `json:"status"`
 }
 

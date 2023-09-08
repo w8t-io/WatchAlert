@@ -8,6 +8,7 @@ import (
 	larkim "github.com/larksuite/oapi-sdk-go/v3/service/im/v1"
 	"prometheus-manager/globals"
 	"prometheus-manager/models"
+	"time"
 )
 
 type FeiShu struct{}
@@ -143,7 +144,7 @@ func feiShuMsgTemplate(v models.Alerts, ActionsValueStr models.CreateAlertSilenc
 								{
 									Tag: "div",
 									Text: models.Texts{
-										Content: "**🕘 开始时间：**\n" + v.StartsAt,
+										Content: "**🕘 开始时间：**\n" + v.StartsAt.Local().Format(layout),
 										Tag:     "lark_md",
 									},
 								},
@@ -165,7 +166,7 @@ func feiShuMsgTemplate(v models.Alerts, ActionsValueStr models.CreateAlertSilenc
 								{
 									Tag: "div",
 									Text: models.Texts{
-										Content: "**🕟 结束时间：**\n" + v.EndsAt,
+										Content: "**🕟 结束时间：**\n" + v.EndsAt.Local().Format(layout),
 										Tag:     "lark_md",
 									},
 								},
@@ -378,7 +379,7 @@ func feiShuMsgTemplate(v models.Alerts, ActionsValueStr models.CreateAlertSilenc
 								{
 									Tag: "div",
 									Text: models.Texts{
-										Content: "**🕘 开始时间：**\n" + v.StartsAt,
+										Content: "**🕘 开始时间：**\n" + v.StartsAt.Local().Format(layout),
 										Tag:     "lark_md",
 									},
 								},
@@ -400,7 +401,7 @@ func feiShuMsgTemplate(v models.Alerts, ActionsValueStr models.CreateAlertSilenc
 								{
 									Tag: "div",
 									Text: models.Texts{
-										Content: "**🕟 结束时间：**\n" + v.EndsAt,
+										Content: "**🕟 结束时间：**\n" + v.EndsAt.Local().Format(layout),
 										Tag:     "lark_md",
 									},
 								},
@@ -475,7 +476,9 @@ func feiShuMsgTemplate(v models.Alerts, ActionsValueStr models.CreateAlertSilenc
 		},
 	}
 
-	silenceMsgContent := fmt.Sprintf("静默时长: %v 分钟\n结束时间: %v\n", globals.Config.AlertManager.SilenceTime, ActionsValueStr.EndsAt)
+	endsT, _ := time.Parse(time.RFC3339, ActionsValueStr.EndsAt)
+	endsT = endsT.Add(8 * time.Hour)
+	silenceMsgContent := fmt.Sprintf("静默时长: %v 分钟\n结束时间: %s\n", globals.Config.AlertManager.SilenceTime, endsT.Format(layout))
 	silenceMsg := models.FeiShuMsg{
 		MsgType: "interactive",
 		Card: models.Cards{
@@ -572,7 +575,7 @@ func feiShuMsgTemplate(v models.Alerts, ActionsValueStr models.CreateAlertSilenc
 								{
 									Tag: "div",
 									Text: models.Texts{
-										Content: "**🕘 开始时间：**\n" + v.StartsAt,
+										Content: "**🕘 开始时间：**\n" + v.StartsAt.Local().Format(layout),
 										Tag:     "lark_md",
 									},
 								},
@@ -594,7 +597,7 @@ func feiShuMsgTemplate(v models.Alerts, ActionsValueStr models.CreateAlertSilenc
 								{
 									Tag: "div",
 									Text: models.Texts{
-										Content: "**🕟 结束时间：**\n" + v.EndsAt,
+										Content: "**🕟 结束时间：**\n" + v.EndsAt.Local().Format(layout),
 										Tag:     "lark_md",
 									},
 								},

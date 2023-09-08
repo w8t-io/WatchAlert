@@ -73,13 +73,14 @@ func renderPrometheusMsgTemplate(alertMsg map[string]interface{}) ([]string, err
 			MatchersList = append(MatchersList, Matchers)
 		}
 
+		nowTimeUTC := time.Now().UTC().Add(time.Minute * time.Duration(silenceTime)).Format(layout)
 		actionValues = models.CreateAlertSilence{
 			Comment:   v.Fingerprint,
 			CreatedBy: "1",
-			EndsAt:    time.Now().Add(time.Minute * time.Duration(silenceTime)).Format(layout),
+			EndsAt:    nowTimeUTC,
 			ID:        "",
 			Matchers:  MatchersList,
-			StartsAt:  v.StartsAt,
+			StartsAt:  v.StartsAt.UTC().Format(layout),
 		}
 	}
 
