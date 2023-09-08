@@ -2,76 +2,19 @@ package sendAlertMessage
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	lark "github.com/larksuite/oapi-sdk-go/v3"
 	larkcore "github.com/larksuite/oapi-sdk-go/v3/core"
 	larkim "github.com/larksuite/oapi-sdk-go/v3/service/im/v1"
 	"prometheus-manager/globals"
 	"prometheus-manager/models"
-	"strconv"
-	"strings"
-	"time"
 )
 
 type FeiShu struct{}
 
-func (f *FeiShu) PushFeiShu(alertMsg map[string]interface{}) {
+func (f *FeiShu) PushFeiShu(cardContentJson []string) error {
 
-	var (
-		alerts       models.Alert
-		actionValues models.CreateAlertSilence
-	)
-
-	alertMsgJson, _ := json.Marshal(alertMsg)
-	err := json.Unmarshal(alertMsgJson, &alerts)
-	if err != nil {
-		return
-	}
-	globals.Logger.Sugar().Info("告警原数据 ->", string(alertMsgJson))
-
-	layout := "2006-01-02T15:04:05.000Z"
-	silenceTime := globals.Config.AlertManager.SilenceTime
-
-	for _, v := range alerts.Alerts {
-		var MatchersList []models.Matchers
-		for kk, vv := range v.Labels {
-			Matchers := models.Matchers{
-				Name:    kk,
-				Value:   vv,
-				IsEqual: true,
-				IsRegex: false,
-			}
-			MatchersList = append(MatchersList, Matchers)
-		}
-
-		actionValues = models.CreateAlertSilence{
-			Comment:   v.Fingerprint,
-			CreatedBy: "1",
-			EndsAt:    time.Now().Add(time.Minute * time.Duration(silenceTime)).Format(layout),
-			ID:        "",
-			Matchers:  MatchersList,
-			StartsAt:  v.StartsAt,
-		}
-	}
-
-	actionValueJson, _ := json.Marshal(actionValues)
-	var ActionsValueStr models.CreateAlertSilence
-	_ = json.Unmarshal(actionValueJson, &ActionsValueStr)
-
-	// 消息提示
-	msgContent := "静默 " + strconv.FormatInt(globals.Config.AlertManager.SilenceTime, 10) + " 分钟"
-	fmt.Println(msgContent)
-
-	for _, v := range alerts.Alerts {
-
-		msg := feiShuMsgTemplate(v, ActionsValueStr, msgContent)
-
-		contentJson, _ := json.Marshal(msg.Card)
-
-		// 需要将所有换行符进行转义
-		strContentJson := strings.Replace(string(contentJson), "\n", "\\n", -1)
-
+	for _, v := range cardContentJson {
 		client := lark.NewClient(globals.Config.FeiShu.AppID, globals.Config.FeiShu.AppSecret, lark.WithEnableTokenCache(true))
 
 		req := larkim.NewCreateMessageReqBuilder().
@@ -79,7 +22,7 @@ func (f *FeiShu) PushFeiShu(alertMsg map[string]interface{}) {
 			Body(larkim.NewCreateMessageReqBodyBuilder().
 				ReceiveId(globals.Config.FeiShu.ChatID).
 				MsgType(`interactive`).
-				Content(strContentJson).
+				Content(v).
 				Build()).
 			Build()
 
@@ -87,22 +30,22 @@ func (f *FeiShu) PushFeiShu(alertMsg map[string]interface{}) {
 		// 处理错误
 		if err != nil {
 			globals.Logger.Sugar().Error("消息卡片发送失败 ->", err)
-			return
+			return fmt.Errorf("消息卡片发送失败 -> %s", err)
 		}
 
 		// 服务端错误处理
 		if !resp.Success() {
 			globals.Logger.Sugar().Error(resp.Code, resp.Msg, resp.RequestId())
-			return
+			return fmt.Errorf("响应错误 -> %s", err)
 		}
 
 		globals.Logger.Sugar().Info("消息卡片发送成功 ->", string(resp.RawBody))
-
 	}
 
+	return nil
 }
 
-func feiShuMsgTemplate(v models.Alerts, ActionsValueStr models.CreateAlertSilence, msgContent string) (msg models.FeiShuMsg) {
+func feiShuMsgTemplate(v models.Alerts, ActionsValueStr models.CreateAlertSilence, confirmPrompt string) (msg models.FeiShuMsg) {
 
 	firingMsg := models.FeiShuMsg{
 		MsgType: "interactive",
@@ -300,7 +243,7 @@ func feiShuMsgTemplate(v models.Alerts, ActionsValueStr models.CreateAlertSilenc
 									Tag:     "plain_text",
 								},
 								Text: models.Texts{
-									Content: msgContent,
+									Content: confirmPrompt,
 									Tag:     "plain_text",
 								},
 							},
@@ -736,7 +679,6 @@ func feiShuMsgTemplate(v models.Alerts, ActionsValueStr models.CreateAlertSilenc
 		},
 	}
 
-	fmt.Println(firingMsg)
 	switch v.Status {
 	case "firing":
 		return firingMsg

@@ -16,10 +16,11 @@ var (
 
 func (aemc *AlertEventMsgCollector) AlertEventMsg(ctx *gin.Context) {
 
-	globals.AlertType = ctx.Query("type")
+	sendAlertMessage.AlertType = ctx.Query("type")
+	sendAlertMessage.DataSource = ctx.Query("dataSource")
 
 	resp, _ := ioutil.ReadAll(ctx.Request.Body)
-	globals.RespBody = resp
+	sendAlertMessage.RespBody = resp
 
 	err := json.Unmarshal(resp, &promAlertManager)
 	if err != nil {
@@ -27,6 +28,10 @@ func (aemc *AlertEventMsgCollector) AlertEventMsg(ctx *gin.Context) {
 		return
 	}
 
-	sendAlertMessage.SendMsg(globals.AlertType, promAlertManager)
+	err = sendAlertMessage.SendMsg(sendAlertMessage.DataSource, sendAlertMessage.AlertType, promAlertManager)
+	if err != nil {
+		ctx.JSON(500, gin.H{"code": 500, "data": err})
+	}
+	ctx.JSON(200, gin.H{"code": 200, "data": "消息发送成功"})
 
 }

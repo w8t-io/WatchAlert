@@ -87,14 +87,18 @@ func (amc *AlertManagerCollector) CreateAlertSilences(challengeInfo interface{})
 	var (
 		promAlertManager = make(map[string]interface{})
 	)
-	err = json.Unmarshal(globals.RespBody, &promAlertManager)
+	err = json.Unmarshal(sendAlertMessage.RespBody, &promAlertManager)
 	if err != nil {
 		globals.Logger.Sugar().Error("告警信息解析失败 ->", err)
 		return
 	}
 	promAlertManager["alerts"].([]interface{})[0].(map[string]interface{})["status"] = "silence"
 
-	sendAlertMessage.SendMsg(globals.AlertType, promAlertManager)
+	err = sendAlertMessage.SendMsg(sendAlertMessage.DataSource, sendAlertMessage.AlertType, promAlertManager)
+	if err != nil {
+		globals.Logger.Sugar().Error("静默消息卡片发送失败 ->", err)
+		return
+	}
 
 }
 
