@@ -94,3 +94,17 @@ type CardInfoAction struct {
 	Value interface{} `json:"value"`
 	Tag   string      `json:"tag"`
 }
+
+// FeiShuUserInfo 飞书用户信息
+type FeiShuUserInfo struct {
+	Data Data `json:"Data"`
+}
+
+type Data struct {
+	User User `json:"User"`
+}
+
+type User struct {
+	UserId string `json:"UserId"`
+	Name   string `json:"Name"`
+}

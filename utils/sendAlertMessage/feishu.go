@@ -3,8 +3,8 @@ package sendAlertMessage
 import (
 	"context"
 	"fmt"
-	lark "github.com/larksuite/oapi-sdk-go/v3"
 	larkcore "github.com/larksuite/oapi-sdk-go/v3/core"
+	larkcontact "github.com/larksuite/oapi-sdk-go/v3/service/contact/v3"
 	larkim "github.com/larksuite/oapi-sdk-go/v3/service/im/v1"
 	"prometheus-manager/globals"
 	"prometheus-manager/models"
@@ -16,7 +16,6 @@ type FeiShu struct{}
 func (f *FeiShu) PushFeiShu(cardContentJson []string) error {
 
 	for _, v := range cardContentJson {
-		client := lark.NewClient(globals.Config.FeiShu.AppID, globals.Config.FeiShu.AppSecret, lark.WithEnableTokenCache(true))
 
 		req := larkim.NewCreateMessageReqBuilder().
 			ReceiveIdType(`chat_id`).
@@ -27,7 +26,7 @@ func (f *FeiShu) PushFeiShu(cardContentJson []string) error {
 				Build()).
 			Build()
 
-		resp, err := client.Im.Message.Create(context.Background(), req, larkcore.WithTenantAccessToken(globals.Config.FeiShu.Token))
+		resp, err := globals.FeiShuCli.Im.Message.Create(context.Background(), req, larkcore.WithTenantAccessToken(globals.Config.FeiShu.Token))
 		// 处理错误
 		if err != nil {
 			globals.Logger.Sugar().Error("消息卡片发送失败 ->", err)
@@ -46,7 +45,7 @@ func (f *FeiShu) PushFeiShu(cardContentJson []string) error {
 	return nil
 }
 
-func feiShuMsgTemplate(v models.Alerts, ActionsValueStr models.CreateAlertSilence, confirmPrompt string) (msg models.FeiShuMsg) {
+func feiShuMsgTemplate(actionUser string, v models.Alerts, ActionsValueStr models.CreateAlertSilence, confirmPrompt string) (msg models.FeiShuMsg) {
 
 	firingMsg := models.FeiShuMsg{
 		MsgType: "interactive",
@@ -478,7 +477,7 @@ func feiShuMsgTemplate(v models.Alerts, ActionsValueStr models.CreateAlertSilenc
 
 	endsT, _ := time.Parse(time.RFC3339, ActionsValueStr.EndsAt)
 	endsT = endsT.Add(8 * time.Hour)
-	silenceMsgContent := fmt.Sprintf("静默时长: %v 分钟\n结束时间: %s\n", globals.Config.AlertManager.SilenceTime, endsT.Format(layout))
+	silenceMsgContent := fmt.Sprintf("操作人: %s\n静默时长: %v 分钟\n结束时间: %s\n", actionUser, globals.Config.AlertManager.SilenceTime, endsT.Format(layout))
 	silenceMsg := models.FeiShuMsg{
 		MsgType: "interactive",
 		Card: models.Cards{
@@ -691,5 +690,28 @@ func feiShuMsgTemplate(v models.Alerts, ActionsValueStr models.CreateAlertSilenc
 		return silenceMsg
 	}
 	return
+
+}
+
+func (f *FeiShu) GetFeiShuUserInfo(userID string) *larkcontact.GetUserResp {
+
+	// 创建请求对象
+	req := larkcontact.NewGetUserReqBuilder().
+		UserId(userID).
+		UserIdType(`user_id`).
+		DepartmentIdType(`open_department_id`).
+		Build()
+
+	// 发起请求
+	// 如开启了SDK的Token管理功能，就无需在请求时调用larkcore.WithTenantAccessToken("-xxx")来手动设置租户Token了
+	resp, err := globals.FeiShuCli.Contact.User.Get(context.Background(), req, larkcore.WithTenantAccessToken(globals.Config.FeiShu.Token))
+
+	// 处理错误
+	if err != nil {
+		globals.Logger.Sugar().Error("获取飞书用户信息失败 ->", err)
+		return nil
+	}
+
+	return resp
 
 }

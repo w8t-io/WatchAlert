@@ -6,10 +6,12 @@ import (
 	"io/ioutil"
 	"prometheus-manager/globals"
 	"prometheus-manager/services/alerts"
+	"prometheus-manager/utils/sendAlertMessage"
 )
 
 var (
 	amc *alerts.AlertManagerCollector
+	f   sendAlertMessage.FeiShu
 )
 
 func (aemc *AlertEventMsgCollector) FeiShuEvent(ctx *gin.Context) {
@@ -27,6 +29,8 @@ func (aemc *AlertEventMsgCollector) FeiShuEvent(ctx *gin.Context) {
 
 	ctx.JSON(200, gin.H{"challenge": challengeInfo["challenge"]})
 
-	amc.CreateAlertSilences(challengeInfo)
+	resp := f.GetFeiShuUserInfo(challengeInfo["user_id"].(string))
+
+	amc.CreateAlertSilences(*resp.Data.User.Name, challengeInfo)
 
 }

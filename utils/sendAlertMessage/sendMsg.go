@@ -13,14 +13,14 @@ var (
 	f FeiShu
 )
 
-func SendMsg(dataSource, alertType string, resp map[string]interface{}) error {
+func SendMsg(actionUser string, dataSource, alertType string, resp map[string]interface{}) error {
 
 	initBasic()
 
 	var cardContentMsg []string
 	switch dataSource {
 	case "prometheus":
-		Msg, err := renderPrometheusMsgTemplate(resp)
+		Msg, err := renderPrometheusMsgTemplate(actionUser, resp)
 		if err != nil {
 			return fmt.Errorf("消息渲染失败 -> %s", err)
 		}
@@ -45,7 +45,7 @@ func SendMsg(dataSource, alertType string, resp map[string]interface{}) error {
 
 }
 
-func renderPrometheusMsgTemplate(alertMsg map[string]interface{}) ([]string, error) {
+func renderPrometheusMsgTemplate(actionUser string, alertMsg map[string]interface{}) ([]string, error) {
 
 	var (
 		alerts         models.Alert
@@ -86,7 +86,7 @@ func renderPrometheusMsgTemplate(alertMsg map[string]interface{}) ([]string, err
 
 	for _, v := range alerts.Alerts {
 
-		msg := feiShuMsgTemplate(v, actionValues, confirmPrompt)
+		msg := feiShuMsgTemplate(actionUser, v, actionValues, confirmPrompt)
 
 		contentJson, _ := json.Marshal(msg.Card)
 

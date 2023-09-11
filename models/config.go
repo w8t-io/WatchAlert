@@ -11,10 +11,11 @@ type Server struct {
 }
 
 type FeiShu struct {
-	AppID     string `json:"appId"`
-	AppSecret string `json:"sppSecret"`
-	ChatID    string `json:"chatId"`
-	Token     string `json:"token"`
+	AppID      string   `json:"appId"`
+	AppSecret  string   `json:"sppSecret"`
+	ChatID     string   `json:"chatId"`
+	Token      string   `json:"token"`
+	ActionUser []string `json:"actionUser"`
 }
 
 type AlertManager struct {

@@ -10,6 +10,9 @@ feishu:
   chatId: "oc_d3945d051a1b8b9df717c5674b62a27c"
   # Token
   token: "t-g10497bJKBHXGZ564SEW5RSDD36AGMZFQ5D5IIFU"
+  # 操作员
+  actionUser:
+    - "祖轩"
 
 AlertManager:
   url: "http://172.17.84.238:9093"

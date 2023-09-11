@@ -58,7 +58,20 @@ func (amc *AlertManagerCollector) ListAlerts() ([]models.GettableAlert, error) {
 
 }
 
-func (amc *AlertManagerCollector) CreateAlertSilences(challengeInfo interface{}) {
+func (amc *AlertManagerCollector) CreateAlertSilences(actionUser string, challengeInfo interface{}) {
+
+	var action bool
+	for _, user := range globals.Config.FeiShu.ActionUser {
+		if actionUser == user {
+			action = true
+			break
+		}
+	}
+
+	if !action {
+		globals.Logger.Sugar().Error("「" + actionUser + "」你无权操作创建静默规则")
+		return
+	}
 
 	rawDataJson, _ := json.Marshal(challengeInfo)
 
@@ -94,7 +107,7 @@ func (amc *AlertManagerCollector) CreateAlertSilences(challengeInfo interface{})
 	}
 	promAlertManager["alerts"].([]interface{})[0].(map[string]interface{})["status"] = "silence"
 
-	err = sendAlertMessage.SendMsg(sendAlertMessage.DataSource, sendAlertMessage.AlertType, promAlertManager)
+	err = sendAlertMessage.SendMsg(actionUser, sendAlertMessage.DataSource, sendAlertMessage.AlertType, promAlertManager)
 	if err != nil {
 		globals.Logger.Sugar().Error("静默消息卡片发送失败 ->", err)
 		return

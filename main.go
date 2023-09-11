@@ -8,6 +8,7 @@ func main() {
 
 	initialize.InitConfig()
 	initialize.InitLogger()
+	initialize.InitClient()
 	initialize.InitRoute()
 
 }

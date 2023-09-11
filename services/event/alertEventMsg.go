@@ -28,7 +28,7 @@ func (aemc *AlertEventMsgCollector) AlertEventMsg(ctx *gin.Context) {
 		return
 	}
 
-	err = sendAlertMessage.SendMsg(sendAlertMessage.DataSource, sendAlertMessage.AlertType, promAlertManager)
+	err = sendAlertMessage.SendMsg("", sendAlertMessage.DataSource, sendAlertMessage.AlertType, promAlertManager)
 	if err != nil {
 		ctx.JSON(500, gin.H{"code": 500, "data": err})
 	}
