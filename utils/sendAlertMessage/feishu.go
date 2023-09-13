@@ -693,7 +693,7 @@ func feiShuMsgTemplate(actionUser string, v models.Alerts, ActionsValueStr model
 
 }
 
-func (f *FeiShu) GetFeiShuUserInfo(userID string) *larkcontact.GetUserResp {
+func (f *FeiShu) GetFeiShuUserInfo(userID string) (*larkcontact.GetUserResp, error) {
 
 	// 创建请求对象
 	req := larkcontact.NewGetUserReqBuilder().
@@ -708,10 +708,9 @@ func (f *FeiShu) GetFeiShuUserInfo(userID string) *larkcontact.GetUserResp {
 
 	// 处理错误
 	if err != nil {
-		globals.Logger.Sugar().Error("获取飞书用户信息失败 ->", err)
-		return nil
+		return nil, err
 	}
 
-	return resp
+	return resp, nil
 
 }
