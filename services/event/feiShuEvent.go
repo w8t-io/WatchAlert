@@ -2,6 +2,7 @@ package event
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"prometheus-manager/globals"
@@ -30,6 +31,8 @@ func (aemc *AlertEventMsgCollector) FeiShuEvent(ctx *gin.Context) {
 	ctx.JSON(200, gin.H{"challenge": challengeInfo["challenge"]})
 
 	resp := f.GetFeiShuUserInfo(challengeInfo["user_id"].(string))
+
+	fmt.Println("=== 用户信息 ->", resp)
 
 	amc.CreateAlertSilences(*resp.Data.User.Name, challengeInfo)
 
