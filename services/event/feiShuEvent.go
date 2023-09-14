@@ -30,13 +30,13 @@ func (aemc *AlertEventMsgCollector) FeiShuEvent(ctx *gin.Context) {
 
 	ctx.JSON(200, gin.H{"challenge": challengeInfo["challenge"]})
 
-	fmt.Println("=== 按钮回传 ->", challengeInfo)
-
 	resp, err := f.GetFeiShuUserInfo(challengeInfo["user_id"].(string))
 	if err != nil {
 		globals.Logger.Sugar().Error("获取飞书用户信息失败 ->", err)
 		return
 	}
+
+	fmt.Println("用户名称 ->", *resp.Data.User.Name)
 
 	amc.CreateAlertSilences(*resp.Data.User.Name, challengeInfo)
 
