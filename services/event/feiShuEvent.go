@@ -36,10 +36,10 @@ func (aemc *AlertEventMsgCollector) FeiShuEvent(ctx *gin.Context) {
 		return
 	}
 
-	fmt.Println("=== >", resp.Data.User)
+	fmt.Println("=== >", resp.Data.User.Name)
 
-	userName := *resp.Data.User.Name
+	//userName := resp.Data.User.Name
 
-	amc.CreateAlertSilences(userName, challengeInfo)
+	//amc.CreateAlertSilences(userName, challengeInfo)
 
 }
