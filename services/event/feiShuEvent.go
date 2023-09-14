@@ -2,7 +2,6 @@ package event
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"prometheus-manager/globals"
@@ -30,16 +29,8 @@ func (aemc *AlertEventMsgCollector) FeiShuEvent(ctx *gin.Context) {
 
 	ctx.JSON(200, gin.H{"challenge": challengeInfo["challenge"]})
 
-	resp, err := f.GetFeiShuUserInfo(challengeInfo["user_id"].(string))
-	if err != nil {
-		globals.Logger.Sugar().Error("获取飞书用户信息失败 ->", err)
-		return
-	}
+	info := f.GetFeiShuUserInfo(challengeInfo["user_id"].(string))
 
-	fmt.Println("=== >", resp.Data.User.Name)
-
-	//userName := resp.Data.User.Name
-
-	//amc.CreateAlertSilences(userName, challengeInfo)
+	amc.CreateAlertSilences(info.Data.User.Name, challengeInfo)
 
 }

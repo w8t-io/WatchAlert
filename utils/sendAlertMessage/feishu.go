@@ -2,6 +2,7 @@ package sendAlertMessage
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	larkcore "github.com/larksuite/oapi-sdk-go/v3/core"
 	larkcontact "github.com/larksuite/oapi-sdk-go/v3/service/contact/v3"
@@ -693,7 +694,7 @@ func feiShuMsgTemplate(actionUser string, v models.Alerts, ActionsValueStr model
 
 }
 
-func (f *FeiShu) GetFeiShuUserInfo(userID string) (*larkcontact.GetUserResp, error) {
+func (f *FeiShu) GetFeiShuUserInfo(userID string) models.FeiShuUserInfo {
 
 	// 创建请求对象
 	req := larkcontact.NewGetUserReqBuilder().
@@ -708,9 +709,14 @@ func (f *FeiShu) GetFeiShuUserInfo(userID string) (*larkcontact.GetUserResp, err
 
 	// 处理错误
 	if err != nil {
-		return nil, err
+		globals.Logger.Sugar().Error("获取飞书用户信息失败 ->", err)
+		return models.FeiShuUserInfo{}
 	}
 
-	return resp, nil
+	var feiShuUserInfo models.FeiShuUserInfo
+	respJson, _ := json.Marshal(resp)
+	_ = json.Unmarshal(respJson, &feiShuUserInfo)
+
+	return feiShuUserInfo
 
 }

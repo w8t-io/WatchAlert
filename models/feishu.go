@@ -97,14 +97,14 @@ type CardInfoAction struct {
 
 // FeiShuUserInfo 飞书用户信息
 type FeiShuUserInfo struct {
-	Data Data `json:"Data"`
+	Data Data `json:"data"`
 }
 
 type Data struct {
-	User User `json:"User"`
+	User User `json:"user"`
 }
 
 type User struct {
-	UserId string `json:"UserId"`
-	Name   string `json:"Name"`
+	UserId string `json:"user_id"`
+	Name   string `json:"name"`
 }
