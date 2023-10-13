@@ -86,6 +86,8 @@ func renderPrometheusMsgTemplate(actionUser string, alertMsg map[string]interfac
 
 	for _, v := range alerts.Alerts {
 
+		globals.CacheCli.Set(v.Fingerprint, v)
+
 		msg := feiShuMsgTemplate(actionUser, v, actionValues, confirmPrompt)
 
 		contentJson, _ := json.Marshal(msg.Card)

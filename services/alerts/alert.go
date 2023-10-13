@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"prometheus-manager/globals"
 	"prometheus-manager/models"
+	"prometheus-manager/services/cache"
 	"prometheus-manager/utils"
 	"prometheus-manager/utils/sendAlertMessage"
 	"strings"
@@ -99,12 +100,21 @@ func (amc *AlertManagerCollector) CreateAlertSilences(actionUser string, challen
 
 	var (
 		promAlertManager = make(map[string]interface{})
+		cacheMap         interface{}
+		Alerts           []interface{}
 	)
 	err = json.Unmarshal(sendAlertMessage.RespBody, &promAlertManager)
 	if err != nil {
 		globals.Logger.Sugar().Error("告警信息解析失败 ->", err)
 		return
 	}
+
+	cacheValue := globals.CacheCli.Get(fingerprintID.(string))
+	cacheValueJson, _ := json.Marshal(cacheValue.(cache.CacheItem).Values)
+	_ = json.Unmarshal(cacheValueJson, &cacheMap)
+
+	Alerts = append(Alerts, cacheMap)
+	promAlertManager["alerts"] = Alerts
 	promAlertManager["alerts"].([]interface{})[0].(map[string]interface{})["status"] = "silence"
 
 	err = sendAlertMessage.SendMsg(actionUser, sendAlertMessage.DataSource, sendAlertMessage.AlertType, promAlertManager)
