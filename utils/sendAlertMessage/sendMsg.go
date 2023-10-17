@@ -82,9 +82,6 @@ func renderPrometheusMsgTemplate(actionUser string, alertMsg map[string]interfac
 			Matchers:  MatchersList,
 			StartsAt:  v.StartsAt.UTC().Format(layout),
 		}
-	}
-
-	for _, v := range alerts.Alerts {
 
 		globals.CacheCli.Set(v.Fingerprint, v)
 
@@ -98,6 +95,7 @@ func renderPrometheusMsgTemplate(actionUser string, alertMsg map[string]interfac
 		cardContentMsg = append(cardContentMsg, cardContentJson)
 
 	}
+
 	return cardContentMsg, nil
 
 }
