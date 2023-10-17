@@ -18,3 +18,7 @@ AlertManager:
   url: "http://172.17.84.238:9093"
   # 静默时长(单位分钟)
   silenceTime: "120"
+
+dutyUser:
+  # zuxuan
+  - "g88fc51d"

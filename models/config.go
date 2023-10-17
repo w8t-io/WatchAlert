@@ -4,6 +4,7 @@ type App struct {
 	Server       Server       `json:"server"`
 	FeiShu       FeiShu       `json:"feishu"`
 	AlertManager AlertManager `json:"AlertManager"`
+	DutyUser     []string     `json:"dutyUser"`
 }
 
 type Server struct {

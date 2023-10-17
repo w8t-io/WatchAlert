@@ -9,6 +9,7 @@ import (
 	larkim "github.com/larksuite/oapi-sdk-go/v3/service/im/v1"
 	"prometheus-manager/globals"
 	"prometheus-manager/models"
+	"prometheus-manager/utils"
 	"time"
 )
 
@@ -224,8 +225,8 @@ func feiShuMsgTemplate(actionUser string, v models.Alerts, ActionsValueStr model
 				{
 					Tag: "div",
 					Text: models.Texts{
-						Content: "🐾 执行动作：",
-						Tag:     "plain_text",
+						Content: fmt.Sprintf("**👤 值班人员：**<at id=%s></at>", utils.GetCurrentDutyUser()),
+						Tag:     "lark_md",
 					},
 				},
 				{
