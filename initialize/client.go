@@ -3,7 +3,7 @@ package initialize
 import (
 	lark "github.com/larksuite/oapi-sdk-go/v3"
 	"prometheus-manager/globals"
-	"prometheus-manager/services/cache"
+	"prometheus-manager/pkg/cache"
 )
 
 func InitClient() {

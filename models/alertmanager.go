@@ -67,7 +67,7 @@ type GettableAlert struct {
 	// Format: date-time
 	UpdatedAt *strfmt.DateTime `json:"updatedAt"`
 
-	Alert
+	AlertInfo
 }
 
 // swagger:model labelSet

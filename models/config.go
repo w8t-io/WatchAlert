@@ -4,7 +4,6 @@ type App struct {
 	Server       Server       `json:"server"`
 	FeiShu       FeiShu       `json:"feishu"`
 	AlertManager AlertManager `json:"AlertManager"`
-	DutyUser     []string     `json:"dutyUser"`
 }
 
 type Server struct {
@@ -12,11 +11,11 @@ type Server struct {
 }
 
 type FeiShu struct {
-	AppID      string   `json:"appId"`
-	AppSecret  string   `json:"sppSecret"`
-	ChatID     string   `json:"chatId"`
-	Token      string   `json:"token"`
-	ActionUser []string `json:"actionUser"`
+	AppID     string   `json:"appId"`
+	AppSecret string   `json:"sppSecret"`
+	ChatID    string   `json:"chatId"`
+	Token     string   `json:"token"`
+	DutyUser  []string `json:"dutyUser"`
 }
 
 type AlertManager struct {

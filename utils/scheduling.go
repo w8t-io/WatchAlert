@@ -15,7 +15,7 @@ var schedule = make(map[interface{}]string)
 
 func CreateAndReturnSchedule(date string) string {
 
-	people := Person{ActionUser: globals.Config.DutyUser}
+	people := Person{ActionUser: globals.Config.FeiShu.DutyUser}
 
 	// 设置值班周期和总共排班天数
 	totalDays := 30

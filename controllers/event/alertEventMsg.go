@@ -2,10 +2,11 @@ package event
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"prometheus-manager/globals"
-	"prometheus-manager/utils/sendAlertMessage"
+	"prometheus-manager/pkg"
 )
 
 type AlertEventMsgCollector struct{}
@@ -16,11 +17,12 @@ var (
 
 func (aemc *AlertEventMsgCollector) AlertEventMsg(ctx *gin.Context) {
 
-	sendAlertMessage.AlertType = ctx.Query("type")
-	sendAlertMessage.DataSource = ctx.Query("dataSource")
+	globals.AlertType = ctx.Query("type")
+	globals.DataSource = ctx.Query("dataSource")
 
 	resp, _ := ioutil.ReadAll(ctx.Request.Body)
-	sendAlertMessage.RespBody = resp
+	globals.RespBody = resp
+	fmt.Println("======= body ->", string(resp))
 
 	err := json.Unmarshal(resp, &promAlertManager)
 	if err != nil {
@@ -28,9 +30,10 @@ func (aemc *AlertEventMsgCollector) AlertEventMsg(ctx *gin.Context) {
 		return
 	}
 
-	err = sendAlertMessage.SendMsg("", sendAlertMessage.DataSource, sendAlertMessage.AlertType, promAlertManager)
+	err = pkg.SendMessageToWebhook("", promAlertManager)
 	if err != nil {
 		ctx.JSON(500, gin.H{"code": 500, "data": err})
+		return
 	}
 	ctx.JSON(200, gin.H{"code": 200, "data": "消息发送成功"})
 

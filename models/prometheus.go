@@ -2,13 +2,13 @@ package models
 
 import "time"
 
-// Alert 接收Prometheus推送的告警
-type Alert struct {
-	Alerts   []Alerts `json:"alerts"`
-	Receiver string   `json:"receiver"`
+// Alerts 接收Prometheus推送的告警
+type Alerts struct {
+	AlertList []AlertInfo `json:"alerts"`
+	Receiver  string      `json:"receiver"`
 }
 
-type Alerts struct {
+type AlertInfo struct {
 	Annotations  Annotations       `json:"annotations"`
 	EndsAt       time.Time         `json:"endsAt"`
 	Fingerprint  string            `json:"fingerprint"`

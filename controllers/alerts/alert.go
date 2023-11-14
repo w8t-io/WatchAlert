@@ -9,9 +9,10 @@ import (
 	"net/http"
 	"prometheus-manager/globals"
 	"prometheus-manager/models"
-	"prometheus-manager/services/cache"
+	"prometheus-manager/pkg"
+	"prometheus-manager/pkg/cache"
+	"prometheus-manager/pkg/feishu"
 	"prometheus-manager/utils"
-	"prometheus-manager/utils/sendAlertMessage"
 	"strings"
 )
 
@@ -59,24 +60,30 @@ func (amc *AlertManagerCollector) ListAlerts() ([]models.GettableAlert, error) {
 
 }
 
-func (amc *AlertManagerCollector) CreateAlertSilences(actionUser string, challengeInfo interface{}) {
+func (amc *AlertManagerCollector) CreateAlertSilences(actionUserID string, challengeInfo interface{}) {
 
-	var action bool
-	for _, user := range globals.Config.FeiShu.ActionUser {
-		if actionUser == user {
+	var (
+		action   bool
+		f        feishu.FeiShu
+		cardInfo models.CardInfo
+	)
+
+	// 判断是否是值班用户
+	for _, user := range globals.Config.FeiShu.DutyUser {
+		if actionUserID == user {
 			action = true
 			break
 		}
 	}
 
 	if !action {
-		globals.Logger.Sugar().Error("「" + actionUser + "」你无权操作创建静默规则")
+		info := f.GetFeiShuUserInfo(actionUserID)
+		globals.Logger.Sugar().Error("「" + info.Data.User.Name + "」你无权操作创建静默规则")
 		return
 	}
 
 	rawDataJson, _ := json.Marshal(challengeInfo)
 
-	var cardInfo models.CardInfo
 	_ = json.Unmarshal(rawDataJson, &cardInfo)
 
 	// To Json
@@ -100,26 +107,23 @@ func (amc *AlertManagerCollector) CreateAlertSilences(actionUser string, challen
 
 	var (
 		promAlertManager = make(map[string]interface{})
-		cacheMap         interface{}
-		Alerts           []interface{}
+		cacheAlertInfo   interface{}
+		AlertInfo        []interface{}
 	)
-	err = json.Unmarshal(sendAlertMessage.RespBody, &promAlertManager)
-	if err != nil {
-		globals.Logger.Sugar().Error("告警信息解析失败 ->", err)
-		return
-	}
 
 	cacheValue := globals.CacheCli.Get(fingerprintID.(string))
-	cacheValueJson, _ := json.Marshal(cacheValue.(cache.CacheItem).Values)
-	_ = json.Unmarshal(cacheValueJson, &cacheMap)
+	cacheAlertJson, _ := json.Marshal(cacheValue.(cache.CacheItem).Values)
+	_ = json.Unmarshal(cacheAlertJson, &cacheAlertInfo)
+	AlertInfo = append(AlertInfo, cacheAlertInfo)
 
-	Alerts = append(Alerts, cacheMap)
-	promAlertManager["alerts"] = Alerts
+	// 将告警状态转换为静默状态
+	promAlertManager["alerts"] = AlertInfo
 	promAlertManager["alerts"].([]interface{})[0].(map[string]interface{})["status"] = "silence"
 
-	err = sendAlertMessage.SendMsg(actionUser, sendAlertMessage.DataSource, sendAlertMessage.AlertType, promAlertManager)
+	// 发送消息卡片
+	err = pkg.SendMessageToWebhook(actionUserID, promAlertManager)
 	if err != nil {
-		globals.Logger.Sugar().Error("静默消息卡片发送失败 ->", err)
+		log.Println("消息卡片发送失败", err)
 		return
 	}
 
