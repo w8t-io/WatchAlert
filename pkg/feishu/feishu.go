@@ -86,6 +86,15 @@ func (f *FeiShu) FeiShuMsgTemplate(actionUser string, v models.AlertInfo, Action
 // firingMsgTemplate 告警模版
 func (f *FeiShu) firingMsgTemplate(template models.FeiShuMsg, v models.AlertInfo, ActionsValueStr models.CreateAlertSilence) models.FeiShuMsg {
 
+	var contentInfo string
+
+	user := utils.GetCurrentDutyUser()
+	if len(user) == 0 {
+		contentInfo = "暂无安排值班人员"
+	} else {
+		contentInfo = fmt.Sprintf("**👤 值班人员：**<at id=%s></at>", user)
+	}
+
 	elements := []models.Elements{
 		{
 			Tag:            "column_set",
@@ -255,7 +264,7 @@ func (f *FeiShu) firingMsgTemplate(template models.FeiShuMsg, v models.AlertInfo
 		{
 			Tag: "div",
 			Text: models.Texts{
-				Content: fmt.Sprintf("**👤 值班人员：**<at id=%s></at>", utils.GetCurrentDutyUser()),
+				Content: contentInfo,
 				Tag:     "lark_md",
 			},
 		},

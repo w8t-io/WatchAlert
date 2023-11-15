@@ -15,7 +15,14 @@ var schedule = make(map[interface{}]string)
 
 func CreateAndReturnSchedule(date string) string {
 
-	people := Person{ActionUser: globals.Config.FeiShu.DutyUser}
+	userList := globals.Config.FeiShu.DutyUser
+	if len(userList) == 0 {
+		globals.Logger.Sugar().Info("暂无安排值班人员", userList)
+		return ""
+	}
+	people := Person{
+		ActionUser: userList,
+	}
 
 	// 设置值班周期和总共排班天数
 	totalDays := 30

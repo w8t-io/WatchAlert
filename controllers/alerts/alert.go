@@ -69,17 +69,19 @@ func (amc *AlertManagerCollector) CreateAlertSilences(actionUserID string, chall
 	)
 
 	// 判断是否是值班用户
-	for _, user := range globals.Config.FeiShu.DutyUser {
-		if actionUserID == user {
-			action = true
-			break
+	if len(globals.Config.FeiShu.DutyUser) != 0 {
+		for _, user := range globals.Config.FeiShu.DutyUser {
+			if actionUserID == user {
+				action = true
+				break
+			}
 		}
-	}
 
-	if !action {
-		info := f.GetFeiShuUserInfo(actionUserID)
-		globals.Logger.Sugar().Error("「" + info.Data.User.Name + "」你无权操作创建静默规则")
-		return
+		if !action {
+			info := f.GetFeiShuUserInfo(actionUserID)
+			globals.Logger.Sugar().Error("「" + info.Data.User.Name + "」你无权操作创建静默规则")
+			return
+		}
 	}
 
 	rawDataJson, _ := json.Marshal(challengeInfo)
