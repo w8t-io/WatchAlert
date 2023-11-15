@@ -289,6 +289,27 @@ func (f *FeiShu) firingMsgTemplate(template models.FeiShuMsg, v models.AlertInfo
 						},
 					},
 				},
+				{
+					Tag: "button",
+					Text: models.ActionsText{
+						Content: "⛓️ 告警链接",
+						Tag:     "plain_text",
+					},
+					Type: "primary",
+					MultiURL: models.MultiURLs{
+						URL: v.GeneratorURL,
+					},
+					Confirm: models.Confirms{
+						Title: models.Titles{
+							Content: "确认",
+							Tag:     "plain_text",
+						},
+						Text: models.Texts{
+							Content: fmt.Sprintf("查询当前 ID: %s 的告警信息", v.Fingerprint),
+							Tag:     "plain_text",
+						},
+					},
+				},
 				//{
 				//	Tag: "button",
 				//	Text: models.ActionsText{
