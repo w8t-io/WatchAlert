@@ -11,6 +11,7 @@ import (
 	"prometheus-manager/models"
 	"prometheus-manager/utils"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -94,6 +95,9 @@ func (f *FeiShu) firingMsgTemplate(template models.FeiShuMsg, v models.AlertInfo
 	} else {
 		contentInfo = fmt.Sprintf("**👤 值班人员：**<at id=%s></at>", user)
 	}
+
+	urlLine := strings.Split(v.GeneratorURL, "/")
+	v.GeneratorURL = globals.Config.Prometheus.URL + "/" + urlLine[len(urlLine)-1]
 
 	elements := []models.Elements{
 		{

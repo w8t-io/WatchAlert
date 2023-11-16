@@ -4,6 +4,7 @@ type App struct {
 	Server       Server       `json:"server"`
 	FeiShu       FeiShu       `json:"feishu"`
 	AlertManager AlertManager `json:"AlertManager"`
+	Prometheus   Prometheus   `json:"Prometheus"`
 }
 
 type Server struct {
@@ -21,4 +22,8 @@ type FeiShu struct {
 type AlertManager struct {
 	URL         string `json:"url"`
 	SilenceTime int64  `json:"silenceTime"`
+}
+
+type Prometheus struct {
+	URL string `json:"url"`
 }
