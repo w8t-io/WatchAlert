@@ -3,6 +3,7 @@ package globals
 import (
 	lark "github.com/larksuite/oapi-sdk-go/v3"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 	"prometheus-manager/models"
 	"prometheus-manager/pkg/cache"
 )
@@ -12,6 +13,7 @@ var (
 	Logger    *zap.Logger
 	FeiShuCli *lark.Client
 	CacheCli  *cache.InMemoryCache
+	DBCli     *gorm.DB
 )
 
 var (

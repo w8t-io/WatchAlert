@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WatchAlert - Rule</title>
+    <link rel="stylesheet" type="text/css" href="/web/static/rule.css">
+</head>
+<body>
+<div class="top-left-buttons">
+    <button onclick="openCreateForm()">创建</button>
+    <button onclick="openUpdateForm()">编辑</button>
+    <button onclick="deleteRow()">删除</button>
+</div>
+
+<table>
+    <thead>
+    <br>
+    <tr>
+        <th>
+            <input type="checkbox" id="select-all-checkbox">
+        </th>
+        <th>规则名称</th>
+        <th>查询条件</th>
+        <th>间隔时间</th>
+        <th>规则标签</th>
+        <th>告警描述</th>
+    </tr>
+    </thead>
+    <tbody id="table-body">
+    <!-- 表格数据将通过JavaScript动态添加到这里 -->
+    </tbody>
+</table>
+
+<!-- 创建弹窗 -->
+<div id="create-form-overlay">
+    <div id="create-form">
+        <h2>创建规则</h2>
+        <div class="row">
+            <label for="name-input">规则名称</label>
+            <input type="text" id="name-input">
+        </div>
+        <div class="row">
+            <label for="expr-input">查询条件</label>
+            <input type="text" id="expr-input">
+        </div>
+        <div class="row">
+            <label for="for-input">间隔时间</label>
+            <input type="text" id="for-input">
+        </div>
+        <div class="row">
+            <label for="label-input">规则标签</label>
+            <input type="text" id="label-input">
+        </div>
+        <div class="row">
+            <label for="annotations-input">告警描述</label>
+            <textarea id="annotations-input"></textarea>
+        </div>
+        <div class="row">
+            <button onclick="submitCreateForm()">提交</button>
+            <button onclick="cancelCreateForm()">取消</button>
+        </div>
+    </div>
+</div>
+
+<!-- 更新弹窗 -->
+<div id="update-form-overlay">
+    <div id="update-form">
+        <h2>更新规则</h2>
+        <div class="row">
+            <label for="update-name-input">规则名称</label>
+            <input type="text" id="update-name-input" readonly>
+        </div>
+        <div class="row">
+            <label for="update-expr-input">查询条件</label>
+            <input type="text" id="update-expr-input">
+        </div>
+        <div class="row">
+            <label for="update-for-input">间隔时间</label>
+            <input type="text" id="update-for-input">
+        </div>
+        <div class="row">
+            <label for="update-label-input">规则标签</label>
+            <input type="text" id="update-label-input">
+        </div>
+        <div class="row">
+            <label for="update-annotations-input">告警描述</label>
+            <textarea id="update-annotations-input"></textarea>
+        </div>
+        <div class="row">
+            <button onclick="submitUpdateForm()">提交</button>
+            <button onclick="cancelUpdateForm()">取消</button>
+        </div>
+    </div>
+</div>
+
+<script src="/web/static/rule.js"></script>
+</body>
+</html>

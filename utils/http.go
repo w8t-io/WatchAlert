@@ -43,3 +43,20 @@ func Post(url string, bodyReader *bytes.Reader) (*http.Response, error) {
 	return resp, nil
 
 }
+
+func PostReloadPrometheus() error {
+
+	url := globals.Config.Prometheus.URL + "/-/reload"
+	req, err := http.NewRequest(http.MethodPost, url, nil)
+	if err != nil {
+		globals.Logger.Sugar().Error("PostReloadPrometheus 请求建立失败 ->", err)
+		return err
+	}
+	_, err = http.DefaultClient.Do(req)
+	if err != nil {
+		globals.Logger.Sugar().Error("PostReloadPrometheus 请求发送失败 ->", err)
+		return err
+	}
+
+	return nil
+}

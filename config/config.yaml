@@ -21,4 +21,9 @@ AlertManager:
   silenceTime: "120"
 
 Prometheus:
-  url: "http://172.17.84.238:9090"
+#  url: "http://192.168.0.66:9090"
+  url: "http://192.168.0.102:9090"
+  rulePath: "/Users/zuxuan/Documents/worksapce/prometheus/prom_data/rules"
+
+Jaeger:
+  url: "https://jg.ob.geesdev.com"

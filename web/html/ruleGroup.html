@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WatchAlert - RuleGroup</title>
+    <link rel="stylesheet" type="text/css" href="/web/static/ruleGroup.css">
+</head>
+<body>
+
+<div class="top-left-buttons">
+    <button onclick="openCreateFormRuleGroup()">创建</button>
+    <button onclick="openUpdateFormRuleGroup()">编辑</button>
+    <button onclick="deleteRowRuleGroup()">删除</button>
+</div>
+
+<table>
+    <thead>
+    <br>
+    <tr>
+        <th>
+            <input type="checkbox" id="select-all-checkbox">
+        </th>
+        <th>规则组名称</th>
+        <th>规则数</th>
+        <th>规则组描述</th>
+        <th>创建时间</th>
+    </tr>
+    </thead>
+    <tbody id="rule-group-data">
+    <!-- 表格数据将通过JavaScript动态添加到这里 -->
+    </tbody>
+</table>
+
+
+<!-- 创建弹窗 -->
+<div id="create-ruleGroup-form-overlay" style="display: none;">
+    <div id="create-ruleGroup-form">
+        <h2>创建规则组</h2>
+        <div class="row">
+            <label for="create-ruleGroupName-input">规则组名称</label>
+            <input type="text" id="create-ruleGroupName-input">
+        </div>
+        <div class="row">
+            <label for="create-ruleGroupDescription-input">规则组描述</label>
+            <input type="text" id="create-ruleGroupDescription-input">
+        </div>
+        <div class="row">
+            <button onclick="submitCreateFormRuleGroup()">提交</button>
+            <button onclick="cancelCreateFormRuleGroup()">取消</button>
+        </div>
+    </div>
+</div>
+
+<!-- 更新弹窗 -->
+<div id="update-form-overlay" style="display: none;">
+    <div id="update-form">
+        <h2>更新规则组</h2>
+        <div class="row">
+            <label for="update-ruleGroupName-input">规则组名称</label>
+            <input type="text" id="update-ruleGroupName-input" readonly>
+        </div>
+        <div class="row">
+            <label for="update-ruleGroupDescription-input">规则组描述</label>
+            <input type="text" id="update-ruleGroupDescription-input">
+        </div>
+        <div class="row">
+            <button onclick="submitUpdateFormRuleGroup()">提交</button>
+            <button onclick="cancelUpdateFormRuleGroup()">取消</button>
+        </div>
+    </div>
+</div>
+
+<script src="/web/static/ruleGroup.js"></script>
+</body>
+</html>
