@@ -10,7 +10,6 @@ import (
 	"prometheus-manager/models"
 	"prometheus-manager/pkg"
 	"prometheus-manager/pkg/cache"
-	"prometheus-manager/pkg/feishu"
 	"prometheus-manager/utils"
 	"strings"
 )
@@ -19,7 +18,6 @@ func CreateAlertSilence(challengeInfo map[string]interface{}) error {
 
 	var (
 		action   bool
-		f        feishu.FeiShu
 		cardInfo models.CardInfo
 	)
 
@@ -34,7 +32,7 @@ func CreateAlertSilence(challengeInfo map[string]interface{}) error {
 		}
 
 		if !action {
-			info := f.GetFeiShuUserInfo(actionUserID)
+			info := utils.GetFeiShuUserInfo(actionUserID)
 			globals.Logger.Sugar().Error("「" + info.Data.User.Name + "」你无权操作创建静默规则")
 			return fmt.Errorf("「" + info.Data.User.Name + "」你无权操作创建静默规则")
 		}

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"prometheus-manager/globals"
 	"prometheus-manager/models"
-	"prometheus-manager/pkg/feishu"
+	"prometheus-manager/utils"
 	"strings"
 	"time"
 )
@@ -83,7 +83,7 @@ func (r *renderPrometheus) FeiShu() error {
 
 	var (
 		cardContentMsg []string
-		f              feishu.FeiShu
+		f              FeiShu
 	)
 
 	// 从结构体中获取数据
@@ -93,7 +93,7 @@ func (r *renderPrometheus) FeiShu() error {
 		// 需要将所有换行符进行转义
 		cardContentJson := strings.Replace(string(contentJson), "\n", "\\n", -1)
 		cardContentMsg = append(cardContentMsg, cardContentJson)
-		err := f.PushFeiShu(cardContentMsg)
+		err := utils.PushFeiShu(cardContentMsg)
 		if err != nil {
 			return fmt.Errorf("飞书消息发送失败 -> %s", err)
 		}
