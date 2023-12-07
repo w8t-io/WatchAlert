@@ -14,20 +14,20 @@ type Cards struct {
 }
 
 type Actions struct {
-	Tag      string      `json:"tag,omitempty"`
-	Text     ActionsText `json:"text,omitempty"`
-	Type     string      `json:"type,omitempty"`
-	Value    interface{} `json:"value,omitempty"`
-	Confirm  Confirms    `json:"confirm,omitempty"`
-	URL      string      `json:"url,omitempty"`
-	MultiURL *MultiURLs  `json:"multi_url,omitempty"`
+	Tag      string      `json:"tag"`
+	Text     ActionsText `json:"text"`
+	Type     string      `json:"type"`
+	Value    interface{} `json:"value"`
+	Confirm  Confirms    `json:"confirm"`
+	URL      string      `json:"url"`
+	MultiURL *MultiURLs  `json:"multi_url"`
 }
 
 type MultiURLs struct {
-	URL        string `json:"url,omitempty"`
-	AndroidURL string `json:"android_url,omitempty"`
-	IosURL     string `json:"ios_url,omitempty"`
-	PcURL      string `json:"pc_url,omitempty"`
+	URL        string `json:"url"`
+	AndroidURL string `json:"android_url"`
+	IosURL     string `json:"ios_url"`
+	PcURL      string `json:"pc_url"`
 }
 
 type Confirms struct {
