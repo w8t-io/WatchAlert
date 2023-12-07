@@ -20,14 +20,14 @@ type Actions struct {
 	Value    interface{} `json:"value,omitempty"`
 	Confirm  Confirms    `json:"confirm,omitempty"`
 	URL      string      `json:"url,omitempty"`
-	MultiURL MultiURLs   `json:"multi_url,omitempty"`
+	MultiURL *MultiURLs  `json:"multi_url,omitempty"`
 }
 
 type MultiURLs struct {
-	URL        string `json:"url"`
-	AndroidURL string `json:"android_url"`
-	IosURL     string `json:"ios_url"`
-	PcURL      string `json:"pc_url"`
+	URL        string `json:"url,omitempty"`
+	AndroidURL string `json:"android_url,omitempty"`
+	IosURL     string `json:"ios_url,omitempty"`
+	PcURL      string `json:"pc_url,omitempty"`
 }
 
 type Confirms struct {

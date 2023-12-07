@@ -238,7 +238,7 @@ func firingMsgTemplate(template models.FeiShuMsg, aliAlert models.AliAlert, env 
 						Tag:     "plain_text",
 					},
 					Type: "primary",
-					MultiURL: models.MultiURLs{
+					MultiURL: &models.MultiURLs{
 						URL: GeneratorURL,
 					},
 					Confirm: models.Confirms{
