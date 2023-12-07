@@ -134,6 +134,8 @@ function sendSelectedUsers(userNames) {
         .catch(error => {
             console.error('发送选中的用户时出错:', error);
         });
+
+    location.reload();
 }
 
 // 调用后端 API 接口来获取用户数据
