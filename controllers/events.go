@@ -3,7 +3,6 @@ package controllers
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"log"
@@ -21,8 +20,6 @@ func (aemc *EventController) AlertEventMsg(ctx *gin.Context) {
 	env := ctx.Query("env")
 	resp, _ := ioutil.ReadAll(ctx.Request.Body)
 	globals.RespBody = resp
-
-	fmt.Println("*** body ->", string(resp))
 
 	err := pkg.SendMessageToWebhook("", resp, env)
 	if err != nil {

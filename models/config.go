@@ -6,6 +6,7 @@ type App struct {
 	AlertManager AlertManager `json:"AlertManager"`
 	Prometheus   Prometheus   `json:"Prometheus"`
 	Jaeger       Jaeger       `json:"Jaeger"`
+	MySQL        MySQL        `json:"MySQL"`
 }
 
 type Server struct {
@@ -13,11 +14,10 @@ type Server struct {
 }
 
 type FeiShu struct {
-	AppID     string   `json:"appId"`
-	AppSecret string   `json:"sppSecret"`
-	ChatID    string   `json:"chatId"`
-	Token     string   `json:"token"`
-	DutyUser  []string `json:"dutyUser"`
+	AppID     string `json:"appId"`
+	AppSecret string `json:"sppSecret"`
+	ChatID    string `json:"chatId"`
+	Token     string `json:"token"`
 }
 
 type AlertManager struct {
@@ -32,4 +32,13 @@ type Prometheus struct {
 
 type Jaeger struct {
 	URL string `json:"url"`
+}
+
+type MySQL struct {
+	Host    string `json:"host"`
+	Port    string `json:"port"`
+	User    string `json:"user"`
+	Pass    string `json:"pass"`
+	DBName  string `json:"dbName"`
+	Timeout string `json:"timeout"`
 }

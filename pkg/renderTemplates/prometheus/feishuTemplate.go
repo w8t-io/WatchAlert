@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"prometheus-manager/globals"
 	"prometheus-manager/models"
+	"prometheus-manager/pkg/schedule"
 	"prometheus-manager/utils"
 	"strconv"
 	"strings"
@@ -11,10 +12,6 @@ import (
 )
 
 type FeiShu struct{}
-
-var (
-	confirmPrompt = "静默 " + strconv.FormatInt(globals.Config.AlertManager.SilenceTime, 10) + " 分钟"
-)
 
 // FeiShuMsgTemplate 飞书消息卡片模版
 func (f *FeiShu) FeiShuMsgTemplate(actionUser string, v models.AlertInfo, ActionsValueStr models.CreateAlertSilence) (msg models.FeiShuMsg) {
@@ -51,13 +48,17 @@ func (f *FeiShu) FeiShuMsgTemplate(actionUser string, v models.AlertInfo, Action
 // firingMsgTemplate 告警模版
 func firingMsgTemplate(template models.FeiShuMsg, v models.AlertInfo, ActionsValueStr models.CreateAlertSilence) models.FeiShuMsg {
 
-	var contentInfo string
+	var (
+		contentInfo   string
+		confirmPrompt = "静默 " + strconv.Itoa(int(globals.Config.AlertManager.SilenceTime)) + " 分钟"
+		currentTime   = strconv.Itoa(time.Now().Year()) + "-" + strconv.Itoa(int(time.Now().Month())) + "-" + strconv.Itoa(time.Now().Day())
+	)
 
-	user := utils.GetCurrentDutyUser()
-	if len(user) == 0 {
+	_, userInfo := schedule.GetCurrentDutyInfo(currentTime)
+	if len(userInfo.FeiShuUserID) == 0 {
 		contentInfo = "暂无安排值班人员"
 	} else {
-		contentInfo = fmt.Sprintf("**👤 值班人员：**<at id=%s></at>", user)
+		contentInfo = fmt.Sprintf("**👤 值班人员：**<at id=%s></at>", userInfo.FeiShuUserID)
 	}
 
 	urlLine := strings.Split(v.GeneratorURL, "/")

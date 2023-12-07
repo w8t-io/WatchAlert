@@ -11,6 +11,7 @@ var (
 	ac  controllers.AlertController
 	rc  rules.RuleController
 	rgc rules.RuleGroupController
+	sc  controllers.ScheduleController
 )
 
 func AlertEventMsg(gin *gin.Engine) {
@@ -43,6 +44,16 @@ func AlertEventMsg(gin *gin.Engine) {
 		rule.POST("delete", rc.Delete)
 		rule.POST("update", rc.Update)
 		rule.GET("getRule", rc.GetRule)
+
+		// 告警值班
+		duty := apiv1.Group("dutySystem")
+		duty.POST("create", sc.CreateSchedule)
+		duty.POST("update", sc.UpdateSchedule)
+		duty.GET("select", sc.SelectDutySystem)
+		dutyUser := duty.Group("user")
+		dutyUser.POST("create", sc.CreateUser)
+		dutyUser.GET("select", sc.SearchUser)
+		dutyUser.GET("getUser", sc.GetUser)
 	}
 
 }

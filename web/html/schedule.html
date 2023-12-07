@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Calendar</title>
+    <link rel="stylesheet" type="text/css" href="/web/static/schedule.css">
+
+</head>
+<body>
+
+<div id="calendar">
+    <!-- 日历内容 -->
+</div>
+
+<div id="user-list" class="tag-list">
+    <!-- 人员列表 -->
+</div>
+
+<div>
+    <label for="duty-user">每人值班周期:</label>
+    <select id="duty-user" name="duty-user">
+        <option value="1">1d</option>
+        <option value="2">2d</option>
+        <option value="5">5d</option>
+        <option value="7">7d</option>
+    </select>
+</div>
+
+<button id="publish-btn">发布</button>
+
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 id="modal-date"></h2>
+        <form id="modal-form">
+            <label for="duty-name">值班人员：</label>
+            <input type="text" id="duty-name" name="duty-name">
+            <br>
+            <button type="submit">提交</button>
+        </form>
+    </div>
+</div>
+
+<script src="/web/static/schedule.js"></script>
+</body>
+</html>

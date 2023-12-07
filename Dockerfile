@@ -1,4 +1,4 @@
-FROM registry.js.design/base/golang:1.18 AS build
+FROM registry.js.design/base/golang:1.18-alpine3.16 AS build
 
 ENV GO111MODULE=on \
     CGO_ENABLED=0 \
@@ -11,12 +11,14 @@ WORKDIR /root
 COPY . /root
 
 RUN go mod tidy && \
-    go build -o alertEventMgr ./main.go && \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o alertEventMgr ./main.go && \
     chmod 777 alertEventMgr
 
 FROM registry.js.design/base/alpine:3.16
 
-RUN mkdir -p /app/config
+RUN mkdir -p /app/{config,web}
+
+COPY ./web /app/web
 
 COPY --from=build /root/alertEventMgr /app/alertEventMgr
 

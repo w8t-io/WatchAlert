@@ -25,6 +25,6 @@ func allRouter(engine *gin.Engine) {
 
 	routers.HealthCheck(engine)
 	v1.AlertEventMsg(engine)
-	//v1.Web(engine)
+	v1.Web(engine)
 
 }

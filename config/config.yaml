@@ -10,10 +10,6 @@ feishu:
   chatId: "oc_17518f8653e322021f71e4f0ad3ac08b"
   # Token
   token: "t-g104beebK2PZQV2EACEVRA4OPNRWVK4C2CUDGNFU"
-  # 值班
-  dutyUser:
-    # zuxuan
-    - "886341fg"
 
 AlertManager:
   url: "http://172.17.84.238:9093"
@@ -27,3 +23,11 @@ Prometheus:
 
 Jaeger:
   url: "https://jg.ob.geesdev.com"
+
+MySQL:
+  host: 192.168.1.176
+  port: 3306
+  user: root
+  pass: Jsdesign.2022
+  dbName: alert
+  timeout: 10s

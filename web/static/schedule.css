@@ -1,0 +1,118 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f2f2f2;
+    margin: 20px;
+}
+
+#calendar {
+    max-width: 600px;
+    background-color: #ffffff;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin: 0 auto 20px;
+}
+
+.month {
+    text-align: center;
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+.days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+}
+
+.day {
+    padding: 10px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+}
+
+.today {
+    background-color: #f0f0f0;
+}
+
+.duty {
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+}
+
+#duty-user {
+    margin-bottom: 10px;
+}
+
+#publish-btn {
+    display: block;
+    margin: 0 auto;
+}
+
+/*窗口*/
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/*用户标签样式*/
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.tag-list .user-item {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: #333;
+}
+
+.tag-list .user-item:nth-child(1) {
+    background-color: #838181;
+}
+
+.tag-list .user-item:nth-child(2) {
+    background-color: #e6e6e6;
+}
+
+.tag-list .user-item:nth-child(3) {
+    background-color: #d9d9d9;
+}
+
+.tag-list .user-item:nth-child(4) {
+    background-color: #cccccc;
+}

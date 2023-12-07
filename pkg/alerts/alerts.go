@@ -17,29 +17,10 @@ import (
 func CreateAlertSilence(challengeInfo map[string]interface{}) error {
 
 	var (
-		action   bool
 		cardInfo models.CardInfo
 	)
 
-	// 判断是否是值班用户
-	actionUserID := challengeInfo["user_id"].(string)
-	if len(globals.Config.FeiShu.DutyUser) != 0 {
-		for _, user := range globals.Config.FeiShu.DutyUser {
-			if actionUserID == user {
-				action = true
-				break
-			}
-		}
-
-		if !action {
-			info := utils.GetFeiShuUserInfo(actionUserID)
-			globals.Logger.Sugar().Error("「" + info.Data.User.Name + "」你无权操作创建静默规则")
-			return fmt.Errorf("「" + info.Data.User.Name + "」你无权操作创建静默规则")
-		}
-	}
-
 	rawDataJson, _ := json.Marshal(challengeInfo)
-
 	_ = json.Unmarshal(rawDataJson, &cardInfo)
 
 	// To Json
@@ -78,6 +59,7 @@ func CreateAlertSilence(challengeInfo map[string]interface{}) error {
 	prometheusAlertBody, _ := json.Marshal(promAlertManager)
 
 	// 发送消息卡片
+	actionUserID := challengeInfo["user_id"].(string)
 	err = pkg.SendMessageToWebhook(actionUserID, prometheusAlertBody, "")
 	if err != nil {
 		log.Println("消息卡片发送失败", err)

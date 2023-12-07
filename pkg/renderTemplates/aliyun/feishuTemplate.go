@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"prometheus-manager/globals"
 	"prometheus-manager/models"
-	"prometheus-manager/utils"
+	"prometheus-manager/pkg/schedule"
 	"strconv"
 	"time"
 )
@@ -44,13 +44,14 @@ func firingMsgTemplate(template models.FeiShuMsg, aliAlert models.AliAlert, env 
 
 	var contentInfo string
 	alertTime, _ := strconv.ParseInt(aliAlert.AlertTime, 10, 64)
-	//resolveTime, _ := strconv.ParseInt(aliAlert.ResolveTime, 10, 64)
 
-	user := utils.GetCurrentDutyUser()
-	if len(user) == 0 {
+	currentTime := strconv.Itoa(time.Now().Year()) + "-" + strconv.Itoa(int(time.Now().Month())) + "-" + strconv.Itoa(time.Now().Day())
+
+	_, userInfo := schedule.GetCurrentDutyInfo(currentTime)
+	if len(userInfo.FeiShuUserID) == 0 {
 		contentInfo = "暂无安排值班人员"
 	} else {
-		contentInfo = fmt.Sprintf("**👤 值班人员：**<at id=%s></at>", user)
+		contentInfo = fmt.Sprintf("**👤 值班人员：**<at id=%s></at>", userInfo.FeiShuUserID)
 	}
 
 	GeneratorURL := globals.Config.Jaeger.URL + "/" + "trace/" + aliAlert.TraceID
