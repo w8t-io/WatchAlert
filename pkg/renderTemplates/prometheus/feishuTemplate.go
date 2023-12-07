@@ -1,7 +1,6 @@
 package prometheus
 
 import (
-	"encoding/json"
 	"fmt"
 	"prometheus-manager/globals"
 	"prometheus-manager/models"
@@ -310,9 +309,6 @@ func firingMsgTemplate(template models.FeiShuMsg, v models.AlertInfo, ActionsVal
 	template.Card.Header.Template = "red"
 	template.Card.Header.Title.Content = "【报警中】一级报警 - 即时设计 🔥"
 	template.Card.Elements = elements
-
-	tempJson, _ := json.Marshal(template)
-	fmt.Println("===", string(tempJson))
 
 	return template
 
