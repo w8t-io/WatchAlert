@@ -6,7 +6,7 @@ import (
 
 type People struct {
 	gorm.Model
-	UserID         uint   `gorm:"column:userId,autoIncrement" json:"userId"`
+	UserID         string `gorm:"column:userId" json:"userId"`
 	UserName       string `gorm:"column:userName" json:"userName"`
 	Phone          string `gorm:"column:phone" json:"phone"`
 	Email          string `gorm:"column:email" json:"email"`
