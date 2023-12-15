@@ -52,6 +52,8 @@ func AlertEventMsg(gin *gin.Engine) {
 		duty.GET("select", sc.SelectDutySystem)
 		dutyUser := duty.Group("user")
 		dutyUser.POST("create", sc.CreateUser)
+		dutyUser.POST("update", sc.UpdateUser)
+		dutyUser.POST("delete", sc.DeleteUser)
 		dutyUser.GET("select", sc.SearchUser)
 		dutyUser.GET("getUser", sc.GetUser)
 	}

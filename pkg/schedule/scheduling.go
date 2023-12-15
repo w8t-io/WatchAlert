@@ -10,7 +10,7 @@ import (
 )
 
 // CreateAndUpdateDutySystem 创建和更新值班表
-func CreateAndUpdateDutySystem(dutyUserInfo []string, dutyPeriod int) ([]dao.DutySystem, error) {
+func CreateAndUpdateDutySystem(dutyUserInfo []dao.DutySystem, dutyPeriod int) ([]dao.DutySystem, error) {
 
 	var dutySystem []dao.DutySystem
 	ch := make(chan string)
@@ -31,7 +31,7 @@ func CreateAndUpdateDutySystem(dutyUserInfo []string, dutyPeriod int) ([]dao.Dut
 	}()
 
 	for i := 0; i <= daysInMonth; i++ {
-		for _, name := range dutyUserInfo {
+		for _, value := range dutyUserInfo {
 			for t := 1; t <= dutyPeriod; t++ {
 				dutyTime := <-ch
 				if dutyTime == "" {
@@ -39,7 +39,8 @@ func CreateAndUpdateDutySystem(dutyUserInfo []string, dutyPeriod int) ([]dao.Dut
 				}
 				ds := dao.DutySystem{
 					Time:     dutyTime,
-					UserName: name,
+					UserName: value.UserName,
+					UserId:   value.UserId,
 				}
 				dutySystem = append(dutySystem, ds)
 			}

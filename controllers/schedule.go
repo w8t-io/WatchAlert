@@ -12,7 +12,7 @@ type ScheduleController struct {
 
 func (sc *ScheduleController) CreateSchedule(ctx *gin.Context) {
 
-	var dutySystem []string
+	var dutySystem []dao.DutySystem
 	_ = ctx.ShouldBindJSON(&dutySystem)
 
 	dutyPeriod := ctx.Query("dutyPeriod")
@@ -93,7 +93,7 @@ func (sc *ScheduleController) CreateUser(ctx *gin.Context) {
 
 	_ = ctx.ShouldBindJSON(&userInfo)
 
-	err := schedule.CreateDutyUser(userInfo)
+	data, err := schedule.CreateDutyUser(userInfo)
 	if err != nil {
 		ctx.JSON(401, gin.H{
 			"code": 3001,
@@ -104,7 +104,7 @@ func (sc *ScheduleController) CreateUser(ctx *gin.Context) {
 	}
 	ctx.JSON(200, gin.H{
 		"code": 3000,
-		"data": nil,
+		"data": data,
 		"msg":  "创建成功",
 	})
 
@@ -112,9 +112,43 @@ func (sc *ScheduleController) CreateUser(ctx *gin.Context) {
 
 func (sc *ScheduleController) DeleteUser(ctx *gin.Context) {
 
+	userId := ctx.Query("userId")
+	err := schedule.DeleteDutyUser(userId)
+	if err != nil {
+		ctx.JSON(401, gin.H{
+			"code": 3004,
+			"data": err.Error(),
+			"msg":  "删除失败",
+		})
+		return
+	}
+	ctx.JSON(200, gin.H{
+		"code": 3000,
+		"data": "",
+		"msg":  "删除成功",
+	})
+
 }
 
 func (sc *ScheduleController) UpdateUser(ctx *gin.Context) {
+
+	var userInfo dao.People
+	_ = ctx.ShouldBindJSON(&userInfo)
+
+	data, err := schedule.UpdateDutyUser(userInfo)
+	if err != nil {
+		ctx.JSON(401, gin.H{
+			"code": 3003,
+			"data": err.Error(),
+			"msg":  "更新失败",
+		})
+		return
+	}
+	ctx.JSON(200, gin.H{
+		"code": 3000,
+		"data": data,
+		"msg":  "更新成功",
+	})
 
 }
 

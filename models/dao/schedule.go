@@ -28,5 +28,6 @@ type JoinsPeopleGroup struct {
 
 type DutySystem struct {
 	Time     string `json:"time"`
+	UserId   string `json:"userId"`
 	UserName string `json:"userName"`
 }

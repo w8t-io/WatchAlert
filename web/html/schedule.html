@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="">
 <head>
     <title>Calendar</title>
     <link rel="stylesheet" type="text/css" href="/web/static/schedule.css">
@@ -11,11 +11,17 @@
     <!-- 日历内容 -->
 </div>
 
-<div id="user-list" class="tag-list">
-    <!-- 人员列表 -->
-</div>
+<div id="duty-user-configure">
 
-<div>
+    <button class="btn-create" id="create-duty-user-btn" onclick="openCreateDutyUserForm()">创建</button>
+    <button class="btn-create" id="update-duty-user-btn" onclick="openUpdateDutyUserForm()">编辑</button>
+    <button class="btn-create" id="delete-duty-user-btn" onclick="deleteDutyUser()">删除</button>
+    
+    <label>用户列表: </label>
+    <div id="user-list" class="tag-list">
+        <!-- 人员列表 -->
+    </div>
+    <br>
     <label for="duty-user">每人值班周期:</label>
     <select id="duty-user" name="duty-user">
         <option value="1">1d</option>
@@ -23,20 +29,90 @@
         <option value="5">5d</option>
         <option value="7">7d</option>
     </select>
+
+    <button class="btn-publish" id="publish-btn">发布</button>
 </div>
 
-<button id="publish-btn">发布</button>
 
 <div id="modal" class="modal">
     <div class="modal-content">
         <span class="close">&times;</span>
         <h2 id="modal-date"></h2>
         <form id="modal-form">
-            <label for="duty-name">值班人员：</label>
-            <input type="text" id="duty-name" name="duty-name">
-            <br>
+            <label>值班人员：</label>
+            <div id="update-user-list" class="tag-list">
+                <!-- 人员列表 -->
+            </div>
             <button type="submit">提交</button>
         </form>
+    </div>
+</div>
+
+
+<!-- 创建用户弹窗 -->
+<div id="create-duty-user-form-overlay">
+    <div id="create-duty-user-form">
+        <h2>创建用户</h2>
+        <div class="row">
+            <label for="username">用户名</label>
+            <input type="text" id="username">
+        </div>
+        <div class="row">
+            <label>通知方式</label>
+            <div>
+                <input type="radio" id="feishu" name="notice-type" value="feishu" onclick="toggleUserIdInput('feishu')"> 飞书
+            </div>
+        </div>
+        <div class="row" id="feishu-user-id-row" style="display: none;">
+            <label for="feiShuUserID">飞书用户ID</label>
+            <input type="text" id="feiShuUserID">
+        </div>
+        <div class="row">
+            <label for="phone">Phone</label>
+            <input type="text" id="phone">
+        </div>
+        <div class="row">
+            <label for="email">Email</label>
+            <input type="text" id="email">
+        </div>
+        <div class="row">
+            <button onclick="submitCreateForm()">提交</button>
+            <button onclick="cancelCreateDutyUserForm()">取消</button>
+        </div>
+    </div>
+</div>
+
+
+<!-- 更新用户弹窗 -->
+<div id="update-duty-user-form-overlay">
+    <div id="update-duty-user-form">
+        <h2>更新用户信息</h2>
+        <div class="row">
+            <label for="username">用户名</label>
+            <input type="text" id="update-username" readonly>
+        </div>
+        <div class="row">
+            <label>通知方式</label>
+            <div>
+                <input type="radio" id="update-feishu" name="update-notice-type" value="feishu" onclick="updateToggleUserIdInput('feishu')"> 飞书
+            </div>
+        </div>
+        <div class="row" id="update-feishu-user-id-row" style="display: none;">
+            <label for="feiShuUserID">飞书用户ID</label>
+            <input type="text" id="update-feiShuUserID" class="row">
+        </div>
+        <div class="row">
+            <label for="phone">Phone</label>
+            <input type="text" id="update-phone">
+        </div>
+        <div class="row">
+            <label for="email">Email</label>
+            <input type="text" id="update-email">
+        </div>
+        <div class="row">
+            <button onclick="submitUpdateForm()">提交</button>
+            <button onclick="cancelUpdateDutyUserForm()">取消</button>
+        </div>
     </div>
 </div>
 
