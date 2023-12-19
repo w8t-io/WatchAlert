@@ -5,9 +5,9 @@ import (
 	lark "github.com/larksuite/oapi-sdk-go/v3"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	dao2 "prometheus-manager/controllers/dao"
 	"prometheus-manager/globals"
-	"prometheus-manager/models/dao"
-	"prometheus-manager/pkg/cache"
+	"prometheus-manager/utils/cache"
 )
 
 func InitClient() {
@@ -45,11 +45,13 @@ func sqlClient() {
 
 	// 检查 Product 结构是否变化，变化则进行迁移
 	err = db.AutoMigrate(
-		&dao.RuleGroupData{},
-		&dao.People{},
-		&dao.PeopleGroup{},
-		&dao.JoinsPeopleGroup{},
-		&dao.DutySystem{},
+		&dao2.RuleGroupData{},
+		&dao2.People{},
+		&dao2.PeopleGroup{},
+		&dao2.JoinsPeopleGroup{},
+		&dao2.DutySchedule{},
+		&dao2.DutyManagement{},
+		&dao2.AlertNotice{},
 	)
 	if err != nil {
 		return

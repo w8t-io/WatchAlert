@@ -6,8 +6,6 @@ feishu:
   appId: "cli_a4cdca8a9238d00d"
   # 应用密钥
   appSecret: "Q8rnC3eIZTcScs30ttD8qh6NvgECQuqM"
-  # 群ID
-  chatId: "oc_17518f8653e322021f71e4f0ad3ac08b"
   # Token
   token: "t-g104beebK2PZQV2EACEVRA4OPNRWVK4C2CUDGNFU"
 
@@ -17,8 +15,7 @@ AlertManager:
   silenceTime: "120"
 
 Prometheus:
-#  url: "http://192.168.0.66:9090"
-  url: "http://192.168.0.102:9090"
+  url: "http://192.168.0.66:9090"
   rulePath: "/Users/zuxuan/Documents/worksapce/prometheus/prom_data/rules"
 
 Jaeger:

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WatchAlert - DutyManage</title>
+    <link rel="stylesheet" type="text/css" href="/web/static/duty_manage.css">
+</head>
+<body>
+
+<div class="top-left-buttons">
+    <button onclick="openCreateFormDutyManage()">创建</button>
+    <button onclick="openUpdateFormDutyManage()">编辑</button>
+    <button onclick="deleteDutyManage()">删除</button>
+</div>
+
+<table>
+    <thead>
+    <br>
+    <tr>
+        <th>
+            <input type="checkbox" id="dutyManage-select-all-checkbox">
+        </th>
+        <th>ID</th>
+        <th>名称</th>
+        <th>描述</th>
+    </tr>
+    </thead>
+    <tbody id="duty-manage-data">
+    <!-- 表格数据将通过JavaScript动态添加到这里 -->
+    </tbody>
+</table>
+
+<!-- 创建弹窗 -->
+<div id="create-dutyManage-form-overlay" style="display: none;">
+    <div id="create-dutyManage-form">
+        <h2>创建对象</h2>
+        <div class="row">
+            <label for="create-dutyManageName-input">名称</label>
+            <input type="text" id="create-dutyManageName-input">
+        </div>
+        <div class="row">
+            <label for="create-dutyManageDescription-input">描述</label>
+            <input type="text" id="create-dutyManageDescription-input">
+        </div>
+        <div class="row">
+            <button onclick="submitCreateFormDutyManage()">提交</button>
+            <button onclick="cancelCreateFormDutyManage()">取消</button>
+        </div>
+    </div>
+</div>
+
+<!-- 更新弹窗 -->
+<div id="update-dutyManage-form-overlay" style="display: none;">
+    <div id="update-dutyManage-form">
+        <h2>更新对象</h2>
+        <div class="row">
+            <label for="update-dutyManageName-input">名称</label>
+            <input type="text" id="update-dutyManageName-input">
+        </div>
+        <div class="row">
+            <label for="update-dutyManageDescription-input">描述</label>
+            <input type="text" id="update-dutyManageDescription-input">
+        </div>
+        <div class="row">
+            <button onclick="submitUpdateFormDutyManage()">提交</button>
+            <button onclick="cancelUpdateFormDutyManage()">取消</button>
+        </div>
+    </div>
+</div>
+
+<script src="/web/static/duty_manage.js"></script>
+</body>
+</html>

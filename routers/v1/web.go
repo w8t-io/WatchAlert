@@ -18,7 +18,13 @@ func Web(r *gin.Engine) {
 	r.GET("/ruleGroup/:ruleGroup/rule", func(context *gin.Context) {
 		context.HTML(200, "rule.html", gin.H{})
 	})
-	r.GET("/dutySystem", func(context *gin.Context) {
+	r.GET("/noticeObject", func(context *gin.Context) {
+		context.HTML(200, "noticeObject.html", gin.H{})
+	})
+	r.GET("/dutyManage", func(context *gin.Context) {
+		context.HTML(200, "duty_manage.html", gin.H{})
+	})
+	r.GET("/dutyManage/:dutyId/schedule", func(context *gin.Context) {
 		context.HTML(200, "schedule.html", gin.H{})
 	})
 

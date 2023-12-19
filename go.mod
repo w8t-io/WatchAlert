@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-openapi/strfmt v0.21.7
+	github.com/google/uuid v1.3.0
 	github.com/larksuite/oapi-sdk-go/v3 v3.0.29
 	github.com/spf13/viper v1.16.0
 	go.uber.org/zap v1.21.0

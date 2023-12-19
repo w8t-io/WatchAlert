@@ -4,12 +4,12 @@ import (
 	lark "github.com/larksuite/oapi-sdk-go/v3"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
-	"prometheus-manager/models"
-	"prometheus-manager/pkg/cache"
+	"prometheus-manager/controllers/dto"
+	"prometheus-manager/utils/cache"
 )
 
 var (
-	Config    models.App
+	Config    dto.App
 	Logger    *zap.Logger
 	FeiShuCli *lark.Client
 	CacheCli  *cache.InMemoryCache
@@ -17,8 +17,5 @@ var (
 )
 
 var (
-	Layout     = "2006-01-02T15:04:05.000Z"
-	AlertType  string
-	DataSource string
-	RespBody   []byte
+	Layout = "2006-01-02T15:04:05.000Z"
 )

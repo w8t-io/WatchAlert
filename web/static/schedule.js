@@ -13,10 +13,11 @@ let userName = ""
 let phone = ""
 let userId = ""
 
+var dutyId = window.location.pathname.split('/')[2];
 
 // 获取值班数据
 async function getDutyData(date) {
-    const response = await fetch('/api/v1/dutySystem/select?time='+date);
+    const response = await fetch('/api/v1/dutyManage/schedule/select?time='+date+'&dutyId='+dutyId);
     return await response.json();
 }
 
@@ -66,6 +67,7 @@ function generateCalendar() {
 
         // 获取值班数据并添加到日期格子下方
         getDutyData(date).then(info => {
+            console.log(info)
             const dutyElement = document.createElement('div');
             dutyElement.classList.add('duty');
             dutyElement.textContent = info.data[0].userName;
@@ -86,7 +88,7 @@ generateCalendar();
 
 let currentDutyUserName = '';
 // 调用后端 API 接口来获取用户数据
-fetch('/api/v1/dutySystem/user/select')
+fetch('/api/v1/dutyManage/user/select')
     .then(response => response.json())
     .then(data => {
         // 遍历用户数据并展示为列表项
@@ -168,7 +170,7 @@ function sendSelectedUsers(selectedUsers) {
     // 获取当前选中选项的值
     const selectedValue = selectElement.value;
 
-    fetch('/api/v1/dutySystem/create?dutyPeriod='+selectedValue, {
+    fetch('/api/v1/dutyManage/schedule/create?dutyPeriod='+selectedValue+'&dutyId='+dutyId, {
         method: 'POST',
         body: JSON.stringify(selectedUsers),
         headers: {
@@ -230,7 +232,7 @@ function submitForm(event) {
     console.log(data)
 
     // 发送 POST 请求
-    fetch('/api/v1/dutySystem/update', {
+    fetch('/api/v1/dutyManage/schedule/update?dutyId='+dutyId, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -324,7 +326,7 @@ function submitCreateForm() {
     console.log(data)
 
     // 发送数据给后端的API接口
-    fetch("/api/v1/dutySystem/user/create", {
+    fetch("/api/v1/dutyManage/user/create", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -366,7 +368,7 @@ function openUpdateDutyUserForm() {
         return;
     }
 
-    fetch('/api/v1/dutySystem/user/getUser?search=' + userId, {
+    fetch('/api/v1/dutyManage/user/getUser?search=' + userId, {
         method: "GET"
     })
         .then(function(response) {
@@ -428,7 +430,7 @@ function submitUpdateForm() {
     console.log(data)
 
     // 发送数据给后端的API接口
-    fetch("/api/v1/dutySystem/user/update", {
+    fetch("/api/v1/dutyManage/user/update", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -468,7 +470,7 @@ function deleteDutyUser(){
         return;
     }
 
-    fetch('/api/v1/dutySystem/user/delete?userId=' + userId, {
+    fetch('/api/v1/dutyManage/user/delete?userId=' + userId, {
         method: "POST"
     })
         .then(response => {
