@@ -100,3 +100,15 @@ func (ano *AlertNoticeObjectController) GetFeishuChats(ctx *gin.Context) {
 	})
 
 }
+
+func (ano *AlertNoticeObjectController) CheckNoticeStatus(ctx *gin.Context) {
+
+	uuid := ctx.Query("uuid")
+	status := alertNoticeService.CheckNoticeObjectStatus(uuid)
+	ctx.JSON(200, gin.H{
+		"code": "4000",
+		"data": status,
+		"msg":  "检查成功",
+	})
+
+}

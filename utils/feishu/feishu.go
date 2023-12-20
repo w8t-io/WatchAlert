@@ -42,3 +42,16 @@ func GetFeiShuChatsID() dto.FeiShuChats {
 	return feiShuChats
 
 }
+
+func CheckFeiShuChatId(chatId string) bool {
+
+	data := GetFeiShuChatsID()
+	for _, v := range data.Items {
+		if v.ChatId == chatId {
+			return true
+		}
+	}
+
+	return false
+
+}

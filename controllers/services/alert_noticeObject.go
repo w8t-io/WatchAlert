@@ -1,9 +1,12 @@
 package services
 
 import (
+	"bytes"
 	"prometheus-manager/controllers/dao"
 	"prometheus-manager/globals"
 	"prometheus-manager/utils/cmd"
+	"prometheus-manager/utils/feishu"
+	"prometheus-manager/utils/http"
 )
 
 type AlertNoticeService struct{}
@@ -14,6 +17,7 @@ type InterAlertNoticeService interface {
 	UpdateNoticeObject(alertNotice dao.AlertNotice) (dao.AlertNotice, error)
 	DeleteNoticeObject(uuid string) error
 	GetNoticeObject(uuid string) dao.AlertNotice
+	CheckNoticeObjectStatus(uuid string) string
 }
 
 func NewInterAlertNoticeService() InterAlertNoticeService {
@@ -91,3 +95,73 @@ func (ans *AlertNoticeService) GetNoticeObject(uuid string) dao.AlertNotice {
 	return alertNoticeObject
 
 }
+
+func (ans *AlertNoticeService) CheckNoticeObjectStatus(uuid string) string {
+
+	var alertNoticeData dao.AlertNotice
+
+	globals.DBCli.Model(&dao.AlertNotice{}).Where("uuid = ?", uuid).Find(&alertNoticeData)
+
+	noticeStatus := "正常"
+	testBodyData := map[string]string{
+		"Prometheus": PrometheusAlertTest,
+		"AliSls":     AliSlsAlertTest,
+	}
+
+	switch alertNoticeData.NoticeType {
+	case "FeiShu":
+		if !feishu.CheckFeiShuChatId(alertNoticeData.FeishuChatId) {
+			noticeStatus = "异常"
+		} else {
+			post, err := http.Post("http://localhost:9001/api/v1/prom/prometheusAlert?uuid="+alertNoticeData.Uuid, bytes.NewReader([]byte(testBodyData[alertNoticeData.DataSource])))
+			if err != nil && post.StatusCode != 200 {
+				noticeStatus = "异常"
+			}
+		}
+	}
+
+	globals.DBCli.Model(&dao.AlertNotice{}).Where("uuid = ?", uuid).Update("notice_status", noticeStatus)
+	return noticeStatus
+}
+
+const PrometheusAlertTest = `{
+    "alerts":[
+        {
+            "annotations":{
+                "description":"test",
+                "summary":"test"
+            },
+            "endsAt":"test",
+            "fingerprint":"8888888888",
+            "generatorURL":"http://0425df9dd50d:9090/graph?g0.expr=up+%3D%3D+0\u0026g0.tab=1",
+            "labels":{
+                "alertname":"test",
+                "instance":"test",
+                "job":"prometheus",
+                "severity":"serious"
+            },
+            "startsAt":"test",
+            "status":"firing"
+        }
+    ],
+    "commonAnnotations":{
+        "description":"test",
+        "summary":"test"
+    },
+    "commonLabels":{
+        "alertname":"test",
+        "instance":"test",
+        "job":"prometheus",
+        "severity":"serious"
+    },
+    "externalURL":"http://test:9093",
+    "groupLabels":{
+        "alertname":"test"
+    },
+    "receiver":"web\\.hook",
+    "status":"firing",
+    "truncatedAlerts":0,
+    "version":"4"
+}`
+
+const AliSlsAlertTest = `["{\"name\": \"test\",\"fingerprint\": \"88888888\",\"region\": \"cn-beijing\",\"status\": \"firing\",\"alert_time\": \"test\",\"fire_time\": \"test\",\"resolve_time\": \"test\",\"host\": \"test\",\"statusCode\": \"UNSET\",\"traceID\": \"test\",\"logs\": \"\"[]\"\",\"attribute\": \"\"test\"\"}"]`

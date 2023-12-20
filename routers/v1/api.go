@@ -80,6 +80,7 @@ func AlertEventMsg(gin *gin.Engine) {
 		notice.POST("delete", AlertNoticeObject.Delete)
 		notice.GET("get", AlertNoticeObject.Get)
 		notice.GET("getFeiShuChats", AlertNoticeObject.GetFeishuChats)
+		notice.GET("checkNoticeStatus", AlertNoticeObject.CheckNoticeStatus)
 	}
 
 }

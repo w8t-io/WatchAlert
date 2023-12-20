@@ -115,3 +115,12 @@ button:hover {
 .row select option {
     padding: 5px;
 }
+
+/*蓝色字体按钮*/
+.test-notice-status-link {
+    color: #00b2ff;
+    text-decoration: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+}

@@ -32,6 +32,10 @@ function fetchData() {
                 envCell.textContent = item.env;
                 row.appendChild(envCell);
 
+                const statusCell = document.createElement('td');
+                statusCell.textContent = item.noticeStatus;
+                row.appendChild(statusCell);
+
                 const dataSourceCell = document.createElement('td');
                 dataSourceCell.textContent = item.dataSource;
                 row.appendChild(dataSourceCell);
@@ -39,6 +43,19 @@ function fetchData() {
                 const noticeCell = document.createElement('td');
                 noticeCell.textContent = item.noticeType;
                 row.appendChild(noticeCell);
+
+                const testCell = document.createElement('td');
+                const testButton = document.createElement('a');
+                testButton.textContent = "Test";
+                testButton.classList.add('test-notice-status-link');
+                testButton.addEventListener('click', function() {
+                    fetch('/api/v1/alertNotice/checkNoticeStatus?uuid='+item.uuid, {
+                        method: 'GET',
+                    })
+                    location.reload()
+                });
+                testCell.appendChild(testButton);
+                row.appendChild(testCell);
 
                 tableBody.appendChild(row);
             });
@@ -82,6 +99,7 @@ function submitCreateFormNoticeObject() {
     var data = {
         name: name,
         env: env,
+        noticeStatus: "未知",
         dataSource: dataSource,
         noticeType: noticeType,
         feishuChatId: feishuChatId,
