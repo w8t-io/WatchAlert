@@ -131,7 +131,7 @@ const PrometheusAlertTest = `{
                 "description":"test",
                 "summary":"test"
             },
-            "endsAt":"test",
+            "endsAt":"0001-01-01T08:05:43.000Z",
             "fingerprint":"8888888888",
             "generatorURL":"http://0425df9dd50d:9090/graph?g0.expr=up+%3D%3D+0\u0026g0.tab=1",
             "labels":{
@@ -140,7 +140,7 @@ const PrometheusAlertTest = `{
                 "job":"prometheus",
                 "severity":"serious"
             },
-            "startsAt":"test",
+            "startsAt":"0001-01-01T08:05:43.000Z",
             "status":"firing"
         }
     ],
