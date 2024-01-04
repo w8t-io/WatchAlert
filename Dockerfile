@@ -11,17 +11,17 @@ WORKDIR /root
 COPY . /root
 
 RUN go mod tidy && \
-    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o alertEventMgr ./main.go && \
-    chmod 777 alertEventMgr
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o watchAlert ./main.go && \
+    chmod 777 watchAlert
 
 FROM registry.js.design/base/alpine:3.16
 
-RUN mkdir -p /app/{config,web}
+RUN mkdir -p /app/config /app/web
 
 COPY ./web /app/web
 
-COPY --from=build /root/alertEventMgr /app/alertEventMgr
+COPY --from=build /root/watchAlert /app/watchAlert
 
 WORKDIR /app
 
-ENTRYPOINT ["/app/alertEventMgr"]
+ENTRYPOINT ["/app/watchAlert"]
