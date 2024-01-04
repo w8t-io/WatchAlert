@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"log"
 	"net/http"
-	"prometheus-manager/globals"
+	"watchAlert/globals"
 )
 
 func Get(url string) (*http.Response, error) {

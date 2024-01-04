@@ -1,6 +1,6 @@
 package api
 
-import "prometheus-manager/controllers/services"
+import "watchAlert/controllers/services"
 
 type ApiGroup struct {
 	AlertNoticeObjectController

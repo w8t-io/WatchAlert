@@ -6,8 +6,8 @@ import (
 	"fmt"
 	larkcore "github.com/larksuite/oapi-sdk-go/v3/core"
 	larkim "github.com/larksuite/oapi-sdk-go/v3/service/im/v1"
-	"prometheus-manager/controllers/dto"
-	"prometheus-manager/globals"
+	"watchAlert/controllers/dto"
+	"watchAlert/globals"
 )
 
 // GetFeiShuChatsID 获取机器人所在的群列表

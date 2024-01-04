@@ -8,9 +8,9 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"prometheus-manager/controllers/dto"
-	"prometheus-manager/globals"
 	"strings"
+	"watchAlert/controllers/dto"
+	"watchAlert/globals"
 )
 
 type RuleService struct{}
@@ -56,7 +56,7 @@ func (rs *RuleService) SelectPromRules(ruleGroup string) SearchRules {
 		resRule SearchRules
 	)
 
-	ruleConfigFile := globals.Config.Prometheus.RulePath + "/" + ruleGroup + ".yaml"
+	ruleConfigFile, _ := getRuleConfigInfo(ruleGroup)
 	file, err := ioutil.ReadFile(ruleConfigFile)
 	if err != nil {
 		log.Println("文件读取失败 ->", err)
@@ -85,17 +85,17 @@ func (rs *RuleService) CreatePromRule(ruleGroup string, ruleBody io.ReadCloser) 
 	if len(ruleGroup) == 0 {
 		return fmt.Errorf("RuleGroup 不能为空")
 	}
-	ruleFilePath := globals.Config.Prometheus.RulePath + "/" + ruleGroup + ".yaml"
+
 	ruleByte, _ := ioutil.ReadAll(ruleBody)
 	_ = json.Unmarshal(ruleByte, &rules)
 
-	_, err := os.Stat(ruleFilePath)
-	if err != nil {
-		_ = json.Unmarshal(ruleByte, &rules)
+	ruleFilePath, ruleConfig := getRuleConfigInfo(ruleGroup)
+
+	if len(ruleConfig.Groups) == 0 {
 		ruleHeader := RULEHEADER
 		ruleHeader = strings.ReplaceAll(ruleHeader, "{{ name }}", rules.Groups[0].Name)
 
-		err = os.WriteFile(ruleFilePath, []byte(ruleHeader), 0644)
+		err := os.WriteFile(ruleFilePath, []byte(ruleHeader), 0644)
 		if err != nil {
 			log.Println("内容写入文件失败 ->", err)
 			return err
@@ -116,11 +116,13 @@ func (rs *RuleService) CreatePromRule(ruleGroup string, ruleBody io.ReadCloser) 
 	ruleContent = strings.ReplaceAll(ruleContent, "{{ description }}", rules.Groups[0].Rules[0].Annotations.Description)
 
 	f, _ := os.OpenFile(ruleFilePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
-	_, err = f.WriteString(ruleContent)
+	_, err := f.WriteString(ruleContent)
 	if err != nil {
 		log.Println("内容写入文件失败 ->", err)
 		return err
 	}
+
+	err = formatRuleConfig(ruleGroup)
 
 	err = globals.DBCli.Exec("UPDATE rule_group_data SET rule_number = rule_number + 1 WHERE name = ?", ruleGroup).Error
 	if err != nil {
@@ -134,16 +136,11 @@ func (rs *RuleService) CreatePromRule(ruleGroup string, ruleBody io.ReadCloser) 
 // DeletePromRule 删除告警规则
 func (rs *RuleService) DeletePromRule(ruleGroup, ruleName string) error {
 
-	ruleFilePath := globals.Config.Prometheus.RulePath + "/" + ruleGroup + ".yaml"
-	var (
-		rules    dto.AlertRules
-		newAfter []dto.Rules
-	)
+	var newAfter []dto.Rules
 
-	file, _ := os.ReadFile(ruleFilePath)
-	_ = yaml.Unmarshal(file, &rules)
+	ruleFilePath, ruleConfig := getRuleConfigInfo(ruleGroup)
 
-	after := rules
+	after := ruleConfig
 	// 获取将被删除元素的下标
 	for i, v := range after.Groups {
 		for _, vv := range v.Rules {
@@ -181,25 +178,23 @@ func (rs *RuleService) DeletePromRule(ruleGroup, ruleName string) error {
 func (rs *RuleService) UpdatePromRule(ruleGroup, ruleName string, ruleBody io.ReadCloser) (dto.AlertRules, error) {
 
 	var (
-		ruleConfigFile, newRuleConfig dto.AlertRules
+		newRuleConfig dto.AlertRules
 	)
-	ruleFilePath := globals.Config.Prometheus.RulePath + "/" + ruleGroup + ".yaml"
 
 	bodyIO, _ := ioutil.ReadAll(ruleBody)
 	err := json.Unmarshal(bodyIO, &newRuleConfig)
 
-	fConfig, _ := ioutil.ReadFile(ruleFilePath)
-	err = yaml.Unmarshal(fConfig, &ruleConfigFile)
+	ruleFilePath, ruleConfig := getRuleConfigInfo(ruleGroup)
 
-	for k, v := range ruleConfigFile.Groups {
+	for k, v := range ruleConfig.Groups {
 		for kk, vv := range v.Rules {
 			if vv.Alert == ruleName {
-				ruleConfigFile.Groups[k].Rules[kk] = newRuleConfig.Groups[0].Rules[0]
+				ruleConfig.Groups[k].Rules[kk] = newRuleConfig.Groups[0].Rules[0]
 			}
 		}
 	}
 
-	f, _ := yaml.Marshal(ruleConfigFile)
+	f, _ := yaml.Marshal(ruleConfig)
 	err = os.WriteFile(ruleFilePath, f, 0644)
 	if err != nil {
 		log.Println("内容写入文件失败 ->", err)
@@ -212,18 +207,9 @@ func (rs *RuleService) UpdatePromRule(ruleGroup, ruleName string, ruleBody io.Re
 
 func (rs *RuleService) GetPromRuleData(ruleGroup, ruleName string) (dto.Rules, error) {
 
-	var (
-		allRules dto.AlertRules
-		getRule  dto.Rules
-	)
+	var getRule dto.Rules
 
-	ruleFilePath := globals.Config.Prometheus.RulePath + "/" + ruleGroup + ".yaml"
-
-	file, err := ioutil.ReadFile(ruleFilePath)
-	if err != nil {
-		return dto.Rules{}, err
-	}
-	err = yaml.Unmarshal(file, &allRules)
+	_, allRules := getRuleConfigInfo(ruleGroup)
 
 	for k, v := range allRules.Groups {
 		for kk, vv := range v.Rules {
@@ -235,5 +221,34 @@ func (rs *RuleService) GetPromRuleData(ruleGroup, ruleName string) (dto.Rules, e
 	}
 
 	return getRule, nil
+
+}
+
+func getRuleConfigInfo(ruleGroup string) (string, dto.AlertRules) {
+
+	var ruleConfig dto.AlertRules
+
+	ruleFilePath := globals.Config.Prometheus.RulePath + "/" + ruleGroup + ".yaml"
+
+	_, err := os.Stat(ruleFilePath)
+	if err != nil {
+		return ruleFilePath, dto.AlertRules{}
+	}
+	fConfig, _ := ioutil.ReadFile(ruleFilePath)
+	_ = yaml.Unmarshal(fConfig, &ruleConfig)
+
+	return ruleFilePath, ruleConfig
+
+}
+
+func formatRuleConfig(ruleGroup string) error {
+
+	ruleConfigPath, ruleConfig := getRuleConfigInfo(ruleGroup)
+	ruleConfigYaml, _ := yaml.Marshal(ruleConfig)
+	err := os.WriteFile(ruleConfigPath, ruleConfigYaml, 0644)
+	if err != nil {
+		return fmt.Errorf("内容写入文件失败 -> %s", err)
+	}
+	return nil
 
 }

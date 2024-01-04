@@ -1,6 +1,6 @@
 package services
 
-import "prometheus-manager/controllers/repo"
+import "watchAlert/controllers/repo"
 
 var (
 	alertNotice  = repo.RepoGroupEntry.AlertNoticeRepo

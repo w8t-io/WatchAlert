@@ -1,8 +1,8 @@
 package repo
 
 import (
-	"prometheus-manager/controllers/dao"
-	"prometheus-manager/globals"
+	"watchAlert/controllers/dao"
+	"watchAlert/globals"
 )
 
 type AlertNoticeRepo struct{}

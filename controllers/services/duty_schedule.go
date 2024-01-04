@@ -3,8 +3,8 @@ package services
 import (
 	"fmt"
 	"log"
-	"prometheus-manager/controllers/dao"
-	"prometheus-manager/globals"
+	"watchAlert/controllers/dao"
+	"watchAlert/globals"
 	"strconv"
 	"time"
 )

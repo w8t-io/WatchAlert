@@ -3,11 +3,11 @@ package prometheus
 import (
 	"encoding/json"
 	"fmt"
-	dto2 "prometheus-manager/controllers/dto"
-	"prometheus-manager/globals"
-	"prometheus-manager/utils/renderTemplates"
 	"strings"
 	"time"
+	dto2 "watchAlert/controllers/dto"
+	"watchAlert/globals"
+	"watchAlert/utils/renderTemplates"
 )
 
 type renderPrometheus struct {
@@ -15,10 +15,9 @@ type renderPrometheus struct {
 }
 
 type PrometheusAlert struct {
-	currentDutyUser string
-	actionUser      string
-	alerts          dto2.AlertInfo
-	actionValues    dto2.CreateAlertSilence
+	currentDutyUser, actionUser, aggregated string
+	alerts                                  dto2.AlertInfo
+	actionValues                            dto2.CreateAlertSilence
 }
 
 func PrometheusTemplate(actionUser string, alertMsg map[string]interface{}, dutyUser string) *renderPrometheus {
@@ -70,6 +69,7 @@ func PrometheusTemplate(actionUser string, alertMsg map[string]interface{}, duty
 			actionUser:      actionUser,
 			alerts:          v,
 			actionValues:    actionValues,
+			aggregated:      alerts.Aggregated,
 		}
 
 		// 数据返回给结构体

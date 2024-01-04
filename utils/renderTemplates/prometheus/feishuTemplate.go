@@ -2,12 +2,12 @@ package prometheus
 
 import (
 	"fmt"
-	dto2 "prometheus-manager/controllers/dto"
-	"prometheus-manager/globals"
-	"prometheus-manager/utils/renderTemplates"
 	"strconv"
 	"strings"
 	"time"
+	dto2 "watchAlert/controllers/dto"
+	"watchAlert/globals"
+	"watchAlert/utils/renderTemplates"
 )
 
 type FeiShu struct{}
@@ -34,7 +34,7 @@ func (f *FeiShu) FeiShuMsgTemplate(prometheusAlert PrometheusAlert) (msg dto2.Fe
 
 	switch prometheusAlert.alerts.Status {
 	case "firing":
-		return firingMsgTemplate(defaultTemplate, prometheusAlert.alerts, prometheusAlert.actionValues, prometheusAlert.currentDutyUser)
+		return firingMsgTemplate(defaultTemplate, prometheusAlert.alerts, prometheusAlert.actionValues, prometheusAlert.currentDutyUser, prometheusAlert.aggregated)
 	case "resolved":
 		return resolvedMsgTemplate(defaultTemplate, prometheusAlert.alerts)
 	case "silence":
@@ -45,7 +45,7 @@ func (f *FeiShu) FeiShuMsgTemplate(prometheusAlert PrometheusAlert) (msg dto2.Fe
 }
 
 // firingMsgTemplate 告警模版
-func firingMsgTemplate(template dto2.FeiShuMsg, v dto2.AlertInfo, ActionsValueStr dto2.CreateAlertSilence, dutyUser string) dto2.FeiShuMsg {
+func firingMsgTemplate(template dto2.FeiShuMsg, v dto2.AlertInfo, ActionsValueStr dto2.CreateAlertSilence, dutyUser string, aggregation string) dto2.FeiShuMsg {
 
 	var (
 		confirmPrompt = "静默 " + strconv.Itoa(int(globals.Config.AlertManager.SilenceTime)) + " 分钟"
@@ -213,7 +213,7 @@ func firingMsgTemplate(template dto2.FeiShuMsg, v dto2.AlertInfo, ActionsValueSt
 		{
 			Tag: "div",
 			Text: dto2.Texts{
-				Content: " ",
+				Content: aggregation,
 				Tag:     "plain_text",
 			},
 		},

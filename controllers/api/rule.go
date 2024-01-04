@@ -2,7 +2,7 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
-	"prometheus-manager/utils/http"
+	"watchAlert/utils/http"
 )
 
 type RuleController struct{}

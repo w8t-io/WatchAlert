@@ -7,8 +7,8 @@ import (
 	larkcore "github.com/larksuite/oapi-sdk-go/v3/core"
 	larkcontact "github.com/larksuite/oapi-sdk-go/v3/service/contact/v3"
 	larkim "github.com/larksuite/oapi-sdk-go/v3/service/im/v1"
-	"prometheus-manager/controllers/dto"
-	"prometheus-manager/globals"
+	"watchAlert/controllers/dto"
+	"watchAlert/globals"
 )
 
 func PushFeiShu(chatId string, cardContentJson []string) error {

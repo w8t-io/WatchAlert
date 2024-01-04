@@ -6,44 +6,39 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	dto2 "prometheus-manager/controllers/dto"
-	"prometheus-manager/globals"
-	"prometheus-manager/utils/cache"
-	"prometheus-manager/utils/http"
 	"strings"
+	"watchAlert/controllers/dto"
+	"watchAlert/globals"
+	"watchAlert/utils/cache"
+	"watchAlert/utils/http"
 )
 
 type AlertSilenceService struct{}
 
 type InterAlertSilenceService interface {
-	CreateAlertSilence(uuid string, challengeInfo map[string]interface{}) error
+	CreateAlertSilence(uuid string, cardInfo dto.CardInfo) error
 }
 
 func NewInterAlertSilenceService() InterAlertSilenceService {
 	return &AlertSilenceService{}
 }
 
-func (ass *AlertSilenceService) CreateAlertSilence(uuid string, challengeInfo map[string]interface{}) error {
+func (ass *AlertSilenceService) CreateAlertSilence(uuid string, cardInfo dto.CardInfo) error {
 
 	var (
-		cardInfo dto2.CardInfo
+		cacheAlertInfo dto.AlertInfo
+		AlertInfoList  []dto.AlertInfo
 	)
 
-	rawDataJson, _ := json.Marshal(challengeInfo)
-	_ = json.Unmarshal(rawDataJson, &cardInfo)
-
-	// To Json
-	kLabel := cardInfo.Action.Value.(map[string]interface{})
+	// 获取静默请求参数
+	kLabel := cardInfo.Action.Value
 	silencesValueJson, _ := json.Marshal(kLabel)
 	bodyReader := bytes.NewReader(silencesValueJson)
 
-	fingerprintID := kLabel["comment"]
-	labelData := getAlertSilencesFingerprintID(fingerprintID.(string))
-	if labelData == fingerprintID {
-		globals.Logger.Sugar().Info("报警静默已存在, 无需重新创建, 报警ID ->", labelData)
-		return fmt.Errorf("报警静默已存在, 无需重新创建")
-	}
+	// 检查是否已创建
+	getAlertSilencesFingerprintID(kLabel.Comment)
 
+	// 发起静默请求
 	_, err := http.Post(globals.Config.AlertManager.URL+"/api/v2/silences", bodyReader)
 	if err != nil {
 		globals.Logger.Sugar().Error("创建报警静默失败 ->", string(silencesValueJson))
@@ -51,25 +46,19 @@ func (ass *AlertSilenceService) CreateAlertSilence(uuid string, challengeInfo ma
 	}
 	globals.Logger.Sugar().Info("创建报警静默成功 ->", string(silencesValueJson))
 
-	var (
-		promAlertManager = make(map[string]interface{})
-		cacheAlertInfo   interface{}
-		AlertInfo        []interface{}
-	)
-
-	cacheValue := globals.CacheCli.Get(fingerprintID.(string))
+	// 将告警状态转换为静默状态
+	cacheValue := globals.CacheCli.Get(kLabel.Comment)
 	cacheAlertJson, _ := json.Marshal(cacheValue.(cache.CacheItem).Values)
 	_ = json.Unmarshal(cacheAlertJson, &cacheAlertInfo)
-	AlertInfo = append(AlertInfo, cacheAlertInfo)
-
-	// 将告警状态转换为静默状态
-	promAlertManager["alert"] = AlertInfo
-	promAlertManager["alert"].([]interface{})[0].(map[string]interface{})["status"] = "silence"
-	prometheusAlertBody, _ := json.Marshal(promAlertManager)
+	cacheAlertInfo.Status = "silence"
+	AlertInfoList = append(AlertInfoList, cacheAlertInfo)
+	alerts := dto.Alerts{
+		AlertList: AlertInfoList,
+	}
+	body, _ := json.Marshal(alerts)
 
 	// 发送消息卡片
-	actionUserID := challengeInfo["user_id"].(string)
-	err = NewInterEventService().PushAlertToWebhook(actionUserID, prometheusAlertBody, uuid)
+	err = NewInterEventService().PushAlertToWebhook(cardInfo.UserID, body, uuid)
 	if err != nil {
 		log.Println("消息卡片发送失败", err)
 		return err
@@ -79,7 +68,7 @@ func (ass *AlertSilenceService) CreateAlertSilence(uuid string, challengeInfo ma
 
 }
 
-func getAlertSilencesFingerprintID(fingerprintID string) (labelData interface{}) {
+func getAlertSilencesFingerprintID(fingerprintID string) {
 
 	resp, err := http.Get(globals.Config.AlertManager.URL + "/api/v2/silences")
 	if err != nil {
@@ -90,7 +79,7 @@ func getAlertSilencesFingerprintID(fingerprintID string) (labelData interface{})
 	content, err := ioutil.ReadAll(resp.Body)
 
 	var (
-		res             []dto2.SearchAlertManager
+		res             []dto.SearchAlertManager
 		activeLabelList []interface{}
 	)
 	err = json.Unmarshal(content, &res)
@@ -105,9 +94,9 @@ func getAlertSilencesFingerprintID(fingerprintID string) (labelData interface{})
 	for _, v := range activeLabelList {
 		activeV := strings.Replace(v.(string), "\"", "", -1)
 		if activeV == fingerprintID {
-			return fingerprintID
+			globals.Logger.Sugar().Info("报警静默已存在, 无需重新创建, 报警ID ->", fingerprintID)
+			return
 		}
 	}
 
-	return nil
 }

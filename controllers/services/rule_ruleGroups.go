@@ -6,9 +6,9 @@ import (
 	"gorm.io/gorm"
 	"io"
 	"io/ioutil"
-	"prometheus-manager/controllers/dao"
-	"prometheus-manager/controllers/dto"
-	"prometheus-manager/globals"
+	"watchAlert/controllers/dao"
+	"watchAlert/controllers/dto"
+	"watchAlert/globals"
 )
 
 type RuleGroupService struct{}

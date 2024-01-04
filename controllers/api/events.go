@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"log"
-	"prometheus-manager/globals"
-	"prometheus-manager/utils/http"
+	"watchAlert/globals"
+	"watchAlert/utils/http"
 )
 
 type EventController struct{}

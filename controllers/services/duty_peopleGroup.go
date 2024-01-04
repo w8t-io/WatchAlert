@@ -2,8 +2,8 @@ package services
 
 import (
 	"log"
-	"prometheus-manager/controllers/dao"
-	"prometheus-manager/globals"
+	"watchAlert/controllers/dao"
+	"watchAlert/globals"
 )
 
 type DutyPeopleGroupService struct{}

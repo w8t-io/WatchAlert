@@ -100,8 +100,24 @@ type CardInfo struct {
 }
 
 type CardInfoAction struct {
-	Value interface{} `json:"value"`
-	Tag   string      `json:"tag"`
+	Value SilenceValue `json:"value"`
+	Tag   string       `json:"tag"`
+}
+
+type SilenceValue struct {
+	Comment   string           `json:"comment"`
+	CreatedBy string           `json:"createdBy"`
+	EndsAt    string           `json:"endsAt"`
+	Id        string           `json:"id"`
+	Matchers  []MatchersLabels `json:"matchers"`
+	StartsAt  string           `json:"startsAt"`
+}
+
+type MatchersLabels struct {
+	IsEqual bool   `json:"isEqual"`
+	IsRegex bool   `json:"isRegex"`
+	Name    string `json:"name"`
+	Value   string `json:"value"`
 }
 
 // FeiShuUserInfo 飞书用户信息

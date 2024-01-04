@@ -2,8 +2,8 @@ package aliyun
 
 import (
 	"fmt"
-	dto2 "prometheus-manager/controllers/dto"
-	"prometheus-manager/globals"
+	dto2 "watchAlert/controllers/dto"
+	"watchAlert/globals"
 	"strconv"
 	"time"
 )

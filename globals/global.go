@@ -4,8 +4,8 @@ import (
 	lark "github.com/larksuite/oapi-sdk-go/v3"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
-	"prometheus-manager/controllers/dto"
-	"prometheus-manager/utils/cache"
+	"watchAlert/controllers/dto"
+	"watchAlert/utils/cache"
 )
 
 var (

@@ -3,9 +3,9 @@ package aliyun
 import (
 	"encoding/json"
 	"fmt"
-	"prometheus-manager/controllers/dto"
-	"prometheus-manager/globals"
-	"prometheus-manager/utils/renderTemplates"
+	"watchAlert/controllers/dto"
+	"watchAlert/globals"
+	"watchAlert/utils/renderTemplates"
 	"strings"
 )
 

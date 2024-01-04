@@ -2,9 +2,9 @@ package initialize
 
 import (
 	"github.com/gin-gonic/gin"
-	"prometheus-manager/globals"
-	"prometheus-manager/routers"
-	"prometheus-manager/routers/v1"
+	"watchAlert/globals"
+	"watchAlert/routers"
+	"watchAlert/routers/v1"
 )
 
 func InitRoute() {

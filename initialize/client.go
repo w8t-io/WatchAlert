@@ -5,9 +5,9 @@ import (
 	lark "github.com/larksuite/oapi-sdk-go/v3"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	dao2 "prometheus-manager/controllers/dao"
-	"prometheus-manager/globals"
-	"prometheus-manager/utils/cache"
+	dao2 "watchAlert/controllers/dao"
+	"watchAlert/globals"
+	"watchAlert/utils/cache"
 )
 
 func InitClient() {

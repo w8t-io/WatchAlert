@@ -2,7 +2,7 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
-	"prometheus-manager/controllers/dao"
+	"watchAlert/controllers/dao"
 )
 
 type DutyManageController struct{}

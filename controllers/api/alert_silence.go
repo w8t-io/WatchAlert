@@ -6,21 +6,19 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"prometheus-manager/controllers/dto"
+	"watchAlert/controllers/dto"
 )
 
 type AlertSilenceController struct{}
 
 func (asc *AlertSilenceController) CreateSilence(ctx *gin.Context) {
 
-	var challengeInfo map[string]interface{}
+	var cardInfo dto.CardInfo
 
 	uuid := ctx.Query("uuid")
-	body := ctx.Request.Body
-	bodyByte, _ := ioutil.ReadAll(body)
-	_ = json.Unmarshal(bodyByte, &challengeInfo)
+	_ = ctx.ShouldBindJSON(&cardInfo)
 
-	err := alertSilenceService.CreateAlertSilence(uuid, challengeInfo)
+	err := alertSilenceService.CreateAlertSilence(uuid, cardInfo)
 	if err != nil {
 		ctx.JSON(200, gin.H{
 			"code": 2001,

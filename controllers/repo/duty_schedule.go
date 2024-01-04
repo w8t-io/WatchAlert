@@ -2,8 +2,8 @@ package repo
 
 import (
 	"fmt"
-	"prometheus-manager/controllers/dao"
-	"prometheus-manager/globals"
+	"watchAlert/controllers/dao"
+	"watchAlert/globals"
 )
 
 type DutyScheduleRepo struct{}

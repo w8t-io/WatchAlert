@@ -1,9 +1,9 @@
 package services
 
 import (
-	"prometheus-manager/controllers/dao"
-	"prometheus-manager/globals"
-	"prometheus-manager/utils/cmd"
+	"watchAlert/controllers/dao"
+	"watchAlert/globals"
+	"watchAlert/utils/cmd"
 )
 
 type DutyManageService struct{}

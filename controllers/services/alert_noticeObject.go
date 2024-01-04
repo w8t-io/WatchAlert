@@ -2,11 +2,11 @@ package services
 
 import (
 	"bytes"
-	"prometheus-manager/controllers/dao"
-	"prometheus-manager/globals"
-	"prometheus-manager/utils/cmd"
-	"prometheus-manager/utils/feishu"
-	"prometheus-manager/utils/http"
+	"watchAlert/controllers/dao"
+	"watchAlert/globals"
+	"watchAlert/utils/cmd"
+	"watchAlert/utils/feishu"
+	"watchAlert/utils/http"
 )
 
 type AlertNoticeService struct{}

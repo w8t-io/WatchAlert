@@ -3,7 +3,7 @@ package initialize
 import (
 	"github.com/spf13/viper"
 	"log"
-	"prometheus-manager/globals"
+	"watchAlert/globals"
 )
 
 var (

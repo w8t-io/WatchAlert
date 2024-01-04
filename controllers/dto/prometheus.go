@@ -4,8 +4,9 @@ import "time"
 
 // Alerts 接收Prometheus推送的告警
 type Alerts struct {
-	AlertList []AlertInfo `json:"alerts"`
-	Receiver  string      `json:"receiver"`
+	AlertList  []AlertInfo `json:"alerts"`
+	Receiver   string      `json:"receiver"`
+	Aggregated string      `json:"aggregated"`
 }
 
 type AlertInfo struct {

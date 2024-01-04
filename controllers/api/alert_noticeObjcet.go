@@ -2,8 +2,8 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
-	"prometheus-manager/controllers/dao"
-	"prometheus-manager/utils/feishu"
+	"watchAlert/controllers/dao"
+	"watchAlert/utils/feishu"
 )
 
 type AlertNoticeObjectController struct{}

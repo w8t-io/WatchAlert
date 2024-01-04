@@ -1,6 +1,6 @@
 package v1
 
-import "prometheus-manager/controllers/api"
+import "watchAlert/controllers/api"
 
 var (
 	AlertNoticeObject = api.ApiGroupApp.AlertNoticeObjectController

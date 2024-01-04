@@ -4,7 +4,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"os"
-	"prometheus-manager/globals"
+	"watchAlert/globals"
 	"time"
 )
 

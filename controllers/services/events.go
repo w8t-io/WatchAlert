@@ -2,12 +2,14 @@ package services
 
 import (
 	"encoding/json"
-	"prometheus-manager/controllers/dao"
-	"prometheus-manager/globals"
-	"prometheus-manager/utils/renderTemplates/aliyun"
-	prom "prometheus-manager/utils/renderTemplates/prometheus"
+	"fmt"
 	"strconv"
 	"time"
+	"watchAlert/controllers/dao"
+	"watchAlert/controllers/dto"
+	"watchAlert/globals"
+	"watchAlert/utils/renderTemplates/aliyun"
+	prom "watchAlert/utils/renderTemplates/prometheus"
 )
 
 type EventService struct{}
@@ -30,6 +32,7 @@ func (es *EventService) PushAlertToWebhook(actionUserID string, body []byte, uui
 	switch alertNoticeObject.DataSource {
 	case "Prometheus":
 
+		body = alertAggregation(body)
 		err := prometheus(alertNoticeObject, actionUserID, body, dutyUser)
 		if err != nil {
 			return err
@@ -84,5 +87,29 @@ func aLiYun(alertNotice dao.AlertNotice, body []byte, dutyUser string) error {
 	}
 
 	return nil
+
+}
+
+func alertAggregation(body []byte) []byte {
+
+	var (
+		alerts              dto.Alerts
+		alertName           string
+		filteredAlertInfo   []dto.AlertInfo
+		countIdenticalAlert = make(map[string]int)
+	)
+	_ = json.Unmarshal(body, &alerts)
+	for k, v := range alerts.AlertList {
+		alertName = v.Labels["alertname"]
+		countIdenticalAlert[alertName] = k + 1
+	}
+	if countIdenticalAlert[alertName] > 1 {
+		filteredAlertInfo = append(filteredAlertInfo, alerts.AlertList[0])
+		alerts.AlertList = filteredAlertInfo
+		alerts.Aggregated = fmt.Sprintf("\n聚合 %d 条告警, 详情查看告警链接 ⬇️", countIdenticalAlert[alertName])
+	}
+
+	jsonData, _ := json.Marshal(alerts)
+	return jsonData
 
 }
