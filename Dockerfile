@@ -16,8 +16,6 @@ RUN go mod tidy && \
 
 FROM registry.js.design/base/alpine:3.16
 
-COPY ./web /app/web
-
 COPY --from=build /root/watchAlert /app/watchAlert
 
 WORKDIR /app
