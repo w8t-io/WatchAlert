@@ -1,31 +1,31 @@
 package repo
 
 import (
-	"fmt"
-	"watchAlert/controllers/dao"
 	"watchAlert/globals"
+	"watchAlert/models"
 )
 
 type DutyScheduleRepo struct{}
 
-// GetDutyScheduleInfo 获取值班信息
-func (dsr *DutyScheduleRepo) GetDutyScheduleInfo(dutyId, time string) (dao.DutySchedule, string) {
+// GetDutyScheduleInfo 获取值班表信息
+func (dsr *DutyScheduleRepo) GetDutyScheduleInfo(dutyId, time string) models.DutySchedule {
 
-	var (
-		dutySchedule dao.DutySchedule
-		dutyPeople   dao.People
-	)
+	var dutySchedule models.DutySchedule
 
 	globals.DBCli.Where("duty_id = ? AND time = ?", dutyId, time).Find(&dutySchedule)
 
-	globals.DBCli.Where("userName = ?", dutySchedule.UserName).Find(&dutyPeople)
+	return dutySchedule
 
-	if len(dutyPeople.FeiShuUserID) == 0 {
-		dutyPeople.FeiShuUserID = "暂无安排值班人员"
-	} else {
-		dutyPeople.FeiShuUserID = fmt.Sprintf("**👤 值班人员：**<at id=%s></at>", dutyPeople.FeiShuUserID)
-	}
+}
 
-	return dutySchedule, dutyPeople.FeiShuUserID
+// GetDutyUserInfo 获取值班用户信息
+func (dsr *DutyScheduleRepo) GetDutyUserInfo(dutyId, time string) models.Member {
+
+	var user models.Member
+
+	schedule := dsr.GetDutyScheduleInfo(dutyId, time)
+	globals.DBCli.Model(&models.Member{}).Where("user_id = ?", schedule.UserId).First(&user)
+
+	return user
 
 }

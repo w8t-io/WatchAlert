@@ -1,66 +1,56 @@
 package services
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"log"
-	"strings"
-	"watchAlert/controllers/dto"
+	"time"
+	"watchAlert/controllers/repo"
 	"watchAlert/globals"
-	"watchAlert/utils/cache"
-	"watchAlert/utils/http"
+	models2 "watchAlert/models"
+	"watchAlert/utils/cmd"
 )
 
-type AlertSilenceService struct{}
+type AlertSilenceService struct {
+	alertEvent models2.AlertCurEvent
+}
 
 type InterAlertSilenceService interface {
-	CreateAlertSilence(uuid string, cardInfo dto.CardInfo) error
+	CreateAlertSilence(silence models2.AlertSilences) error
+	UpdateAlertSilence(silence models2.AlertSilences) (models2.AlertSilences, error)
+	DeleteAlertSilence(id string) error
+	ListAlertSilence() ([]models2.AlertSilences, error)
 }
 
 func NewInterAlertSilenceService() InterAlertSilenceService {
 	return &AlertSilenceService{}
 }
 
-func (ass *AlertSilenceService) CreateAlertSilence(uuid string, cardInfo dto.CardInfo) error {
+func (ass *AlertSilenceService) CreateAlertSilence(silence models2.AlertSilences) error {
 
-	var (
-		cacheAlertInfo dto.AlertInfo
-		AlertInfoList  []dto.AlertInfo
-	)
-
-	// 获取静默请求参数
-	kLabel := cardInfo.Action.Value
-	silencesValueJson, _ := json.Marshal(kLabel)
-	bodyReader := bytes.NewReader(silencesValueJson)
-
-	// 检查是否已创建
-	getAlertSilencesFingerprintID(kLabel.Comment)
-
-	// 发起静默请求
-	_, err := http.Post(globals.Config.AlertManager.URL+"/api/v2/silences", bodyReader)
-	if err != nil {
-		globals.Logger.Sugar().Error("创建报警静默失败 ->", string(silencesValueJson))
-		return fmt.Errorf("创建报警静默失败")
+	createAt := time.Now().Unix()
+	silenceEvent := models2.AlertSilences{
+		Id:             "s-" + cmd.RandId(),
+		Fingerprint:    silence.Fingerprint,
+		Datasource:     silence.Datasource,
+		DatasourceType: silence.DatasourceType,
+		StartsAt:       silence.StartsAt,
+		EndsAt:         silence.EndsAt,
+		CreateBy:       silence.CreateBy,
+		CreateAt:       createAt,
+		UpdateAt:       createAt,
+		Comment:        silence.Comment,
 	}
-	globals.Logger.Sugar().Info("创建报警静默成功 ->", string(silencesValueJson))
 
-	// 将告警状态转换为静默状态
-	cacheValue := globals.CacheCli.Get(kLabel.Comment)
-	cacheAlertJson, _ := json.Marshal(cacheValue.(cache.CacheItem).Values)
-	_ = json.Unmarshal(cacheAlertJson, &cacheAlertInfo)
-	cacheAlertInfo.Status = "silence"
-	AlertInfoList = append(AlertInfoList, cacheAlertInfo)
-	alerts := dto.Alerts{
-		AlertList: AlertInfoList,
+	event, ok := silenceEvent.GetCache(silence.Fingerprint)
+	if ok && event != "" {
+		return fmt.Errorf("静默消息已存在, ID:%s", silenceEvent.Id)
 	}
-	body, _ := json.Marshal(alerts)
 
-	// 发送消息卡片
-	err = NewInterEventService().PushAlertToWebhook(cardInfo.UserID, body, uuid)
+	muteAt := silence.EndsAt - createAt
+	duration := time.Duration(muteAt) * time.Second
+	silenceEvent.SetCache(duration)
+
+	err := repo.DBCli.Create(models2.AlertSilences{}, silenceEvent)
 	if err != nil {
-		log.Println("消息卡片发送失败", err)
 		return err
 	}
 
@@ -68,35 +58,57 @@ func (ass *AlertSilenceService) CreateAlertSilence(uuid string, cardInfo dto.Car
 
 }
 
-func getAlertSilencesFingerprintID(fingerprintID string) {
+func (ass *AlertSilenceService) UpdateAlertSilence(silence models2.AlertSilences) (models2.AlertSilences, error) {
 
-	resp, err := http.Get(globals.Config.AlertManager.URL + "/api/v2/silences")
+	updateAt := time.Now().Unix()
+
+	silence.UpdateAt = updateAt
+	muteAt := silence.EndsAt - silence.StartsAt
+	duration := time.Duration(muteAt) * time.Second
+	silence.SetCache(duration)
+
+	err := repo.DBCli.Updates(repo.Updates{
+		Table:   models2.AlertSilences{},
+		Where:   []string{"id = ?", silence.Id},
+		Updates: silence,
+	})
+
 	if err != nil {
-		fmt.Println(err)
-		return
+		return models2.AlertSilences{}, err
 	}
 
-	content, err := ioutil.ReadAll(resp.Body)
+	return silence, nil
 
-	var (
-		res             []dto.SearchAlertManager
-		activeLabelList []interface{}
-	)
-	err = json.Unmarshal(content, &res)
+}
 
-	for _, v := range res {
-		if v.Status.State == "active" {
-			labelJson, _ := json.Marshal(v.Comment)
-			activeLabelList = append(activeLabelList, string(labelJson))
-		}
+func (ass *AlertSilenceService) DeleteAlertSilence(id string) error {
+
+	var silence models2.AlertSilences
+	globals.DBCli.Where("id = ?", id).Find(&silence)
+
+	del := repo.Delete{
+		Table: models2.AlertSilences{},
+		Where: []string{"id = ?", id},
+	}
+	repo.DBCli.Delete(del)
+
+	_, err := globals.RedisCli.Del(models2.SilenceCachePrefix + silence.Fingerprint).Result()
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+
+func (ass *AlertSilenceService) ListAlertSilence() ([]models2.AlertSilences, error) {
+
+	var silenceList []models2.AlertSilences
+	err := globals.DBCli.Find(&silenceList).Error
+
+	if err != nil {
+		return []models2.AlertSilences{}, err
 	}
 
-	for _, v := range activeLabelList {
-		activeV := strings.Replace(v.(string), "\"", "", -1)
-		if activeV == fingerprintID {
-			globals.Logger.Sugar().Info("报警静默已存在, 无需重新创建, 报警ID ->", fingerprintID)
-			return
-		}
-	}
+	return silenceList, nil
 
 }

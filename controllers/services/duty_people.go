@@ -1,42 +1,42 @@
 package services
 
 import (
-	"watchAlert/controllers/dao"
 	"watchAlert/globals"
+	"watchAlert/models"
 	"watchAlert/utils/cmd"
 )
 
 type DutyPeopleService struct{}
 
 type InterDutyPeopleService interface {
-	CreateDutyUser(userInfo dao.People) (dao.People, error)
-	SelectDutyUser() []dao.People
-	UpdateDutyUser(userInfo dao.People) (dao.People, error)
+	CreateDutyUser(userInfo models.People) (models.People, error)
+	SelectDutyUser() []models.People
+	UpdateDutyUser(userInfo models.People) (models.People, error)
 	DeleteDutyUser(userId string) error
-	GetDutyUser(user string) ([]dao.People, error)
+	GetDutyUser(user string) ([]models.People, error)
 }
 
 func NewInterDutyPeopleService() InterDutyPeopleService {
 	return &DutyPeopleService{}
 }
 
-func (dps *DutyPeopleService) CreateDutyUser(userInfo dao.People) (dao.People, error) {
+func (dps *DutyPeopleService) CreateDutyUser(userInfo models.People) (models.People, error) {
 
-	userInfo.UserID = cmd.RandUserId()
+	userInfo.UserID = cmd.RandId()
 	err := globals.DBCli.Create(&userInfo).Error
 	if err != nil {
 		globals.Logger.Sugar().Error("值班用户创建失败 ->", err)
-		return dao.People{}, err
+		return models.People{}, err
 	}
 
 	return userInfo, nil
 }
 
-func (dps *DutyPeopleService) SelectDutyUser() []dao.People {
+func (dps *DutyPeopleService) SelectDutyUser() []models.People {
 
-	var people []dao.People
+	var people []models.People
 
-	err := globals.DBCli.Model(&dao.People{}).Find(&people).Error
+	err := globals.DBCli.Model(&models.People{}).Find(&people).Error
 	if err != nil {
 		globals.Logger.Sugar().Error("用户查询失败失败 ->", err)
 		return nil
@@ -46,9 +46,9 @@ func (dps *DutyPeopleService) SelectDutyUser() []dao.People {
 
 }
 
-func (dps *DutyPeopleService) UpdateDutyUser(userInfo dao.People) (dao.People, error) {
+func (dps *DutyPeopleService) UpdateDutyUser(userInfo models.People) (models.People, error) {
 
-	var newInfo dao.People
+	var newInfo models.People
 
 	tx := globals.DBCli.Begin()
 	err := tx.Where("userId = ?", userInfo.UserID).Updates(&userInfo).Error
@@ -64,7 +64,7 @@ func (dps *DutyPeopleService) UpdateDutyUser(userInfo dao.People) (dao.People, e
 		return userInfo, err
 	}
 
-	globals.DBCli.Model(&dao.People{}).Where("userId = ?", userInfo.UserID).Find(&newInfo)
+	globals.DBCli.Model(&models.People{}).Where("userId = ?", userInfo.UserID).Find(&newInfo)
 
 	return newInfo, nil
 
@@ -73,7 +73,7 @@ func (dps *DutyPeopleService) UpdateDutyUser(userInfo dao.People) (dao.People, e
 func (dps *DutyPeopleService) DeleteDutyUser(userId string) error {
 
 	tx := globals.DBCli.Begin()
-	err := tx.Where("userId = ?", userId).Delete(&dao.People{}).Error
+	err := tx.Where("userId = ?", userId).Delete(&models.People{}).Error
 	if err != nil {
 		tx.Rollback()
 		globals.Logger.Error("删除用户信息失败")
@@ -97,15 +97,15 @@ func (dps *DutyPeopleService) DeleteDutyUser(userId string) error {
 
 }
 
-func (dps *DutyPeopleService) GetDutyUser(user string) ([]dao.People, error) {
+func (dps *DutyPeopleService) GetDutyUser(user string) ([]models.People, error) {
 
-	var userInfo []dao.People
+	var userInfo []models.People
 
-	err := globals.DBCli.Model(dao.People{}).Where("userId LIKE ? OR userName LIKE ? OR phone LIKE ? OR email LIKE ?",
+	err := globals.DBCli.Model(models.People{}).Where("userId LIKE ? OR userName LIKE ? OR phone LIKE ? OR email LIKE ?",
 		"%"+user+"%", "%"+user+"%", "%"+user+"%", "%"+user+"%").Find(&userInfo).Error
 	if err != nil {
 		globals.Logger.Sugar().Error("值班用户查询失败 ->", err)
-		return []dao.People{}, err
+		return []models.People{}, err
 	}
 
 	return userInfo, nil

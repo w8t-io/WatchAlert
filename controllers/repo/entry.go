@@ -6,3 +6,7 @@ type RepoGroup struct {
 }
 
 var RepoGroupEntry = new(RepoGroup)
+
+var (
+	DBCli = NewInterGormDBCli()
+)

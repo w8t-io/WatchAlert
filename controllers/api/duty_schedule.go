@@ -2,22 +2,17 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
-	"strconv"
-	"watchAlert/controllers/dao"
+	"watchAlert/models"
 )
 
 type DutyScheduleController struct{}
 
 func (sc *DutyScheduleController) Create(ctx *gin.Context) {
 
-	var dutySchedule []dao.DutySchedule
+	var dutySchedule models.DutyScheduleCreate
 	_ = ctx.ShouldBindJSON(&dutySchedule)
 
-	dutyPeriod := ctx.Query("dutyPeriod")
-	dutyId := ctx.Query("dutyId")
-
-	dutyPeriodInt, _ := strconv.Atoi(dutyPeriod)
-	data, err := dutyScheduleService.CreateAndUpdateDutySystem(dutySchedule, dutyPeriodInt, dutyId)
+	data, err := dutyScheduleService.CreateAndUpdateDutySystem(dutySchedule)
 	if err != nil {
 		ctx.JSON(401, gin.H{
 			"code": 3003,
@@ -35,11 +30,10 @@ func (sc *DutyScheduleController) Create(ctx *gin.Context) {
 
 func (sc *DutyScheduleController) Update(ctx *gin.Context) {
 
-	var dutySchedule dao.DutySchedule
+	var dutySchedule models.DutySchedule
 	_ = ctx.ShouldBindJSON(&dutySchedule)
-	dutyId := ctx.Query("dutyId")
 
-	err := dutyScheduleService.UpdateDutySystem(dutySchedule, dutyId)
+	err := dutyScheduleService.UpdateDutySystem(dutySchedule)
 	if err != nil {
 		ctx.JSON(401, gin.H{
 			"code": 3004,

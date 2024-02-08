@@ -1,63 +1,66 @@
 package services
 
 import (
-	"watchAlert/controllers/dao"
+	"time"
 	"watchAlert/globals"
+	"watchAlert/models"
 	"watchAlert/utils/cmd"
 )
 
 type DutyManageService struct{}
 
 type InterDutyManageService interface {
-	ListDutyManage() []dao.DutyManagement
-	CreateDutyManage(dutyManage dao.DutyManagement) (dao.DutyManagement, error)
-	UpdateDutyManage(dutyManage dao.DutyManagement) (dao.DutyManagement, error)
+	ListDutyManage() []models.DutyManagement
+	CreateDutyManage(dutyManage models.DutyManagement) (models.DutyManagement, error)
+	UpdateDutyManage(dutyManage models.DutyManagement) (models.DutyManagement, error)
 	DeleteDutyManage(id string) error
-	GetDutyManage(id string) dao.DutyManagement
+	GetDutyManage(id string) models.DutyManagement
 }
 
 func NewInterDutyManageService() InterDutyManageService {
 	return &DutyManageService{}
 }
 
-func (dms *DutyManageService) ListDutyManage() []dao.DutyManagement {
+func (dms *DutyManageService) ListDutyManage() []models.DutyManagement {
 
-	var list []dao.DutyManagement
-	globals.DBCli.Model(&dao.DutyManagement{}).Find(&list)
+	var list []models.DutyManagement
+	globals.DBCli.Model(&models.DutyManagement{}).Find(&list)
 	return list
 
 }
 
-func (dms *DutyManageService) CreateDutyManage(dutyManage dao.DutyManagement) (dao.DutyManagement, error) {
+func (dms *DutyManageService) CreateDutyManage(dutyManage models.DutyManagement) (models.DutyManagement, error) {
 
 	tx := globals.DBCli.Begin()
-	dutyManage.ID = cmd.RandUuid()
+	dutyManage.ID = "dt-" + cmd.RandId()
+	dutyManage.CreateAt = time.Now().Unix()
+
 	err := tx.Create(&dutyManage).Error
 	if err != nil {
 		tx.Rollback()
-		return dao.DutyManagement{}, err
+		return models.DutyManagement{}, err
 	}
 	err = tx.Commit().Error
 	if err != nil {
 		tx.Rollback()
-		return dao.DutyManagement{}, err
+		return models.DutyManagement{}, err
 	}
 	return dutyManage, nil
 
 }
 
-func (dms *DutyManageService) UpdateDutyManage(dutyManage dao.DutyManagement) (dao.DutyManagement, error) {
+func (dms *DutyManageService) UpdateDutyManage(dutyManage models.DutyManagement) (models.DutyManagement, error) {
 
 	tx := globals.DBCli.Begin()
-	err := tx.Model(&dao.DutyManagement{}).Where("id = ?", dutyManage.ID).Updates(&dutyManage).Error
+	err := tx.Model(&models.DutyManagement{}).Where("id = ?", dutyManage.ID).Updates(&dutyManage).Error
 	if err != nil {
 		tx.Rollback()
-		return dao.DutyManagement{}, err
+		return models.DutyManagement{}, err
 	}
 	err = tx.Commit().Error
 	if err != nil {
 		tx.Rollback()
-		return dao.DutyManagement{}, err
+		return models.DutyManagement{}, err
 	}
 	return dutyManage, nil
 
@@ -66,7 +69,7 @@ func (dms *DutyManageService) UpdateDutyManage(dutyManage dao.DutyManagement) (d
 func (dms *DutyManageService) DeleteDutyManage(id string) error {
 
 	tx := globals.DBCli.Begin()
-	err := tx.Where("id = ?", id).Delete(&dao.DutyManagement{}).Error
+	err := tx.Where("id = ?", id).Delete(&models.DutyManagement{}).Error
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -80,10 +83,10 @@ func (dms *DutyManageService) DeleteDutyManage(id string) error {
 
 }
 
-func (dms *DutyManageService) GetDutyManage(id string) dao.DutyManagement {
+func (dms *DutyManageService) GetDutyManage(id string) models.DutyManagement {
 
-	var data dao.DutyManagement
-	globals.DBCli.Model(&dao.DutyManagement{}).Where("id = ?", id).Find(&data)
+	var data models.DutyManagement
+	globals.DBCli.Model(&models.DutyManagement{}).Where("id = ?", id).Find(&data)
 	return data
 
 }

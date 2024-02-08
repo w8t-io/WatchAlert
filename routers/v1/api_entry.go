@@ -1,14 +1,21 @@
 package v1
 
-import "watchAlert/controllers/api"
+import (
+	"watchAlert/controllers/api"
+)
 
 var (
 	AlertNoticeObject = api.ApiGroupApp.AlertNoticeObjectController
-	AlertSilence      = api.ApiGroupApp.AlertSilenceController
-	DutyManage        = api.ApiGroupApp.DutyManageController
-	DutyPeople        = api.ApiGroupApp.DutyPeopleController
-	DutySchedule      = api.ApiGroupApp.DutyScheduleController
-	Event             = api.ApiGroupApp.EventController
-	Rule              = api.ApiGroupApp.RuleController
-	RuleGroup         = api.ApiGroupApp.RuleGroupController
+	AlertSilence    = api.ApiGroupApp.AlertSilenceController
+	AlertDatasource = api.ApiGroupApp.AlertDataSourceController
+	DutyManage      = api.ApiGroupApp.DutyManageController
+	DutySchedule    = api.ApiGroupApp.DutyScheduleController
+	Event           = api.ApiGroupApp.EventController
+	Rule            = api.ApiGroupApp.RuleController
+	Auth            = api.ApiGroupApp.UserController
+	AlertCurEvent   = api.ApiGroupApp.AlertCurEventController
+	AlertHisEvent   = api.ApiGroupApp.AlertHisEventController
+	Role            = api.ApiGroupApp.UserRoleController
+	Permissions     = api.ApiGroupApp.UserPermissionsController
+	NoticeTemplate  = api.ApiGroupApp.AlertNoticeTemplateController
 )

@@ -3,18 +3,18 @@ package services
 import (
 	"fmt"
 	"log"
-	"watchAlert/controllers/dao"
-	"watchAlert/globals"
 	"strconv"
 	"time"
+	"watchAlert/globals"
+	"watchAlert/models"
 )
 
 type DutyScheduleService struct{}
 
 type InterDutyScheduleService interface {
-	CreateAndUpdateDutySystem(dutyUserInfo []dao.DutySchedule, dutyPeriod int, dutyId string) ([]dao.DutySchedule, error)
-	UpdateDutySystem(dutySchedule dao.DutySchedule, dutyId string) error
-	SelectDutySystem(dutyId, date string) ([]dao.DutySchedule, error)
+	CreateAndUpdateDutySystem(dutyUserInfo models.DutyScheduleCreate) ([]models.DutySchedule, error)
+	UpdateDutySystem(dutySchedule models.DutySchedule) error
+	SelectDutySystem(dutyId, date string) ([]models.DutySchedule, error)
 }
 
 func NewInterDutyScheduleService() InterDutyScheduleService {
@@ -22,13 +22,19 @@ func NewInterDutyScheduleService() InterDutyScheduleService {
 }
 
 // CreateAndUpdateDutySystem 创建和更新值班表
-func (dms *DutyScheduleService) CreateAndUpdateDutySystem(dutyUserInfo []dao.DutySchedule, dutyPeriod int, dutyId string) ([]dao.DutySchedule, error) {
+func (dms *DutyScheduleService) CreateAndUpdateDutySystem(dutyInfo models.DutyScheduleCreate) ([]models.DutySchedule, error) {
 
-	var dutyScheduleList []dao.DutySchedule
+	var dutyScheduleList []models.DutySchedule
 	ch := make(chan string)
 
+	layout := "2006-01"
+	parsedTime, err := time.Parse(layout, dutyInfo.Month)
+	if err != nil {
+		return nil, err
+	}
+
 	// 获取当前月份
-	year, month, _ := time.Now().Date()
+	year, month, _ := parsedTime.Date()
 	// 构建下个月的第一天
 	nextMonth := time.Date(year, month+1, 1, 0, 0, 0, 0, time.UTC)
 	// 计算当前月份有多少天
@@ -43,17 +49,19 @@ func (dms *DutyScheduleService) CreateAndUpdateDutySystem(dutyUserInfo []dao.Dut
 	}()
 
 	for i := 0; i <= daysInMonth; i++ {
-		for _, value := range dutyUserInfo {
-			for t := 1; t <= dutyPeriod; t++ {
+		for _, value := range dutyInfo.Users {
+			for t := 1; t <= dutyInfo.DutyPeriod; t++ {
 				dutyTime := <-ch
 				if dutyTime == "" {
 					break
 				}
-				ds := dao.DutySchedule{
-					DutyId:   dutyId,
-					Time:     dutyTime,
-					UserName: value.UserName,
-					UserId:   value.UserId,
+				ds := models.DutySchedule{
+					DutyId: dutyInfo.DutyId,
+					Time:   dutyTime,
+					Users: models.Users{
+						UserId:   value.UserId,
+						Username: value.Username,
+					},
 				}
 				dutyScheduleList = append(dutyScheduleList, ds)
 			}
@@ -62,19 +70,20 @@ func (dms *DutyScheduleService) CreateAndUpdateDutySystem(dutyUserInfo []dao.Dut
 
 	for _, v := range dutyScheduleList {
 
-		dutyScheduleInfo, _ := dutySchedule.GetDutyScheduleInfo(dutyId, v.Time)
+		// 更新当前已发布的日程表
+		dutyScheduleInfo := dutySchedule.GetDutyScheduleInfo(dutyInfo.DutyId, v.Time)
 
 		if dutyScheduleInfo.Time != "" {
 
-			if err := dms.UpdateDutySystem(v, dutyId); err != nil {
-				return []dao.DutySchedule{}, err
+			if err = dms.UpdateDutySystem(v); err != nil {
+				return nil, err
 			}
 
 		} else {
 
-			if err := globals.DBCli.Create(&v).Error; err != nil {
+			if err = globals.DBCli.Create(&v).Error; err != nil {
 				log.Println("值班系统创建失败", err)
-				return []dao.DutySchedule{}, err
+				return nil, err
 			}
 
 		}
@@ -86,9 +95,9 @@ func (dms *DutyScheduleService) CreateAndUpdateDutySystem(dutyUserInfo []dao.Dut
 }
 
 // UpdateDutySystem 更新值班表
-func (dms *DutyScheduleService) UpdateDutySystem(dutySchedule dao.DutySchedule, dutyId string) error {
+func (dms *DutyScheduleService) UpdateDutySystem(dutySchedule models.DutySchedule) error {
 
-	err := globals.DBCli.Model(&dao.DutySchedule{}).Where("duty_id = ? AND time = ?", dutyId, dutySchedule.Time).Updates(&dutySchedule).Error
+	err := globals.DBCli.Model(&models.DutySchedule{}).Where("duty_id = ? AND time = ?", dutySchedule.DutyId, dutySchedule.Time).Updates(&dutySchedule).Error
 	if err != nil {
 		return err
 	}
@@ -97,20 +106,20 @@ func (dms *DutyScheduleService) UpdateDutySystem(dutySchedule dao.DutySchedule, 
 }
 
 // SelectDutySystem 查询值班表
-func (dms *DutyScheduleService) SelectDutySystem(dutyId, date string) ([]dao.DutySchedule, error) {
+func (dms *DutyScheduleService) SelectDutySystem(dutyId, date string) ([]models.DutySchedule, error) {
 
 	var (
-		dutyScheduleList []dao.DutySchedule
+		dutyScheduleList []models.DutySchedule
 	)
 
 	if date != "" {
-		globals.DBCli.Model(&dao.DutySchedule{}).Where("duty_id = ? AND time = ?", dutyId, date).Find(&dutyScheduleList)
+		globals.DBCli.Model(&models.DutySchedule{}).Where("duty_id = ? AND time = ?", dutyId, date).Find(&dutyScheduleList)
 		return dutyScheduleList, nil
 	}
 
 	yearMonth := fmt.Sprintf("%d-%d-", time.Now().Year(), time.Now().Month())
 
-	globals.DBCli.Model(&dao.DutySchedule{}).Where("duty_id = ? AND time LIKE ?", dutyId, yearMonth+"%").Find(&dutyScheduleList)
+	globals.DBCli.Model(&models.DutySchedule{}).Where("duty_id = ? AND time LIKE ?", dutyId, yearMonth+"%").Find(&dutyScheduleList)
 
 	return dutyScheduleList, nil
 

@@ -2,21 +2,21 @@ package services
 
 import (
 	"log"
-	"watchAlert/controllers/dao"
 	"watchAlert/globals"
+	"watchAlert/models"
 )
 
 type DutyPeopleGroupService struct{}
 
 type InterDutyPeopleGroupService interface {
-	CreateDutyGroup(groupInfo dao.PeopleGroup) error
+	CreateDutyGroup(groupInfo models.PeopleGroup) error
 }
 
 func NewInterDutyPeopleGroupService() InterDutyPeopleGroupService {
 	return &DutyPeopleGroupService{}
 }
 
-func (dpgs *DutyPeopleGroupService) CreateDutyGroup(groupInfo dao.PeopleGroup) error {
+func (dpgs *DutyPeopleGroupService) CreateDutyGroup(groupInfo models.PeopleGroup) error {
 
 	err := globals.DBCli.Create(&groupInfo).Error
 	if err != nil {

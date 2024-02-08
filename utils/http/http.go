@@ -4,10 +4,15 @@ import (
 	"bytes"
 	"log"
 	"net/http"
+	"time"
 	"watchAlert/globals"
 )
 
 func Get(url string) (*http.Response, error) {
+
+	client := http.Client{
+		Timeout: 1 * time.Second,
+	}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -17,7 +22,7 @@ func Get(url string) (*http.Response, error) {
 		globals.Logger.Sugar().Error("请求建立失败", err)
 		return nil, err
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		globals.Logger.Sugar().Error("请求发送失败", err)
 		return nil, err
@@ -44,19 +49,19 @@ func Post(url string, bodyReader *bytes.Reader) (*http.Response, error) {
 
 }
 
-func PostReloadPrometheus() error {
-
-	url := globals.Config.Prometheus.URL + "/-/reload"
-	req, err := http.NewRequest(http.MethodPost, url, nil)
-	if err != nil {
-		globals.Logger.Sugar().Error("PostReloadPrometheus 请求建立失败 ->", err)
-		return err
-	}
-	_, err = http.DefaultClient.Do(req)
-	if err != nil {
-		globals.Logger.Sugar().Error("PostReloadPrometheus 请求发送失败 ->", err)
-		return err
-	}
-
-	return nil
-}
+//func PostReloadPrometheus() error {
+//
+//	url := globals.Config.Prometheus.URL + "/-/reload"
+//	req, err := http.NewRequest(http.MethodPost, url, nil)
+//	if err != nil {
+//		globals.Logger.Sugar().Error("PostReloadPrometheus 请求建立失败 ->", err)
+//		return err
+//	}
+//	_, err = http.DefaultClient.Do(req)
+//	if err != nil {
+//		globals.Logger.Sugar().Error("PostReloadPrometheus 请求发送失败 ->", err)
+//		return err
+//	}
+//
+//	return nil
+//}

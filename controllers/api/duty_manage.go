@@ -2,7 +2,8 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
-	"watchAlert/controllers/dao"
+	"watchAlert/models"
+	jwtUtils "watchAlert/utils/jwt"
 )
 
 type DutyManageController struct{}
@@ -20,8 +21,11 @@ func (dmc *DutyManageController) List(ctx *gin.Context) {
 
 func (dmc *DutyManageController) Create(ctx *gin.Context) {
 
-	var dutyManage dao.DutyManagement
+	var dutyManage models.DutyManagement
 	_ = ctx.ShouldBindJSON(&dutyManage)
+
+	userName := jwtUtils.GetUser(ctx.Request.Header.Get("Authorization"))
+	dutyManage.CreateBy = userName
 
 	data, err := dutyManageService.CreateDutyManage(dutyManage)
 	if err != nil {
@@ -41,7 +45,7 @@ func (dmc *DutyManageController) Create(ctx *gin.Context) {
 
 func (dmc *DutyManageController) Update(ctx *gin.Context) {
 
-	var dutyManage dao.DutyManagement
+	var dutyManage models.DutyManagement
 	_ = ctx.ShouldBindJSON(&dutyManage)
 
 	data, err := dutyManageService.UpdateDutyManage(dutyManage)

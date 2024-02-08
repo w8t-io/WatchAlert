@@ -1,19 +1,19 @@
 package globals
 
 import (
+	"github.com/go-redis/redis"
 	lark "github.com/larksuite/oapi-sdk-go/v3"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
-	"watchAlert/controllers/dto"
-	"watchAlert/utils/cache"
+	"watchAlert/config"
 )
 
 var (
-	Config    dto.App
+	Config    config.App
 	Logger    *zap.Logger
 	FeiShuCli *lark.Client
-	CacheCli  *cache.InMemoryCache
 	DBCli     *gorm.DB
+	RedisCli  *redis.Client
 )
 
 var (

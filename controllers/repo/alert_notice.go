@@ -1,16 +1,16 @@
 package repo
 
 import (
-	"watchAlert/controllers/dao"
 	"watchAlert/globals"
+	"watchAlert/models"
 )
 
 type AlertNoticeRepo struct{}
 
-func (anr *AlertNoticeRepo) Get(uuid string) dao.AlertNotice {
+func (anr *AlertNoticeRepo) Get(uuid string) models.AlertNotice {
 
-	var alertNoticeData dao.AlertNotice
-	globals.DBCli.Model(&dao.AlertNotice{}).Where("uuid = ?", uuid).Find(&alertNoticeData)
+	var alertNoticeData models.AlertNotice
+	globals.DBCli.Model(&models.AlertNotice{}).Where("uuid = ?", uuid).Find(&alertNoticeData)
 	return alertNoticeData
 
 }

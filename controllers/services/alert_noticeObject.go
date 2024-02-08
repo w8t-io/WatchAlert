@@ -1,22 +1,19 @@
 package services
 
 import (
-	"bytes"
-	"watchAlert/controllers/dao"
 	"watchAlert/globals"
+	"watchAlert/models"
 	"watchAlert/utils/cmd"
-	"watchAlert/utils/feishu"
-	"watchAlert/utils/http"
 )
 
 type AlertNoticeService struct{}
 
 type InterAlertNoticeService interface {
-	SearchNoticeObject() []dao.AlertNotice
-	CreateNoticeObject(alertNotice dao.AlertNotice) (dao.AlertNotice, error)
-	UpdateNoticeObject(alertNotice dao.AlertNotice) (dao.AlertNotice, error)
+	SearchNoticeObject() []models.AlertNotice
+	CreateNoticeObject(alertNotice models.AlertNotice) (models.AlertNotice, error)
+	UpdateNoticeObject(alertNotice models.AlertNotice) (models.AlertNotice, error)
 	DeleteNoticeObject(uuid string) error
-	GetNoticeObject(uuid string) dao.AlertNotice
+	GetNoticeObject(uuid string) models.AlertNotice
 	CheckNoticeObjectStatus(uuid string) string
 }
 
@@ -24,46 +21,46 @@ func NewInterAlertNoticeService() InterAlertNoticeService {
 	return &AlertNoticeService{}
 }
 
-func (ans *AlertNoticeService) SearchNoticeObject() []dao.AlertNotice {
+func (ans *AlertNoticeService) SearchNoticeObject() []models.AlertNotice {
 
-	var alertNoticeObject []dao.AlertNotice
+	var alertNoticeObject []models.AlertNotice
 	globals.DBCli.Find(&alertNoticeObject)
 	return alertNoticeObject
 
 }
 
-func (ans *AlertNoticeService) CreateNoticeObject(alertNotice dao.AlertNotice) (dao.AlertNotice, error) {
+func (ans *AlertNoticeService) CreateNoticeObject(alertNotice models.AlertNotice) (models.AlertNotice, error) {
 
 	tx := globals.DBCli.Begin()
-	alertNotice.Uuid = cmd.RandUuid()
+	alertNotice.Uuid = "n-"+cmd.RandId()
 	err := tx.Create(alertNotice).Error
 	if err != nil {
 		tx.Rollback()
 		globals.Logger.Sugar().Error("创建通知对象失败", err)
-		return dao.AlertNotice{}, err
+		return models.AlertNotice{}, err
 	}
 	err = tx.Commit().Error
 	if err != nil {
 		tx.Rollback()
 		globals.Logger.Sugar().Error("事务提交失败", err)
-		return dao.AlertNotice{}, err
+		return models.AlertNotice{}, err
 	}
 	return alertNotice, nil
 
 }
 
-func (ans *AlertNoticeService) UpdateNoticeObject(alertNotice dao.AlertNotice) (dao.AlertNotice, error) {
+func (ans *AlertNoticeService) UpdateNoticeObject(alertNotice models.AlertNotice) (models.AlertNotice, error) {
 
 	tx := globals.DBCli.Begin()
-	err := tx.Model(&dao.AlertNotice{}).Where("uuid = ?", alertNotice.Uuid).Updates(&alertNotice).Error
+	err := tx.Model(&models.AlertNotice{}).Where("uuid = ?", alertNotice.Uuid).Updates(&alertNotice).Error
 	if err != nil {
 		tx.Rollback()
-		return dao.AlertNotice{}, err
+		return models.AlertNotice{}, err
 	}
 	err = tx.Commit().Error
 	if err != nil {
 		tx.Rollback()
-		return dao.AlertNotice{}, err
+		return models.AlertNotice{}, err
 	}
 	return alertNotice, nil
 
@@ -72,7 +69,7 @@ func (ans *AlertNoticeService) UpdateNoticeObject(alertNotice dao.AlertNotice) (
 func (ans *AlertNoticeService) DeleteNoticeObject(uuid string) error {
 
 	tx := globals.DBCli.Begin()
-	err := tx.Where("uuid = ?", uuid).Delete(&dao.AlertNotice{}).Error
+	err := tx.Where("uuid = ?", uuid).Delete(&models.AlertNotice{}).Error
 	if err != nil {
 		tx.Rollback()
 		globals.Logger.Sugar().Error("删除通知对象失败", err)
@@ -88,9 +85,9 @@ func (ans *AlertNoticeService) DeleteNoticeObject(uuid string) error {
 
 }
 
-func (ans *AlertNoticeService) GetNoticeObject(uuid string) dao.AlertNotice {
+func (ans *AlertNoticeService) GetNoticeObject(uuid string) models.AlertNotice {
 
-	var alertNoticeObject dao.AlertNotice
+	var alertNoticeObject models.AlertNotice
 	globals.DBCli.Where("uuid = ?", uuid).Find(&alertNoticeObject)
 	return alertNoticeObject
 
@@ -98,30 +95,9 @@ func (ans *AlertNoticeService) GetNoticeObject(uuid string) dao.AlertNotice {
 
 func (ans *AlertNoticeService) CheckNoticeObjectStatus(uuid string) string {
 
-	var alertNoticeData dao.AlertNotice
-
-	globals.DBCli.Model(&dao.AlertNotice{}).Where("uuid = ?", uuid).Find(&alertNoticeData)
-
-	noticeStatus := "正常"
-	testBodyData := map[string]string{
-		"Prometheus": PrometheusAlertTest,
-		"AliSls":     AliSlsAlertTest,
-	}
-
-	switch alertNoticeData.NoticeType {
-	case "FeiShu":
-		if !feishu.CheckFeiShuChatId(alertNoticeData.FeishuChatId) {
-			noticeStatus = "异常"
-		} else {
-			post, err := http.Post("http://localhost:9001/api/v1/prom/prometheusAlert?uuid="+alertNoticeData.Uuid, bytes.NewReader([]byte(testBodyData[alertNoticeData.DataSource])))
-			if err != nil && post.StatusCode != 200 {
-				noticeStatus = "异常"
-			}
-		}
-	}
-
-	globals.DBCli.Model(&dao.AlertNotice{}).Where("uuid = ?", uuid).Update("notice_status", noticeStatus)
-	return noticeStatus
+	// ToDo
+	
+	return ""
 }
 
 const PrometheusAlertTest = `{

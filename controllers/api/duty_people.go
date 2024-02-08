@@ -2,7 +2,7 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
-	"watchAlert/controllers/dao"
+	"watchAlert/models"
 )
 
 type DutyPeopleController struct{}
@@ -20,7 +20,7 @@ func (dpc *DutyPeopleController) Search(ctx *gin.Context) {
 
 func (dpc *DutyPeopleController) Create(ctx *gin.Context) {
 
-	var userInfo dao.People
+	var userInfo models.People
 
 	_ = ctx.ShouldBindJSON(&userInfo)
 
@@ -63,7 +63,7 @@ func (dpc *DutyPeopleController) Delete(ctx *gin.Context) {
 
 func (dpc *DutyPeopleController) Update(ctx *gin.Context) {
 
-	var userInfo dao.People
+	var userInfo models.People
 	_ = ctx.ShouldBindJSON(&userInfo)
 
 	data, err := dutyPeopleService.UpdateDutyUser(userInfo)

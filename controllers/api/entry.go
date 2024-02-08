@@ -1,27 +1,36 @@
 package api
 
-import "watchAlert/controllers/services"
+import (
+	"watchAlert/controllers/services"
+)
 
 type ApiGroup struct {
 	AlertNoticeObjectController
-	AlertSilenceController
 	DutyManageController
 	DutyPeopleController
 	DutyScheduleController
 	EventController
+	AlertDataSourceController
+	AlertSilenceController
 	RuleController
-	RuleGroupController
+	UserController
+	AlertCurEventController
+	AlertHisEventController
+	UserRoleController
+	UserPermissionsController
+	AlertNoticeTemplateController
 }
 
 var ApiGroupApp = new(ApiGroup)
 
 var (
-	alertNoticeService  = services.NewInterAlertNoticeService()
-	alertSilenceService = services.NewInterAlertSilenceService()
-	dutyScheduleService = services.NewInterDutyScheduleService()
-	dutyPeopleService   = services.NewInterDutyPeopleService()
-	dutyManageService   = services.NewInterDutyManageService()
-	eventService        = services.NewInterEventService()
-	ruleGroupService    = services.NewInterRuleGroupService()
-	ruleService         = services.NewInterRuleService()
+	alertNoticeService   = services.NewInterAlertNoticeService()
+	dutyScheduleService  = services.NewInterDutyScheduleService()
+	dutyPeopleService    = services.NewInterDutyPeopleService()
+	dutyManageService    = services.NewInterDutyManageService()
+	ruleService          = services.NewInterRuleService()
+	dataSourceService    = services.NewInterAlertDataSourceService()
+	alertSilenceService  = services.NewInterAlertSilenceService()
+	alertCurEventService = services.NewInterAlertCurEventService()
+	alertHisEventService = services.NewInterAlertHisEventService()
 )
