@@ -2,7 +2,6 @@ package utils
 
 import (
 	"errors"
-	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/spf13/viper"
 	"time"
@@ -63,12 +62,25 @@ func parseToken(tokenStr string) (JwtCustomClaims, error) {
 }
 
 func IsTokenValid(tokenStr string) (JwtCustomClaims, bool) {
+
 	token, err := parseToken(tokenStr)
-	fmt.Println(err)
 	if err != nil {
 		return token, false
 	}
+
+	// 发布者校验
+	if token.StandardClaims.Issuer != AppGuardName {
+		return token, false
+	}
+
+	// 校验过期时间
+	ok := token.StandardClaims.VerifyExpiresAt(time.Now().Unix(), false)
+	if !ok {
+		return token, false
+	}
+
 	return token, true
+
 }
 
 func GetUser(tokenStr string) string {

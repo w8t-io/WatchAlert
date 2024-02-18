@@ -16,4 +16,4 @@ Redis:
 
 Jwt:
   # 失效时间
-  expire: 40000
+  expire: 18000

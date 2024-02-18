@@ -21,22 +21,12 @@ func JwtAuth() gin.HandlerFunc {
 		tokenStr = tokenStr[len(jwtUtils.TokenType)+1:]
 
 		// 校验 Token
-		token, ok := jwtUtils.IsTokenValid(tokenStr)
+		_, ok := jwtUtils.IsTokenValid(tokenStr)
 		if !ok {
 			response.TokenFail(context)
 			context.Abort()
 			return
 		}
-
-		// 发布者校验
-		if token.StandardClaims.Issuer != jwtUtils.AppGuardName {
-			response.TokenFail(context)
-			context.Abort()
-			return
-		}
-
-		context.Set("token", token)
-		context.Set("id", token.ID)
 
 	}
 
