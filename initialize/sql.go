@@ -36,6 +36,10 @@ func InitPermissionsSQL() {
 			API: "/api/w8t/user/userChangePass",
 		},
 		{
+			Key: "SearchDutyUser",
+			API: "/api/w8t/user/searchDutyUser",
+		},
+		{
 			Key: "RoleCreate",
 			API: "/api/w8t/role/roleCreate",
 		},
