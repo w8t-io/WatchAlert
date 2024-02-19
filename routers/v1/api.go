@@ -23,6 +23,7 @@ func AlertEventMsg(gin *gin.Engine) {
 			// 接收飞书回调
 			system.POST("feiShuEvent", Event.FeiShuEvent)
 			system.GET("checkNoticeStatus", AlertNoticeObject.CheckNoticeStatus)
+			system.GET("userInfo", Auth.GetUserInfo)
 		}
 
 		/*
@@ -46,7 +47,6 @@ func AlertEventMsg(gin *gin.Engine) {
 				user.POST("userDelete", Auth.Delete)
 				user.POST("userChangePass", Auth.ChangePass)
 				user.GET("searchDutyUser", Auth.SearchDutyUser)
-				user.GET("userInfo", Auth.GetUserInfo)
 			}
 
 			/*
@@ -56,6 +56,7 @@ func AlertEventMsg(gin *gin.Engine) {
 			role := w8t.Group("role")
 			{
 				role.POST("roleCreate", Role.Create)
+				role.POST("roleUpdate", Role.Update)
 				role.POST("roleDelete", Role.Delete)
 				role.GET("roleList", Role.List)
 			}

@@ -40,6 +40,10 @@ func InitPermissionsSQL() {
 			API: "/api/w8t/role/roleCreate",
 		},
 		{
+			Key: "RoleUpdate",
+			API: "/api/w8t/role/roleUpdate",
+		},
+		{
 			Key: "RoleDelete",
 			API: "/api/w8t/role/roleDelete",
 		},
@@ -182,10 +186,6 @@ func InitPermissionsSQL() {
 		{
 			Key: "NoticeTemplateDelete",
 			API: "/api/w8t/noticeTemplate/noticeTemplateDelete",
-		},
-		{
-			Key: "UserInfo",
-			API: "/api/w8t/user/userInfo",
 		},
 	}
 

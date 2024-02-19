@@ -33,6 +33,27 @@ func (urc *UserRoleController) Create(ctx *gin.Context) {
 
 }
 
+func (urc *UserRoleController) Update(ctx *gin.Context) {
+
+	var userRole models.UserRole
+	_ = ctx.ShouldBindJSON(&userRole)
+
+	pString, _ := json.Marshal(userRole.PermissionsJson)
+	userRole.Permissions = string(pString)
+
+	err := repo.DBCli.Updates(repo.Updates{
+		Table:   &models.UserRole{},
+		Where:   []string{"id = ?", userRole.ID},
+		Updates: userRole,
+	})
+	if err != nil {
+		response.Fail(ctx, err.Error(), "failed")
+		return
+	}
+	response.Success(ctx, "", "success")
+
+}
+
 func (urc *UserRoleController) Delete(ctx *gin.Context) {
 
 	id := ctx.Query("id")
