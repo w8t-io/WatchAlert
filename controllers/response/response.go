@@ -5,6 +5,13 @@ import (
 	"net/http"
 )
 
+var CodeInfo = map[int64]string{
+	200: "OK",
+	400: "Token鉴权失败",
+	401: "Token失效",
+	403: "权限不足",
+}
+
 func Response(c *gin.Context, httpStatus int, code int, data interface{}, msg string) {
 	c.JSON(httpStatus, gin.H{
 		"code": code,
@@ -22,9 +29,13 @@ func Fail(ctx *gin.Context, data interface{}, msg string) {
 }
 
 func TokenFail(ctx *gin.Context) {
-	Response(ctx, http.StatusBadRequest, 400, nil, "Token鉴权失败")
+	Response(ctx, http.StatusBadRequest, 400, nil, CodeInfo[400])
+}
+
+func TokenExpire(ctx *gin.Context) {
+	Response(ctx, http.StatusBadRequest, 401, nil, CodeInfo[401])
 }
 
 func PermissionFail(ctx *gin.Context) {
-	Response(ctx, http.StatusBadRequest, 403, nil, "权限不足")
+	Response(ctx, http.StatusBadRequest, 403, nil, CodeInfo[403])
 }

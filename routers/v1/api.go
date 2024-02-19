@@ -46,6 +46,7 @@ func AlertEventMsg(gin *gin.Engine) {
 				user.POST("userDelete", Auth.Delete)
 				user.POST("userChangePass", Auth.ChangePass)
 				user.GET("searchDutyUser", Auth.SearchDutyUser)
+				user.GET("userInfo", Auth.GetUserInfo)
 			}
 
 			/*

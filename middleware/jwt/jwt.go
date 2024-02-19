@@ -21,11 +21,17 @@ func JwtAuth() gin.HandlerFunc {
 		tokenStr = tokenStr[len(jwtUtils.TokenType)+1:]
 
 		// 校验 Token
-		_, ok := jwtUtils.IsTokenValid(tokenStr)
+		code, ok := jwtUtils.IsTokenValid(tokenStr)
 		if !ok {
-			response.TokenFail(context)
-			context.Abort()
-			return
+			if code == 400 {
+				response.TokenFail(context)
+				context.Abort()
+				return
+			} else if code == 401 {
+				response.TokenExpire(context)
+				context.Abort()
+				return
+			}
 		}
 
 	}

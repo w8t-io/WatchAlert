@@ -177,3 +177,13 @@ func (u *UserController) SearchDutyUser(ctx *gin.Context) {
 	response.Success(ctx, data, "success")
 
 }
+
+func (u *UserController) GetUserInfo(ctx *gin.Context) {
+
+	username := jwtUtils.GetUser(ctx.Request.Header.Get("Authorization"))
+
+	userInfo := models.Member{}
+	globals.DBCli.Model(&models.Member{}).Where("user_name = ?", username).Find(&userInfo)
+	response.Success(ctx, userInfo, "success")
+
+}

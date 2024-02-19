@@ -61,25 +61,25 @@ func parseToken(tokenStr string) (JwtCustomClaims, error) {
 
 }
 
-func IsTokenValid(tokenStr string) (JwtCustomClaims, bool) {
+func IsTokenValid(tokenStr string) (int64, bool) {
 
 	token, err := parseToken(tokenStr)
 	if err != nil {
-		return token, false
+		return 400, false
 	}
 
 	// 发布者校验
 	if token.StandardClaims.Issuer != AppGuardName {
-		return token, false
+		return 400, false
 	}
 
 	// 校验过期时间
 	ok := token.StandardClaims.VerifyExpiresAt(time.Now().Unix(), false)
 	if !ok {
-		return token, false
+		return 401, false
 	}
 
-	return token, true
+	return 200, true
 
 }
 

@@ -183,6 +183,10 @@ func InitPermissionsSQL() {
 			Key: "NoticeTemplateDelete",
 			API: "/api/w8t/noticeTemplate/noticeTemplateDelete",
 		},
+		{
+			Key: "UserInfo",
+			API: "/api/w8t/user/userInfo",
+		},
 	}
 
 	perms = permissions
