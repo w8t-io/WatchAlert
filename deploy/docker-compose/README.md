@@ -121,7 +121,7 @@ w8t-web       /bin/sh -c REACT_APP_BACKE ...   Up      0.0.0.0:80->3000/tcp
 > 
 > user_roles.sql: 用户角色      // 目前集成在代码中无需初始化
 ```shell
-# mysql -h xxx:3306 -u root -p w8t.123 -D watchalert < notice_template_examples.sql
+# mysql -h xxx:3306 -u root -pw8t.123 --default-character-set=utf8mb4 -D watchalert < notice_template_examples.sql
 ```
 
 - 访问页面
