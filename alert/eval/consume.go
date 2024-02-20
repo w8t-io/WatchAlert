@@ -35,6 +35,8 @@ func NewInterEvalConsumeWork() InterEvalConsume {
 // Run 启动告警消费进程
 func (ec *EvalConsume) Run() {
 
+	groupInterval := 10
+
 	action := func() {
 		alertsCurEventKeys := ec.getRedisKeys()
 		for _, key := range alertsCurEventKeys {
@@ -50,7 +52,7 @@ func (ec *EvalConsume) Run() {
 
 			if len(ec.alertGroups[alert.RuleId]) > 0 {
 				// 如果信号量满了就推送告警，并且初始化信号量
-				if ec.num == 10 {
+				if ec.num == int64(groupInterval) {
 					curEvent := ec.filterAlerts(ec.alertGroups)
 					ec.fireAlertEvent(curEvent)
 					// 执行一波后 必须重新清空alertGroups组中的数据。
@@ -112,8 +114,9 @@ func (ec *EvalConsume) filterAlerts(alertGroups map[string][]models.AlertCurEven
 	for _, alerts := range alertGroups {
 		// 根据相同指纹进行去重
 		newAlert := ec.removeDuplicates(alerts)
+		// 将通过指纹去重后以Fingerprint为Key的Map转换成以原来RuleName为Key的Map (同一告警类型聚合)
 		for _, alert := range newAlert {
-			newAlertGroups[alert.Fingerprint] = newAlert
+			newAlertGroups[alert.RuleName] = append(newAlertGroups[alert.RuleName], alert)
 		}
 	}
 
@@ -187,13 +190,14 @@ func (ec *EvalConsume) fireAlertEvent(alertGroups map[string][]models.AlertCurEv
 
 	wg.Wait()
 
-	for _, alerts := range fireAlertsMap {
-		ec.handleAlert(alerts)
+	for key, _ := range fireAlertsMap {
+		ec.handleAlert(fireAlertsMap[key])
 	}
 
-	for _, alerts := range recoverAlertsMap {
-		ec.handleAlert(alerts)
+	for key, _ := range recoverAlertsMap {
+		ec.handleAlert(recoverAlertsMap[key])
 	}
+
 }
 
 func (ec *EvalConsume) handleAlert(alerts []models.AlertCurEvent) {
