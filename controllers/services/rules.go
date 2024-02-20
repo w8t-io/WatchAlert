@@ -63,9 +63,20 @@ func (rs *RuleService) Update(rule models.AlertRule) error {
 	}
 
 	// 更新后重启协程
-	rs.quit <- &newRule.RuleId
+	if !newRule.EnabledBool {
+		rs.quit <- &newRule.RuleId
+	}
 
+	iter := globals.RedisCli.Scan(0, models.CachePrefix+rule.RuleId+"*", 0).Iterator()
+	keys := make([]string, 0)
+	for iter.Next() {
+		key := iter.Val()
+		keys = append(keys, key)
+	}
+
+	globals.RedisCli.Del(keys...)
 	rs.rule <- newRule
+	globals.Logger.Sugar().Infof("重启 RuleId 为 %s 的Watch 进程", newRule.RuleId)
 
 	return nil
 
@@ -85,7 +96,20 @@ func (rs *RuleService) Delete(id string) error {
 	}
 
 	// 退出该规则的协程
-	rs.quit <- &id
+	if alertRule.EnabledBool {
+		globals.Logger.Sugar().Infof("停止 RuleId 为 %s 的Watch 进程", id)
+		rs.quit <- &id
+	}
+
+	iter := globals.RedisCli.Scan(0, models.CachePrefix+id+"*", 0).Iterator()
+	keys := make([]string, 0)
+	for iter.Next() {
+		key := iter.Val()
+		keys = append(keys, key)
+	}
+
+	globals.RedisCli.Del(keys...)
+	globals.Logger.Sugar().Infof("删除队列数据 ->%s", keys)
 
 	return nil
 

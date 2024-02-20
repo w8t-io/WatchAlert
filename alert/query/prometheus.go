@@ -1,15 +1,14 @@
 package query
 
 import (
-	"encoding/json"
-	"io/ioutil"
+	"fmt"
+	"sort"
+	"strings"
 	"time"
 	"watchAlert/controllers/repo"
-	"watchAlert/controllers/services"
 	"watchAlert/globals"
 	models "watchAlert/models"
-	"watchAlert/utils/hash"
-	utilHttp "watchAlert/utils/http"
+	"watchAlert/utils/prom"
 )
 
 type Prometheus struct {
@@ -20,69 +19,65 @@ func (p *Prometheus) Query(rule models.AlertRule) {
 
 	for _, dsId := range rule.DatasourceIdList {
 
-		datasource := services.NewInterAlertDataSourceService().Get(dsId, rule.DatasourceType)
-
-		url := datasource[0].HTTPJson.URL + "/api/v1/query?query=" + rule.RuleConfigJson.PromQL
-		res, err := utilHttp.Get(url)
+		resQuery, _, err := prom.NewPromClient(dsId).Query(rule.RuleConfigJson.PromQL)
 		if err != nil {
 			return
 		}
 
-		var (
-			ResQuery models.PromQueryResponse
-			curKeys  []string
-		)
-		byteBody, _ := ioutil.ReadAll(res.Body)
-		_ = json.Unmarshal(byteBody, &ResQuery)
+		if resQuery == nil {
+			return
+		}
 
-		var curValue []string
+		var curValue float64
+		var curKeys []string
 
-		if ResQuery.Data.Result != nil {
+		for _, v := range resQuery {
+			curValue = v.Value
 
-			for _, v := range ResQuery.Data.Result {
-				curValue = v.Value
+			fingerprint := v.Labels.FastFingerprint().String()
+			key := p.alertEvent.CurAlertCacheKey(rule.RuleId, fingerprint)
+			curKeys = append(curKeys, key)
 
-				metricJson, _ := json.Marshal(v.Metric)
-				// fingerprint 用于报警指纹，根据 Prom Query 查到的Metric Label
-				fingerprint := hash.Md5Hash(metricJson)
-				fingerprint = fingerprint[:15]
+			// handle series tags
+			metricMap := make(map[string]string)
+			for label, value := range v.Labels {
+				metricMap[string(label)] = string(value)
+			}
 
-				key := p.alertEvent.CurAlertCacheKey(rule.RuleId, fingerprint)
-				curKeys = append(curKeys, key)
+			metricArr := labelMapToArr(metricMap)
+			sort.Strings(metricArr)
 
-				event := models.AlertCurEvent{
-					DatasourceType:       rule.DatasourceType,
-					DatasourceIdList:     []string{dsId},
-					Fingerprint:          fingerprint,
-					RuleId:               rule.RuleId,
-					RuleName:             rule.RuleName,
-					Severity:             rule.RuleConfigJson.Severity,
-					Instance:             v.Metric["instance"],
-					Metric:               string(metricJson),
-					MetricMap:            v.Metric,
-					CurValue:             v.Value,
-					PromQl:               rule.RuleConfigJson.PromQL,
-					LabelsMap:            rule.LabelsMap,
-					Labels:               rule.Labels,
-					EvalInterval:         rule.EvalInterval,
-					ForDuration:          rule.ForDuration,
-					NoticeId:             rule.NoticeId,
-					NoticeGroupList:      rule.NoticeGroupList,
-					IsRecovered:          false,
-					RepeatNoticeInterval: rule.RepeatNoticeInterval,
-					DutyUser:             "暂无", // 默认暂无值班人员, 渲染模版时会实际判断 Notice 是否存在值班人员
-				}
-				event.Annotations = event.ParserAnnotation(rule.Annotations)
-				event.FirstTriggerTime = event.GetFirstTime()
-				event.LastEvalTime = event.GetLastEvalTime()
-				event.LastSendTime = event.GetLastSendTime()
+			event := models.AlertCurEvent{
+				DatasourceType:       rule.DatasourceType,
+				DatasourceIdList:     []string{dsId},
+				Fingerprint:          fingerprint,
+				RuleId:               rule.RuleId,
+				RuleName:             rule.RuleName,
+				Severity:             rule.RuleConfigJson.Severity,
+				Instance:             string(v.Labels["instance"]),
+				Metric:               strings.Join(metricArr, ",,"),
+				MetricMap:            metricMap,
+				CurValue:             v.Value,
+				PromQl:               rule.RuleConfigJson.PromQL,
+				LabelsMap:            rule.LabelsMap,
+				Labels:               rule.Labels,
+				EvalInterval:         rule.EvalInterval,
+				ForDuration:          rule.ForDuration,
+				NoticeId:             rule.NoticeId,
+				NoticeGroupList:      rule.NoticeGroupList,
+				IsRecovered:          false,
+				RepeatNoticeInterval: rule.RepeatNoticeInterval,
+				DutyUser:             "暂无", // 默认暂无值班人员, 渲染模版时会实际判断 Notice 是否存在值班人员
+			}
+			event.Annotations = event.ParserAnnotation(rule.Annotations)
+			event.FirstTriggerTime = event.GetFirstTime()
+			event.LastEvalTime = event.GetLastEvalTime()
+			event.LastSendTime = event.GetLastSendTime()
 
-				p.alertEvent.SetCache(event, 0)
-				err = repo.DBCli.Create(models.AlertCurEvent{}, &event)
-				if err != nil {
-					return
-				}
-
+			p.alertEvent.SetCache(event, 0)
+			err = repo.DBCli.Create(models.AlertCurEvent{}, &event)
+			if err != nil {
+				return
 			}
 
 		}
@@ -137,4 +132,19 @@ func (p *Prometheus) getSliceDifference(slice1 []string, slice2 []string) []stri
 	}
 
 	return difference
+}
+
+func labelMapToArr(m map[string]string) []string {
+	numLabels := len(m)
+
+	labelStrings := make([]string, 0, numLabels)
+	for label, value := range m {
+		labelStrings = append(labelStrings, fmt.Sprintf("%s=%s", label, value))
+	}
+
+	if numLabels > 1 {
+		sort.Strings(labelStrings)
+	}
+
+	return labelStrings
 }

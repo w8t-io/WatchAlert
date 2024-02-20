@@ -23,7 +23,7 @@ type AlertCurEvent struct {
 	Instance               string            `json:"instance"`
 	Metric                 string            `json:"-" gorm:"metric"`
 	MetricMap              map[string]string `json:"metric" gorm:"-"`
-	CurValue               []string          `json:"curValue" gorm:"-"`
+	CurValue               float64           `json:"curValue" gorm:"-"`
 	LabelsMap              map[string]string `json:"labels" gorm:"-"`
 	Labels                 string            `json:"-" gorm:"labels"`
 	EvalInterval           int64             `json:"eval_interval"`

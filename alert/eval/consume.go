@@ -17,6 +17,7 @@ type EvalConsume struct {
 	models.AlertCurEvent
 	RedisChannel string
 	alertGroups  map[string][]models.AlertCurEvent
+	num          int64
 }
 
 type InterEvalConsume interface {
@@ -42,30 +43,38 @@ func (ec *EvalConsume) Run() {
 			if alert.Fingerprint == "" {
 				return
 			}
+
 			ec.Lock()
 			ec.alertGroups[alert.RuleId] = append(ec.alertGroups[alert.RuleId], alert)
 			ec.Unlock()
+
+			if len(ec.alertGroups[alert.RuleId]) > 0 {
+				// 如果信号量满了就推送告警，并且初始化信号量
+				if ec.num == 10 {
+					curEvent := ec.filterAlerts(ec.alertGroups)
+					ec.fireAlertEvent(curEvent)
+					// 执行一波后 必须重新清空alertGroups组中的数据。
+					ec.clear()
+				}
+				ec.num++
+			}
 		}
 	}
 
 	ticker := time.Tick(time.Second)
-	var ch = make(chan struct{}, 10)
 
 	go func() {
 		for range ticker {
 			action()
-			// 如果信号量满了就推送告警，并且初始化信号量
-			if len(ch) == cap(ch) {
-				curEvent := ec.filterAlerts(ec.alertGroups)
-				ec.fireAlertEvent(curEvent)
-				// 执行一波后 必须重新清空alertGroups组中的数据。
-				ec.alertGroups = map[string][]models.AlertCurEvent{}
-				ch = make(chan struct{}, 10)
-			}
-			ch <- struct{}{}
 		}
 	}()
 
+}
+
+func (ec *EvalConsume) clear() {
+
+	ec.alertGroups = map[string][]models.AlertCurEvent{}
+	ec.num = 0
 }
 
 // 获取缓存所有Keys
@@ -98,19 +107,17 @@ func (ec *EvalConsume) getRedisKeys() []string {
 // 过滤重复性告警
 func (ec *EvalConsume) filterAlerts(alertGroups map[string][]models.AlertCurEvent) map[string][]models.AlertCurEvent {
 
-	//MeetCriteriaAlerts 符合推送条件的告警
-	var MeetCriteriaAlerts []models.AlertCurEvent
+	var newAlertGroups = make(map[string][]models.AlertCurEvent)
 
-	for alertGroupName, alerts := range alertGroups {
+	for _, alerts := range alertGroups {
 		// 根据相同指纹进行去重
 		newAlert := ec.removeDuplicates(alerts)
 		for _, alert := range newAlert {
-			MeetCriteriaAlerts = append(MeetCriteriaAlerts, alert)
+			newAlertGroups[alert.Fingerprint] = newAlert
 		}
-		alertGroups[alertGroupName] = MeetCriteriaAlerts
 	}
 
-	return alertGroups
+	return newAlertGroups
 
 }
 
@@ -137,10 +144,12 @@ func (ec *EvalConsume) removeDuplicates(alerts []models.AlertCurEvent) []models.
 
 func (ec *EvalConsume) fireAlertEvent(alertGroups map[string][]models.AlertCurEvent) {
 
+	fireAlertsMap := make(map[string][]models.AlertCurEvent)
+	recoverAlertsMap := make(map[string][]models.AlertCurEvent)
+
 	var (
-		fireAlerts, recoverAlerts []models.AlertCurEvent
-		syncLock                  sync.Mutex
-		wg                        sync.WaitGroup
+		syncLock sync.Mutex
+		wg       sync.WaitGroup
 	)
 
 	for _, alerts := range alertGroups {
@@ -150,7 +159,7 @@ func (ec *EvalConsume) fireAlertEvent(alertGroups map[string][]models.AlertCurEv
 				defer wg.Done()
 				if alert.IsRecovered {
 					syncLock.Lock()
-					recoverAlerts = append(recoverAlerts, alert)
+					recoverAlertsMap[alert.RuleName] = append(recoverAlertsMap[alert.RuleName], alert)
 					syncLock.Unlock()
 
 					ec.DelCache(ec.CurAlertCacheKey(alert.RuleId, alert.Fingerprint))
@@ -167,7 +176,7 @@ func (ec *EvalConsume) fireAlertEvent(alertGroups map[string][]models.AlertCurEv
 					// 判断告警是否符合触发条件
 					if alert.LastSendTime == 0 || alert.LastEvalTime >= alert.LastSendTime+alert.RepeatNoticeInterval*60 {
 						syncLock.Lock()
-						fireAlerts = append(fireAlerts, alert)
+						fireAlertsMap[alert.RuleName] = append(fireAlertsMap[alert.RuleName], alert)
 						syncLock.Unlock()
 					}
 				}
@@ -178,9 +187,13 @@ func (ec *EvalConsume) fireAlertEvent(alertGroups map[string][]models.AlertCurEv
 
 	wg.Wait()
 
-	ec.handleAlert(fireAlerts)
-	ec.handleAlert(recoverAlerts)
+	for _, alerts := range fireAlertsMap {
+		ec.handleAlert(alerts)
+	}
 
+	for _, alerts := range recoverAlertsMap {
+		ec.handleAlert(alerts)
+	}
 }
 
 func (ec *EvalConsume) handleAlert(alerts []models.AlertCurEvent) {
@@ -199,18 +212,22 @@ func (ec *EvalConsume) handleAlert(alerts []models.AlertCurEvent) {
 		content = fmt.Sprintf("聚合 %d 条告警", len(alerts))
 	}
 
+	var wg sync.WaitGroup
 	for _, alert := range alerts {
-
-		if !alert.IsRecovered {
-			alert.LastSendTime = curTime
-			alert.SetCache(alert, 0)
-		}
-
-		// 聚合
-		alertOne = alerts[0]
-		alertOne.Annotations += "\n" + content
-
+		wg.Add(1)
+		go func(alert models.AlertCurEvent) {
+			defer wg.Done()
+			if !alert.IsRecovered {
+				alert.LastSendTime = curTime
+				alert.SetCache(alert, 0)
+			}
+		}(alert)
 	}
+	wg.Wait()
+
+	// 聚合
+	alertOne = alerts[0]
+	alertOne.Annotations += "\n" + content
 
 	noticeId := ec.noticeSplitGroup(alertOne)
 
