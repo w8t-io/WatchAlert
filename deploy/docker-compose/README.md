@@ -45,7 +45,7 @@ version: "3"
 services:
   w8t-service:
     container_name: w8t-service
-    image: docker.io/cairry/watchalert:master.202402191620.5d2a
+    image: docker.io/cairry/watchalert:master.202402201747.398b
     environment:
       - TZ=Asia/Shanghai
     volumes:
@@ -59,7 +59,7 @@ services:
 
   w8t-web:
     container_name: w8t-web
-    image: docker.io/cairry/watchalert-web:master.202402191620.d3c2
+    image: docker.io/cairry/watchalert-web:master.202402191747.c702
     environment:
       - TZ=Asia/Shanghai
     restart: always
