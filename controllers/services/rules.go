@@ -62,8 +62,14 @@ func (rs *RuleService) Update(rule models.AlertRule) error {
 		return err
 	}
 
-	// 更新后重启协程
-	if !newRule.EnabledBool {
+	alertInfo := models.AlertRule{}
+	globals.DBCli.Model(&models.AlertRule{}).Where("rule_id = ?", rule.RuleId).Find(&alertInfo)
+
+	/*
+		重启协程
+		判断当前状态是否是false 并且 历史状态是否为true
+	*/
+	if !newRule.EnabledBool && alertInfo.EnabledBool {
 		rs.quit <- &newRule.RuleId
 	}
 
@@ -75,8 +81,10 @@ func (rs *RuleService) Update(rule models.AlertRule) error {
 	}
 
 	globals.RedisCli.Del(keys...)
-	rs.rule <- newRule
-	globals.Logger.Sugar().Infof("重启 RuleId 为 %s 的Watch 进程", newRule.RuleId)
+	if newRule.EnabledBool {
+		rs.rule <- newRule
+		globals.Logger.Sugar().Infof("重启 RuleId 为 %s 的Watch 进程", newRule.RuleId)
+	}
 
 	return nil
 
