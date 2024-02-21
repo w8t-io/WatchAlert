@@ -23,12 +23,8 @@ func JwtAuth() gin.HandlerFunc {
 		// 校验 Token
 		code, ok := jwtUtils.IsTokenValid(tokenStr)
 		if !ok {
-			if code == 400 {
+			if code == 401 {
 				response.TokenFail(context)
-				context.Abort()
-				return
-			} else if code == 401 {
-				response.TokenExpire(context)
 				context.Abort()
 				return
 			}

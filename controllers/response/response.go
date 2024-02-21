@@ -7,8 +7,8 @@ import (
 
 var CodeInfo = map[int64]string{
 	200: "OK",
-	400: "Token鉴权失败",
-	401: "Token失效",
+	400: "请求失败",
+	401: "Token鉴权失败",
 	403: "权限不足",
 }
 
@@ -25,17 +25,16 @@ func Success(ctx *gin.Context, data interface{}, msg string) {
 }
 
 func Fail(ctx *gin.Context, data interface{}, msg string) {
-	Response(ctx, http.StatusBadRequest, 400, data, msg)
+	code := 400
+	Response(ctx, code, code, data, msg)
 }
 
 func TokenFail(ctx *gin.Context) {
-	Response(ctx, http.StatusBadRequest, 400, nil, CodeInfo[400])
-}
-
-func TokenExpire(ctx *gin.Context) {
-	Response(ctx, http.StatusBadRequest, 401, nil, CodeInfo[401])
+	code := 401
+	Response(ctx, code, code, nil, CodeInfo[int64(code)])
 }
 
 func PermissionFail(ctx *gin.Context) {
-	Response(ctx, http.StatusBadRequest, 403, nil, CodeInfo[403])
+	code := 403
+	Response(ctx, code, code, nil, CodeInfo[int64(code)])
 }
