@@ -22,19 +22,20 @@ type NoticeGroup []map[string]string
 
 type AlertRule struct {
 	//gorm.Model
-	RuleIdStr            RuleId      `json:"ruleId" gorm:"-"`
-	RuleId               string      `json:"-" gorm:"ruleId"`
-	DatasourceType       string      `json:"datasourceType"`
-	DatasourceIdList     []string    `json:"datasourceId" gorm:"-"`
-	DatasourceId         string      `json:"-" gorm:"datasourceId"`
-	RuleName             string      `json:"ruleName"`
-	EvalInterval         int64       `json:"evalInterval"`
-	ForDuration          int64       `json:"forDuration"`
-	RepeatNoticeInterval int64       `json:"repeatNoticeInterval"`
-	Description          string      `json:"description"`
-	Annotations          string      `json:"annotations"`
-	RuleConfigJson       RuleConfig  `json:"ruleConfig" gorm:"-"`
-	RuleConfig           string      `json:"-" gorm:"ruleConfig"`
+	RuleIdStr            RuleId     `json:"ruleId" gorm:"-"`
+	RuleId               string     `json:"-" gorm:"ruleId"`
+	RuleGroupId          string     `json:"ruleGroupId"`
+	DatasourceType       string     `json:"datasourceType"`
+	DatasourceIdList     []string   `json:"datasourceId" gorm:"-"`
+	DatasourceId         string     `json:"-" gorm:"datasourceId"`
+	RuleName             string     `json:"ruleName"`
+	EvalInterval         int64      `json:"evalInterval"`
+	ForDuration          int64      `json:"forDuration"`
+	RepeatNoticeInterval int64      `json:"repeatNoticeInterval"`
+	Description          string     `json:"description"`
+	Annotations          string     `json:"annotations"`
+	RuleConfigJson       RuleConfig `json:"ruleConfig" gorm:"-"`
+	RuleConfig           string     `json:"-" gorm:"ruleConfig"`
 	LabelsMap            LabelsMap   `json:"labels" gorm:"-"`
 	Labels               string      `json:"-" gorm:"labels"`
 	NoticeId             string      `json:"noticeId"`

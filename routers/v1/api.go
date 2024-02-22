@@ -79,6 +79,18 @@ func AlertEventMsg(gin *gin.Engine) {
 			}
 
 			/*
+				规则组
+				/api/w8t/ruleGroup
+			*/
+			ruleGroup := w8t.Group("ruleGroup")
+			{
+				ruleGroup.POST("ruleGroupCreate", RuleGroup.Create)
+				ruleGroup.POST("ruleGroupUpdate", RuleGroup.Update)
+				ruleGroup.POST("ruleGroupDelete", RuleGroup.Delete)
+				ruleGroup.GET("ruleGroupList", RuleGroup.List)
+			}
+
+			/*
 				告警规则
 				/api/w8t/rule
 			*/

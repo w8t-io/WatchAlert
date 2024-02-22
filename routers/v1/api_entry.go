@@ -18,4 +18,5 @@ var (
 	Role            = api.ApiGroupApp.UserRoleController
 	Permissions     = api.ApiGroupApp.UserPermissionsController
 	NoticeTemplate  = api.ApiGroupApp.AlertNoticeTemplateController
+	RuleGroup       = api.ApiGroupApp.RuleGroupController
 )

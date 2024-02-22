@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"watchAlert/alert/queue"
 	"watchAlert/controllers/repo"
 	"watchAlert/globals"
@@ -17,7 +18,7 @@ type InterRuleService interface {
 	Create(rule models.AlertRule) error
 	Update(rule models.AlertRule) error
 	Delete(id string) error
-	List() ([]models.AlertRule, error)
+	List(ruleGroupId string) ([]models.AlertRule, error)
 	Search(ruleId string) models.AlertRule
 }
 
@@ -123,11 +124,12 @@ func (rs *RuleService) Delete(id string) error {
 
 }
 
-func (rs *RuleService) List() ([]models.AlertRule, error) {
+func (rs *RuleService) List(ruleGroupId string) ([]models.AlertRule, error) {
 
 	var alertRuleList []models.AlertRule
 
-	globals.DBCli.Find(&alertRuleList)
+	globals.DBCli.Model(&models.AlertRule{}).Where("rule_group_id = ?", ruleGroupId).Find(&alertRuleList)
+	fmt.Println("--->", ruleGroupId, alertRuleList)
 
 	for k, v := range alertRuleList {
 		newRule := v.ParserRuleToJson()

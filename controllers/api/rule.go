@@ -57,7 +57,9 @@ func (rc *RuleController) List(ctx *gin.Context) {
 	var rule []models.AlertRule
 	_ = ctx.ShouldBindJSON(&rule)
 
-	data, err := ruleService.List()
+	ruleGroupId := ctx.Query("ruleGroupId")
+
+	data, err := ruleService.List(ruleGroupId)
 	if err != nil {
 		ctx.JSON(401, gin.H{
 			"code": "401",

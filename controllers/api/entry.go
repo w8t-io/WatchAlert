@@ -19,6 +19,7 @@ type ApiGroup struct {
 	UserRoleController
 	UserPermissionsController
 	AlertNoticeTemplateController
+	RuleGroupController
 }
 
 var ApiGroupApp = new(ApiGroup)
@@ -33,4 +34,5 @@ var (
 	alertSilenceService  = services.NewInterAlertSilenceService()
 	alertCurEventService = services.NewInterAlertCurEventService()
 	alertHisEventService = services.NewInterAlertHisEventService()
+	ruleGroupService     = services.NewInterRuleGroupService()
 )
