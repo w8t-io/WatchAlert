@@ -58,12 +58,10 @@ func (arw *AlertRuleWork) watch(rule models.AlertRule) {
 		case <-timer.C:
 			switch rule.GetRuleType() {
 			case "Prometheus":
-				fmt.Println("Query->>")
 				arw.prom.Query(rule)
 			}
 
 		case <-arw.quit:
-			fmt.Println("退出协程->>")
 			timer.Stop()
 			return
 

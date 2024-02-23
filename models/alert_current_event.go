@@ -1,10 +1,10 @@
 package models
 
 import (
-	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
-	"text/template"
+	"strings"
 	"time"
 	"watchAlert/globals"
 )
@@ -12,35 +12,34 @@ import (
 const CachePrefix = "cur-alert-"
 
 type AlertCurEvent struct {
-	RuleId                 string            `json:"rule_id"`
-	RuleName               string            `json:"rule_name"`
-	DatasourceType         string            `json:"datasource_type"`
-	DatasourceId           string            `json:"-" gorm:"datasource_id"`
-	DatasourceIdList       []string          `json:"datasource_id" gorm:"-"`
-	Fingerprint            string            `json:"fingerprint"`
-	Severity               int64             `json:"severity"`
-	PromQl                 string            `json:"prom_ql"`
-	Instance               string            `json:"instance"`
-	Metric                 string            `json:"-" gorm:"metric"`
-	MetricMap              map[string]string `json:"metric" gorm:"-"`
-	CurValue               float64           `json:"curValue" gorm:"-"`
-	LabelsMap              map[string]string `json:"labels" gorm:"-"`
-	Labels                 string            `json:"-" gorm:"labels"`
-	EvalInterval           int64             `json:"eval_interval"`
-	ForDuration            int64             `json:"for_duration"`
-	NoticeId               string            `json:"notice_id" gorm:"-"` // 默认通知对象ID
-	NoticeGroupList        NoticeGroup       `json:"noticeGroup" gorm:"-"`
-	NoticeGroup            string            `json:"-" gorm:"noticeGroup"`
-	Annotations            string            `json:"annotations" gorm:"-"`
-	IsRecovered            bool              `json:"is_recovered" gorm:"-"`
-	FirstTriggerTime       int64             `json:"first_trigger_time"` // 第一次触发时间
-	FirstTriggerTimeFormat string            `json:"-" gorm:"-"`
-	RepeatNoticeInterval   int64             `json:"repeat_notice_interval"`  // 重复通知间隔时间
-	LastEvalTime           int64             `json:"last_eval_time" gorm:"-"` // 上一次评估时间
-	LastSendTime           int64             `json:"last_send_time" gorm:"-"` // 上一次发送时间
-	RecoverTime            int64             `json:"recover_time" gorm:"-"`   // 恢复时间
-	RecoverTimeFormat      string            `json:"-" gorm:"-"`
-	DutyUser               string            `json:"duty_user" gorm:"-"`
+	RuleId                 string                 `json:"rule_id"`
+	RuleName               string                 `json:"rule_name"`
+	DatasourceType         string                 `json:"datasource_type"`
+	DatasourceId           string                 `json:"-" gorm:"datasource_id"`
+	DatasourceIdList       []string               `json:"datasource_id" gorm:"-"`
+	Fingerprint            string                 `json:"fingerprint"`
+	Severity               int64                  `json:"severity"`
+	PromQl                 string                 `json:"prom_ql"`
+	Instance               string                 `json:"instance"`
+	Metric                 string                 `json:"-" gorm:"metric"`
+	MetricMap              map[string]interface{} `json:"metric" gorm:"-"`
+	LabelsMap              map[string]string      `json:"labels" gorm:"-"`
+	Labels                 string                 `json:"-" gorm:"labels"`
+	EvalInterval           int64                  `json:"eval_interval"`
+	ForDuration            int64                  `json:"for_duration"`
+	NoticeId               string                 `json:"notice_id" gorm:"-"` // 默认通知对象ID
+	NoticeGroupList        NoticeGroup            `json:"noticeGroup" gorm:"-"`
+	NoticeGroup            string                 `json:"-" gorm:"noticeGroup"`
+	Annotations            string                 `json:"annotations" gorm:"-"`
+	IsRecovered            bool                   `json:"is_recovered" gorm:"-"`
+	FirstTriggerTime       int64                  `json:"first_trigger_time"` // 第一次触发时间
+	FirstTriggerTimeFormat string                 `json:"-" gorm:"-"`
+	RepeatNoticeInterval   int64                  `json:"repeat_notice_interval"`  // 重复通知间隔时间
+	LastEvalTime           int64                  `json:"last_eval_time" gorm:"-"` // 上一次评估时间
+	LastSendTime           int64                  `json:"last_send_time" gorm:"-"` // 上一次发送时间
+	RecoverTime            int64                  `json:"recover_time" gorm:"-"`   // 恢复时间
+	RecoverTimeFormat      string                 `json:"-" gorm:"-"`
+	DutyUser               string                 `json:"duty_user" gorm:"-"`
 }
 
 func (ace *AlertCurEvent) CurAlertCacheKey(ruleId, fingerprint string) string {
@@ -105,23 +104,52 @@ func (ace *AlertCurEvent) DelCache(key string) {
 
 }
 
+// ParserAnnotation 处理变量形式的字符串，替换为对应的值
 func (ace *AlertCurEvent) ParserAnnotation(annotations string) string {
 
-	var (
-		tmpl *template.Template
-		buf  bytes.Buffer
-	)
+	// 查找变量形式的字符串，并替换为对应的值
+	result := annotations
+	for strings.Contains(result, "${") && strings.Contains(result, "}") {
+		startIndex := strings.Index(result, "${")
+		endIndex := strings.Index(result, "}")
+		if startIndex == -1 || endIndex == -1 || endIndex <= startIndex {
+			break
+		}
 
-	tmpl = template.Must(template.New("tmpl").Parse(annotations))
+		// 获取变量名称
+		variable := result[startIndex+2 : endIndex]
 
-	err := tmpl.Execute(&buf, ace)
-	if err != nil {
-		globals.Logger.Sugar().Error("Annotation 解析失败->", err.Error())
-		return ""
+		// 获取对应的值
+		value := getJSONValue(ace.MetricMap, variable)
+
+		// 替换变量形式的字符串为对应的值
+		result = strings.Replace(result, "${"+variable+"}", fmt.Sprintf("%v", value), 1)
 	}
 
-	return buf.String()
+	return result
 
+}
+
+// 通过变量形式 ${key} 获取 JSON 数据中的值
+func getJSONValue(data map[string]interface{}, variable string) interface{} {
+	// 将变量形式的字符串分割为键名数组
+	keys := strings.Split(variable, ".")
+
+	// 逐级获取 JSON 数据中的值
+	value := data
+	for _, key := range keys {
+		if v, ok := value[key]; ok {
+			if nextValue, ok := v.(map[string]interface{}); ok {
+				value = nextValue
+			} else {
+				return v
+			}
+		} else {
+			return nil
+		}
+	}
+
+	return nil
 }
 
 func (ace *AlertCurEvent) GetFirstTime() int64 {

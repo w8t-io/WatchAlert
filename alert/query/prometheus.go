@@ -28,21 +28,20 @@ func (p *Prometheus) Query(rule models.AlertRule) {
 			return
 		}
 
-		var curValue float64
 		var curKeys []string
 
 		for _, v := range resQuery {
-			curValue = v.Value
 
 			fingerprint := v.Labels.FastFingerprint().String()
 			key := p.alertEvent.CurAlertCacheKey(rule.RuleId, fingerprint)
 			curKeys = append(curKeys, key)
 
 			// handle series tags
-			metricMap := make(map[string]string)
+			metricMap := make(map[string]interface{})
 			for label, value := range v.Labels {
 				metricMap[string(label)] = string(value)
 			}
+			metricMap["value"] = v.Value
 
 			metricArr := labelMapToArr(metricMap)
 			sort.Strings(metricArr)
@@ -57,7 +56,6 @@ func (p *Prometheus) Query(rule models.AlertRule) {
 				Instance:             string(v.Labels["instance"]),
 				Metric:               strings.Join(metricArr, ",,"),
 				MetricMap:            metricMap,
-				CurValue:             v.Value,
 				PromQl:               rule.RuleConfigJson.PromQL,
 				LabelsMap:            rule.LabelsMap,
 				Labels:               rule.Labels,
@@ -91,7 +89,6 @@ func (p *Prometheus) Query(rule models.AlertRule) {
 			if event.IsRecovered == true {
 				continue
 			}
-			event.CurValue = curValue
 			event.IsRecovered = true
 			event.RecoverTime = time.Now().Unix()
 			event.LastSendTime = 0
@@ -134,7 +131,7 @@ func (p *Prometheus) getSliceDifference(slice1 []string, slice2 []string) []stri
 	return difference
 }
 
-func labelMapToArr(m map[string]string) []string {
+func labelMapToArr(m map[string]interface{}) []string {
 	numLabels := len(m)
 
 	labelStrings := make([]string, 0, numLabels)
