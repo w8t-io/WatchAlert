@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 	"watchAlert/alert/query"
+	"watchAlert/alert/queue"
 	"watchAlert/globals"
 	"watchAlert/models"
 )
@@ -21,11 +22,11 @@ type InterAlertRuleWork interface {
 	Run()
 }
 
-func NewInterAlertRuleWork(rule chan *models.AlertRule, quit chan *string) InterAlertRuleWork {
+func NewInterAlertRuleWork() InterAlertRuleWork {
 
 	return &AlertRuleWork{
-		rule: rule,
-		quit: quit,
+		rule: queue.AlertRuleChannel,
+		quit: queue.QuitAlertRuleChannel,
 	}
 
 }
@@ -57,10 +58,12 @@ func (arw *AlertRuleWork) watch(rule models.AlertRule) {
 		case <-timer.C:
 			switch rule.GetRuleType() {
 			case "Prometheus":
+				fmt.Println("Query->>")
 				arw.prom.Query(rule)
 			}
 
 		case <-arw.quit:
+			fmt.Println("退出协程->>")
 			timer.Stop()
 			return
 

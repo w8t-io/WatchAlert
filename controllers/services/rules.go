@@ -53,24 +53,14 @@ func (rs *RuleService) Update(rule models.AlertRule) error {
 
 	newRule := rule.ParserRuleToGorm()
 
-	data := repo.Updates{
-		Table:   models.AlertRule{},
-		Where:   []string{"rule_id = ?", newRule.RuleId},
-		Updates: &newRule,
-	}
-	err := repo.DBCli.Updates(data)
-	if err != nil {
-		return err
-	}
-
-	alertInfo := models.AlertRule{}
-	globals.DBCli.Model(&models.AlertRule{}).Where("rule_id = ?", rule.RuleId).Find(&alertInfo)
-
 	/*
 		重启协程
 		判断当前状态是否是false 并且 历史状态是否为true
 	*/
-	if !newRule.EnabledBool && alertInfo.EnabledBool {
+	alertInfo := models.AlertRule{}
+	globals.DBCli.Model(&models.AlertRule{}).Where("rule_id = ?", rule.RuleId).Find(&alertInfo)
+
+	if alertInfo.Enabled == "true" && newRule.EnabledBool == false {
 		rs.quit <- &newRule.RuleId
 	}
 
@@ -80,11 +70,20 @@ func (rs *RuleService) Update(rule models.AlertRule) error {
 		key := iter.Val()
 		keys = append(keys, key)
 	}
-
 	globals.RedisCli.Del(keys...)
 	if newRule.EnabledBool {
 		rs.rule <- newRule
 		globals.Logger.Sugar().Infof("重启 RuleId 为 %s 的Watch 进程", newRule.RuleId)
+	}
+
+	data := repo.Updates{
+		Table:   models.AlertRule{},
+		Where:   []string{"rule_id = ?", newRule.RuleId},
+		Updates: &newRule,
+	}
+	err := repo.DBCli.Updates(data)
+	if err != nil {
+		return err
 	}
 
 	return nil
