@@ -104,6 +104,28 @@ func AlertEventMsg(gin *gin.Engine) {
 			}
 
 			/*
+				规则模版组
+				/api/w8t/ruleTmplGroup
+			*/
+			ruleTmplGroup := w8t.Group("ruleTmplGroup")
+			{
+				ruleTmplGroup.POST("ruleTmplGroupCreate", RuleTmplGroup.Create)
+				ruleTmplGroup.POST("ruleTmplGroupDelete", RuleTmplGroup.Delete)
+				ruleTmplGroup.GET("ruleTmplGroupList", RuleTmplGroup.List)
+			}
+
+			/*
+				规则模版
+				/api/w8t/ruleTmpl
+			*/
+			ruleTmpl := w8t.Group("ruleTmpl")
+			{
+				ruleTmpl.POST("ruleTmplCreate", RuleTmpl.Create)
+				ruleTmpl.POST("ruleTmplDelete", RuleTmpl.Delete)
+				ruleTmpl.GET("ruleTmplList", RuleTmpl.List)
+			}
+
+			/*
 				排班管理
 				/api/w8t/dutyManage
 			*/

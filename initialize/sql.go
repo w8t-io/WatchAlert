@@ -207,6 +207,30 @@ func InitPermissionsSQL() {
 			Key: "RuleGroupList",
 			API: "/api/w8t/ruleGroup/ruleGroupList",
 		},
+		{
+			Key: "RuleTmplGroupCreate",
+			API: "/api/w8t/ruleTmplGroup/ruleTmplGroupCreate",
+		},
+		{
+			Key: "RuleTmplGroupDelete",
+			API: "/api/w8t/ruleTmplGroup/ruleTmplGroupDelete",
+		},
+		{
+			Key: "RuleTmplGroupList",
+			API: "/api/w8t/ruleTmplGroup/ruleTmplGroupList",
+		},
+		{
+			Key: "RuleTmplCreate",
+			API: "/api/w8t/ruleTmpl/ruleTmplCreate",
+		},
+		{
+			Key: "RuleTmplDelete",
+			API: "/api/w8t/ruleTmpl/ruleTmplDelete",
+		},
+		{
+			Key: "RuleTmplList",
+			API: "/api/w8t/ruleTmpl/ruleTmplList",
+		},
 	}
 
 	perms = permissions

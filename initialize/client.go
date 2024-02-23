@@ -66,6 +66,8 @@ func sqlClient() {
 		&models2.UserPermissions{},
 		&models2.NoticeTemplateExample{},
 		&models2.RuleGroups{},
+		&models2.RuleTemplateGroup{},
+		&models2.RuleTemplate{},
 	)
 	if err != nil {
 		return

@@ -20,6 +20,8 @@ type ApiGroup struct {
 	UserPermissionsController
 	AlertNoticeTemplateController
 	RuleGroupController
+	RuleTmplGroupController
+	RuleTmplController
 }
 
 var ApiGroupApp = new(ApiGroup)
