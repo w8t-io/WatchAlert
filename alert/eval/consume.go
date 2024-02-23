@@ -41,7 +41,6 @@ func (ec *EvalConsume) Run() {
 		alertsCurEventKeys := ec.getRedisKeys()
 		for _, key := range alertsCurEventKeys {
 			alert := ec.GetCache(key)
-			fmt.Println(alert)
 			if alert.Fingerprint == "" {
 				return
 			}

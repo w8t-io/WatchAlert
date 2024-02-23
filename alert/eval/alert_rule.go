@@ -58,6 +58,7 @@ func (arw *AlertRuleWork) watch(rule models.AlertRule) {
 		case <-timer.C:
 			switch rule.GetRuleType() {
 			case "Prometheus":
+				globals.Logger.Sugar().Infof("规则评估 -> %v", rule)
 				arw.prom.Query(rule)
 			}
 

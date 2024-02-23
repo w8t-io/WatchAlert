@@ -63,7 +63,11 @@ func (rs *RuleService) Update(rule models.AlertRule) error {
 	if alertInfo.Enabled == "true" && newRule.EnabledBool == false {
 		rs.quit <- &newRule.RuleId
 	}
+	if alertInfo.Enabled == "true" && newRule.EnabledBool == true {
+		rs.quit <- &newRule.RuleId
+	}
 
+	// 删除缓存
 	iter := globals.RedisCli.Scan(0, models.CachePrefix+rule.RuleId+"*", 0).Iterator()
 	keys := make([]string, 0)
 	for iter.Next() {
@@ -71,11 +75,14 @@ func (rs *RuleService) Update(rule models.AlertRule) error {
 		keys = append(keys, key)
 	}
 	globals.RedisCli.Del(keys...)
+
+	// 启动协程
 	if newRule.EnabledBool {
 		rs.rule <- newRule
 		globals.Logger.Sugar().Infof("重启 RuleId 为 %s 的Watch 进程", newRule.RuleId)
 	}
 
+	// 更新数据
 	data := repo.Updates{
 		Table:   models.AlertRule{},
 		Where:   []string{"rule_id = ?", newRule.RuleId},
