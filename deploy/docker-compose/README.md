@@ -45,7 +45,7 @@ version: "3"
 services:
   w8t-service:
     container_name: w8t-service
-    image: docker.io/cairry/watchalert:master.202402211140.e93d
+    image: docker.io/cairry/watchalert:master.202402231521.6bfd
     environment:
       - TZ=Asia/Shanghai
     volumes:
@@ -59,7 +59,7 @@ services:
 
   w8t-web:
     container_name: w8t-web
-    image: docker.io/cairry/watchalert-web:master.202402211738.fb66
+    image: docker.io/cairry/watchalert-web:master.202402231521.6d40
     environment:
       - TZ=Asia/Shanghai
     restart: always
@@ -117,16 +117,20 @@ w8t-web       /bin/sh -c REACT_APP_BACKE ...   Up      0.0.0.0:80->3000/tcp
 > 
 > notice_template_examples.sql: 通知模版
 > 
-> user_permissions.sql: 权限      // 目前集成在代码中无需初始化
+> rule_template_groups.sql: 告警规则模版组
 > 
-> user_roles.sql: 用户角色      // 目前集成在代码中无需初始化
+> rule_templates.sql: 告警规则模版
+> 
+> user_roles.sql: 用户角色
 ```shell
 # mysql -h xxx:3306 -u root -pw8t.123 --default-character-set=utf8mb4 -D watchalert < notice_template_examples.sql
+# mysql -h xxx:3306 -u root -pw8t.123 --default-character-set=utf8mb4 -D watchalert < rule_template_groups.sql
+# mysql -h xxx:3306 -u root -pw8t.123 --default-character-set=utf8mb4 -D watchalert < rule_templates.sql
+# mysql -h xxx:3306 -u root -pw8t.123 --default-character-set=utf8mb4 -D watchalert < user_roles.sql
 ```
 
 - 访问页面
 
 先来初始化 admin 用户的密码
-
-![img_1.png](img_1.png)
-![img_2.png](img_2.png)
+![login.png](login.png)
+![img.png](img.png)
