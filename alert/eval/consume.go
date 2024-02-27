@@ -17,7 +17,7 @@ type EvalConsume struct {
 	models.AlertCurEvent
 	RedisChannel string
 	alertGroups  map[string][]models.AlertCurEvent
-	num          int64
+	Timing       map[string]int
 }
 
 type InterEvalConsume interface {
@@ -28,6 +28,7 @@ func NewInterEvalConsumeWork() InterEvalConsume {
 
 	return &EvalConsume{
 		alertGroups: make(map[string][]models.AlertCurEvent),
+		Timing:      make(map[string]int),
 	}
 
 }
@@ -35,30 +36,34 @@ func NewInterEvalConsumeWork() InterEvalConsume {
 // Run 启动告警消费进程
 func (ec *EvalConsume) Run() {
 
-	groupInterval := 10
+	// 定义相同的Group之间发送告警通知的时间间隔（s）
+	groupInterval := 30
 
 	action := func() {
 		alertsCurEventKeys := ec.getRedisKeys()
 		for _, key := range alertsCurEventKeys {
 			alert := ec.GetCache(key)
 			if alert.Fingerprint == "" {
-				return
+				continue
 			}
 
 			ec.Lock()
 			ec.alertGroups[alert.RuleId] = append(ec.alertGroups[alert.RuleId], alert)
 			ec.Unlock()
-
-			if len(ec.alertGroups[alert.RuleId]) > 0 {
-				// 如果信号量满了就推送告警，并且初始化信号量
-				if ec.num == int64(groupInterval) {
-					curEvent := ec.filterAlerts(ec.alertGroups)
-					ec.fireAlertEvent(curEvent)
-					// 执行一波后 必须重新清空alertGroups组中的数据。
-					ec.clear()
-				}
-				ec.num++
+		}
+		for key, alerts := range ec.alertGroups {
+			if len(alerts) == 0 {
+				continue
 			}
+
+			// 如果当前告警组时间到达 groupInterval 的时间则推送告警
+			if ec.Timing[key] >= groupInterval {
+				curEvent := ec.filterAlerts(ec.alertGroups[key])
+				ec.fireAlertEvent(curEvent)
+				// 执行一波后 必须重新清空alertGroups组中的数据。
+				ec.clear(key)
+			}
+			ec.Timing[key]++
 		}
 	}
 
@@ -72,10 +77,13 @@ func (ec *EvalConsume) Run() {
 
 }
 
-func (ec *EvalConsume) clear() {
+func (ec *EvalConsume) clear(ruleId string) {
 
-	ec.alertGroups = map[string][]models.AlertCurEvent{}
-	ec.num = 0
+	for key := range ec.alertGroups {
+		delete(ec.alertGroups, key)
+	}
+	ec.Timing[ruleId] = 0
+
 }
 
 // 获取缓存所有Keys
@@ -105,16 +113,21 @@ func (ec *EvalConsume) getRedisKeys() []string {
 	return keys
 }
 
-// 过滤重复性告警
-func (ec *EvalConsume) filterAlerts(alertGroups map[string][]models.AlertCurEvent) map[string][]models.AlertCurEvent {
+// 过滤告警
+func (ec *EvalConsume) filterAlerts(alertGroups []models.AlertCurEvent) map[string][]models.AlertCurEvent {
 
 	var newAlertGroups = make(map[string][]models.AlertCurEvent)
 
-	for _, alerts := range alertGroups {
-		// 根据相同指纹进行去重
-		newAlert := ec.removeDuplicates(alerts)
-		// 将通过指纹去重后以Fingerprint为Key的Map转换成以原来RuleName为Key的Map (同一告警类型聚合)
-		for _, alert := range newAlert {
+	// 根据相同指纹进行去重
+	newAlert := ec.removeDuplicates(alertGroups)
+	// 将通过指纹去重后以Fingerprint为Key的Map转换成以原来RuleName为Key的Map (同一告警类型聚合)
+	for _, alert := range newAlert {
+		// 持续时间
+		if alert.LastEvalTime-alert.FirstTriggerTime < alert.ForDuration {
+			continue
+		}
+		// 重复通知，如果是初次推送不用进一步判断。
+		if alert.LastSendTime == 0 || alert.LastEvalTime >= alert.LastSendTime+alert.RepeatNoticeInterval*60 {
 			newAlertGroups[alert.RuleName] = append(newAlertGroups[alert.RuleName], alert)
 		}
 	}
@@ -164,23 +177,16 @@ func (ec *EvalConsume) fireAlertEvent(alertGroups map[string][]models.AlertCurEv
 					recoverAlertsMap[alert.RuleName] = append(recoverAlertsMap[alert.RuleName], alert)
 					syncLock.Unlock()
 
-					ec.DelCache(ec.CurAlertCacheKey(alert.RuleId, alert.Fingerprint))
+					ec.DelCache(ec.CurAlertCacheKey(alert.RuleId, alert.DatasourceId, alert.Fingerprint))
 					// 记录历史告警
 					err := ec.RecordAlertHisEvent(alert)
 					if err != nil {
 						return
 					}
 				} else if !alert.IsRecovered {
-					// 持续时间
-					if alert.LastEvalTime-alert.FirstTriggerTime < alert.ForDuration {
-						return
-					}
-					// 判断告警是否符合触发条件
-					if alert.LastSendTime == 0 || alert.LastEvalTime >= alert.LastSendTime+alert.RepeatNoticeInterval*60 {
-						syncLock.Lock()
-						fireAlertsMap[alert.RuleName] = append(fireAlertsMap[alert.RuleName], alert)
-						syncLock.Unlock()
-					}
+					syncLock.Lock()
+					fireAlertsMap[alert.RuleName] = append(fireAlertsMap[alert.RuleName], alert)
+					syncLock.Unlock()
 				}
 
 			}(alert)
@@ -212,7 +218,7 @@ func (ec *EvalConsume) handleAlert(alerts []models.AlertCurEvent) {
 	)
 
 	if len(alerts) > 1 {
-		content = fmt.Sprintf("聚合 %d 条告警", len(alerts))
+		content = fmt.Sprintf("聚合 %d 条告警\n", len(alerts))
 	}
 
 	var wg sync.WaitGroup
@@ -278,7 +284,7 @@ func (ec *EvalConsume) RecordAlertHisEvent(alert models.AlertCurEvent) error {
 
 	metric, _ := json.Marshal(alert.MetricMap)
 	hisData := models.AlertHisEvent{
-		DatasourceId:     alert.DatasourceIdList[0],
+		DatasourceId:     alert.DatasourceId,
 		Fingerprint:      alert.Fingerprint,
 		RuleId:           alert.RuleId,
 		RuleName:         alert.RuleName,
