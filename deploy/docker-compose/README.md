@@ -35,17 +35,17 @@ Jwt:
 - Docker-Compose 启动配置
 > 注意：w8t-web 的 command。
 >
-> REACT_APP_BACKEND_IP=w8t-service:9001 yarn start
+> REACT_APP_BACKEND_PORT=9001 yarn start
 >
 > 参数解析：
 >
-> - REACT_APP_BACKEND_IP：后端服务IP+端口
+> - REACT_APP_BACKEND_PORT：有特殊需要需要修改后端端口，需要在这里指定后端端口。
 ```yaml
 version: "3"
 services:
   w8t-service:
     container_name: w8t-service
-    image: docker.io/cairry/watchalert:master.202402231521.6bfd
+    image: docker.io/cairry/watchalert:latest
     environment:
       - TZ=Asia/Shanghai
     volumes:
@@ -59,7 +59,7 @@ services:
 
   w8t-web:
     container_name: w8t-web
-    image: docker.io/cairry/watchalert-web:master.202402231521.6d40
+    image: docker.io/cairry/watchalert-web:latest
     environment:
       - TZ=Asia/Shanghai
     restart: always
@@ -69,7 +69,7 @@ services:
     entrypoint: ["/bin/sh","-c"]
     command:
       - |
-         REACT_APP_BACKEND_IP=w8t-service:9001 yarn start
+         yarn start
 
     networks:
       - w8t
