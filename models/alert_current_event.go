@@ -9,14 +9,13 @@ import (
 	"watchAlert/globals"
 )
 
-const CachePrefix = "cur-alert-"
+const CachePrefix = "alert-"
 
 type AlertCurEvent struct {
 	RuleId                 string                 `json:"rule_id"`
 	RuleName               string                 `json:"rule_name"`
 	DatasourceType         string                 `json:"datasource_type"`
-	DatasourceId           string                 `json:"-" gorm:"datasource_id"`
-	DatasourceIdList       []string               `json:"datasource_id" gorm:"-"`
+	DatasourceId           string                 `json:"datasource_id" gorm:"datasource_id"`
 	Fingerprint            string                 `json:"fingerprint"`
 	Severity               int64                  `json:"severity"`
 	PromQl                 string                 `json:"prom_ql"`
@@ -42,10 +41,10 @@ type AlertCurEvent struct {
 	DutyUser               string                 `json:"duty_user" gorm:"-"`
 }
 
-func (ace *AlertCurEvent) CurAlertCacheKey(ruleId, fingerprint string) string {
+func (ace *AlertCurEvent) CurAlertCacheKey(ruleId, dsId, fingerprint string) string {
 
-	// cur-alert-xxx-xxx
-	return CachePrefix + ruleId + "-" + fingerprint
+	// alert-xxx-xxx
+	return CachePrefix + ruleId + "-" + dsId + "-" + fingerprint
 
 }
 
@@ -70,7 +69,7 @@ func (ace *AlertCurEvent) SetCache(alert AlertCurEvent, expiration time.Duration
 	globals.DBCli.Where("rule_id = ? and enabled = ?", alert.RuleId, "true").Find(&alertRule)
 	if alertRule.RuleId == alert.RuleId {
 		alertJson, _ := json.Marshal(alert)
-		globals.RedisCli.Set(ace.CurAlertCacheKey(alert.RuleId, alert.Fingerprint), string(alertJson), expiration)
+		globals.RedisCli.Set(ace.CurAlertCacheKey(alert.RuleId, alert.DatasourceId, alert.Fingerprint), string(alertJson), expiration)
 	}
 
 }
@@ -154,7 +153,7 @@ func getJSONValue(data map[string]interface{}, variable string) interface{} {
 
 func (ace *AlertCurEvent) GetFirstTime() int64 {
 
-	ft := ace.GetCache(ace.CurAlertCacheKey(ace.RuleId, ace.Fingerprint)).FirstTriggerTime
+	ft := ace.GetCache(ace.CurAlertCacheKey(ace.RuleId, ace.DatasourceId, ace.Fingerprint)).FirstTriggerTime
 	if ft == 0 {
 		return time.Now().Unix()
 	}
@@ -165,7 +164,7 @@ func (ace *AlertCurEvent) GetFirstTime() int64 {
 func (ace *AlertCurEvent) GetLastEvalTime() int64 {
 
 	curTime := time.Now().Unix()
-	let := ace.GetCache(ace.CurAlertCacheKey(ace.RuleId, ace.Fingerprint)).LastEvalTime
+	let := ace.GetCache(ace.CurAlertCacheKey(ace.RuleId, ace.DatasourceId, ace.Fingerprint)).LastEvalTime
 	if let == 0 || let < curTime {
 		return curTime
 	}
@@ -176,6 +175,6 @@ func (ace *AlertCurEvent) GetLastEvalTime() int64 {
 
 func (ace *AlertCurEvent) GetLastSendTime() int64 {
 
-	return ace.GetCache(ace.CurAlertCacheKey(ace.RuleId, ace.Fingerprint)).LastSendTime
+	return ace.GetCache(ace.CurAlertCacheKey(ace.RuleId, ace.DatasourceId, ace.Fingerprint)).LastSendTime
 
 }

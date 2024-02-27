@@ -17,92 +17,93 @@ type Prometheus struct {
 
 func (p *Prometheus) Query(rule models.AlertRule) {
 
+	var recoverKeys []string
+
 	for _, dsId := range rule.DatasourceIdList {
 
 		resQuery, _, err := prom.NewPromClient(dsId).Query(rule.RuleConfigJson.PromQL)
 		if err != nil {
-			return
-		}
-
-		if resQuery == nil {
-			return
+			continue
 		}
 
 		var curKeys []string
 
-		for _, v := range resQuery {
+		if resQuery != nil {
+			for _, v := range resQuery {
+				fingerprint := v.Labels.FastFingerprint().String()
+				key := p.alertEvent.CurAlertCacheKey(rule.RuleId, dsId, fingerprint)
+				curKeys = append(curKeys, key)
 
-			fingerprint := v.Labels.FastFingerprint().String()
-			key := p.alertEvent.CurAlertCacheKey(rule.RuleId, fingerprint)
-			curKeys = append(curKeys, key)
+				// handle series tags
+				metricMap := make(map[string]interface{})
+				for label, value := range v.Labels {
+					metricMap[string(label)] = string(value)
+				}
+				metricMap["value"] = v.Value
 
-			// handle series tags
-			metricMap := make(map[string]interface{})
-			for label, value := range v.Labels {
-				metricMap[string(label)] = string(value)
+				metricArr := labelMapToArr(metricMap)
+				sort.Strings(metricArr)
+
+				event := models.AlertCurEvent{
+					DatasourceType:       rule.DatasourceType,
+					DatasourceId:         dsId,
+					Fingerprint:          fingerprint,
+					RuleId:               rule.RuleId,
+					RuleName:             rule.RuleName,
+					Severity:             rule.RuleConfigJson.Severity,
+					Instance:             string(v.Labels["instance"]),
+					Metric:               strings.Join(metricArr, ",,"),
+					MetricMap:            metricMap,
+					PromQl:               rule.RuleConfigJson.PromQL,
+					LabelsMap:            rule.LabelsMap,
+					Labels:               rule.Labels,
+					EvalInterval:         rule.EvalInterval,
+					ForDuration:          rule.ForDuration,
+					NoticeId:             rule.NoticeId,
+					NoticeGroupList:      rule.NoticeGroupList,
+					IsRecovered:          false,
+					RepeatNoticeInterval: rule.RepeatNoticeInterval,
+					DutyUser:             "暂无", // 默认暂无值班人员, 渲染模版时会实际判断 Notice 是否存在值班人员
+				}
+				event.Annotations = event.ParserAnnotation(rule.Annotations)
+				event.FirstTriggerTime = event.GetFirstTime()
+				event.LastEvalTime = event.GetLastEvalTime()
+				event.LastSendTime = event.GetLastSendTime()
+
+				p.alertEvent.SetCache(event, 0)
+				err = repo.DBCli.Create(models.AlertCurEvent{}, &event)
+				if err != nil {
+					globals.Logger.Sugar().Errorf("Failed inserting AlertCurEvent into the database: %s", err)
+					continue
+				}
 			}
-			metricMap["value"] = v.Value
-
-			metricArr := labelMapToArr(metricMap)
-			sort.Strings(metricArr)
-
-			event := models.AlertCurEvent{
-				DatasourceType:       rule.DatasourceType,
-				DatasourceIdList:     []string{dsId},
-				Fingerprint:          fingerprint,
-				RuleId:               rule.RuleId,
-				RuleName:             rule.RuleName,
-				Severity:             rule.RuleConfigJson.Severity,
-				Instance:             string(v.Labels["instance"]),
-				Metric:               strings.Join(metricArr, ",,"),
-				MetricMap:            metricMap,
-				PromQl:               rule.RuleConfigJson.PromQL,
-				LabelsMap:            rule.LabelsMap,
-				Labels:               rule.Labels,
-				EvalInterval:         rule.EvalInterval,
-				ForDuration:          rule.ForDuration,
-				NoticeId:             rule.NoticeId,
-				NoticeGroupList:      rule.NoticeGroupList,
-				IsRecovered:          false,
-				RepeatNoticeInterval: rule.RepeatNoticeInterval,
-				DutyUser:             "暂无", // 默认暂无值班人员, 渲染模版时会实际判断 Notice 是否存在值班人员
-			}
-			event.Annotations = event.ParserAnnotation(rule.Annotations)
-			event.FirstTriggerTime = event.GetFirstTime()
-			event.LastEvalTime = event.GetLastEvalTime()
-			event.LastSendTime = event.GetLastSendTime()
-
-			p.alertEvent.SetCache(event, 0)
-			err = repo.DBCli.Create(models.AlertCurEvent{}, &event)
-			if err != nil {
-				return
-			}
-
 		}
 
-		allKey := p.alertCacheKeys(rule)
-
-		recoverKeys := p.getSliceDifference(allKey, curKeys)
+		allKey := p.alertCacheKeys(rule, dsId)
+		recoverKeys = p.getSliceDifference(allKey, curKeys)
 
 		for _, key := range recoverKeys {
-			event := p.alertEvent.GetCache(key)
-			if event.IsRecovered == true {
-				continue
-			}
-			event.IsRecovered = true
-			event.RecoverTime = time.Now().Unix()
-			event.LastSendTime = 0
-			p.alertEvent.SetCache(event, 0)
+			curTime := time.Now().Unix()
+			go func(key string, curTime int64) {
+				event := p.alertEvent.GetCache(key)
+				if event.IsRecovered == true {
+					return
+				}
+				event.IsRecovered = true
+				event.RecoverTime = curTime
+				event.LastSendTime = 0
+				p.alertEvent.SetCache(event, 0)
+			}(key, curTime)
 		}
 
 	}
 
 }
 
-func (p *Prometheus) alertCacheKeys(rule models.AlertRule) []string {
+func (p *Prometheus) alertCacheKeys(rule models.AlertRule, dsId string) []string {
 
 	// 获取所有keys
-	keyPrefix := p.alertEvent.CurAlertCacheKey(rule.RuleId, "*")
+	keyPrefix := p.alertEvent.CurAlertCacheKey(rule.RuleId, dsId, "*")
 	keys, _ := globals.RedisCli.Keys(keyPrefix).Result()
 
 	return keys
