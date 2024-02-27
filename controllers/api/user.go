@@ -180,7 +180,16 @@ func (u *UserController) SearchDutyUser(ctx *gin.Context) {
 
 func (u *UserController) GetUserInfo(ctx *gin.Context) {
 
-	username := jwtUtils.GetUser(ctx.Request.Header.Get("Authorization"))
+	token := ctx.Request.Header.Get("Authorization")
+	code, ok := jwtUtils.IsTokenValid(token)
+	if !ok {
+		if code == 401 {
+			response.TokenFail(ctx)
+			return
+		}
+	}
+
+	username := jwtUtils.GetUser(token)
 
 	userInfo := models.Member{}
 	globals.DBCli.Model(&models.Member{}).Where("user_name = ?", username).Find(&userInfo)
