@@ -3,6 +3,7 @@ package api
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"time"
@@ -35,11 +36,17 @@ func (u *UserController) Login(ctx *gin.Context) {
 		return
 	}
 
-	tokenData, err := jwtUtils.GenerateToken(use.UserId, use.UserName)
+	req.UserId = use.UserId
+	req.Password = hashPassword
+	tokenData, err := jwtUtils.GenerateToken(req)
 	if err != nil {
 		response.Fail(ctx, nil, err.Error())
 		return
 	}
+
+	duration := time.Duration(globals.Config.Jwt.Expire) * time.Second
+	globals.RedisCli.Set("uid-"+use.UserId, cmd.JsonMarshal(use), duration)
+
 	response.Success(ctx, tokenData, "success")
 
 }
@@ -80,9 +87,15 @@ func (u *UserController) Register(ctx *gin.Context) {
 
 func (u *UserController) Update(ctx *gin.Context) {
 
-	var user models.Member
+	var (
+		user   models.Member
+		dbUser models.Member
+	)
 	_ = ctx.ShouldBindJSON(&user)
 
+	globals.DBCli.Model(&models.Member{}).Where("user_id = ?", user.UserId).First(&dbUser)
+
+	user.Password = dbUser.Password
 	err := repo.DBCli.Updates(repo.Updates{
 		Table:   models.Member{},
 		Where:   []string{"user_id = ?", user.UserId},
@@ -92,6 +105,8 @@ func (u *UserController) Update(ctx *gin.Context) {
 		response.Fail(ctx, err.Error(), "failed")
 		return
 	}
+
+	u.changeCache(ctx, user.UserId)
 
 	response.Success(ctx, nil, "success")
 
@@ -139,14 +154,16 @@ func (u *UserController) ChangePass(ctx *gin.Context) {
 	err := repo.DBCli.Update(repo.Update{
 		Table:  models.Member{},
 		Where:  []string{"user_id = ?", id},
-		Update: []string{"password",hashPassword},
+		Update: []string{"password", hashPassword},
 	})
 	if err != nil {
-		response.Fail(ctx,err.Error(),"failed")
+		response.Fail(ctx, err.Error(), "failed")
 		return
 	}
 
-	response.Success(ctx,"","success")
+	u.changeCache(ctx, id)
+
+	response.Success(ctx, "", "success")
 
 }
 
@@ -194,5 +211,24 @@ func (u *UserController) GetUserInfo(ctx *gin.Context) {
 	userInfo := models.Member{}
 	globals.DBCli.Model(&models.Member{}).Where("user_name = ?", username).Find(&userInfo)
 	response.Success(ctx, userInfo, "success")
+
+}
+
+func (u *UserController) changeCache(ctx *gin.Context, userId string) {
+
+	var dbUser models.Member
+	globals.DBCli.Model(&models.Member{}).Where("user_id = ?", userId).First(&dbUser)
+
+	var cacheUser models.Member
+	result, err := globals.RedisCli.Get("uid-" + userId).Result()
+	if err != nil {
+		globals.Logger.Sugar().Error(err)
+		response.Fail(ctx, err.Error(), "failed")
+		return
+	}
+	_ = json.Unmarshal([]byte(result), &cacheUser)
+
+	duration, _ := globals.RedisCli.TTL("uid-" + userId).Result()
+	globals.RedisCli.Set("uid-"+userId, cmd.JsonMarshal(dbUser), duration)
 
 }

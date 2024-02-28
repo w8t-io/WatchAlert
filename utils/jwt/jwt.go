@@ -1,11 +1,13 @@
 package utils
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/spf13/viper"
 	"time"
 	"watchAlert/globals"
+	"watchAlert/models"
 )
 
 // 把签发的秘钥 抛出来
@@ -15,6 +17,7 @@ var stSignKey = []byte(viper.GetString("jwt.WatchAlert"))
 type JwtCustomClaims struct {
 	ID             string
 	Name           string
+	Pass           string
 	StandardClaims jwt.StandardClaims
 }
 
@@ -30,12 +33,13 @@ func (j JwtCustomClaims) Valid() error {
 }
 
 // GenerateToken 生成Token
-func GenerateToken(id string, name string) (string, error) {
+func GenerateToken(user models.Member) (string, error) {
 
 	// 初始化
 	iJwtCustomClaims := JwtCustomClaims{
-		ID:   id,
-		Name: name,
+		ID:   user.UserId,
+		Name: user.UserName,
+		Pass: user.Password,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Unix() + globals.Config.Jwt.Expire,
 			IssuedAt:  time.Now().Unix(),
@@ -71,6 +75,18 @@ func IsTokenValid(tokenStr string) (int64, bool) {
 	// 发布者校验
 	if token.StandardClaims.Issuer != AppGuardName {
 		return 400, false
+	}
+
+	// 密码校验, 当修改密码后其他已登陆的终端会被下线。
+	var user models.Member
+	result, err := globals.RedisCli.Get("uid-" + token.ID).Result()
+	if err != nil {
+		return 400, false
+	}
+	_ = json.Unmarshal([]byte(result), &user)
+
+	if token.Pass != user.Password {
+		return 401, false
 	}
 
 	// 校验过期时间

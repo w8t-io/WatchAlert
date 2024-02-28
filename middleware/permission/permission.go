@@ -2,6 +2,7 @@ package permission
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"watchAlert/controllers/response"
 	"watchAlert/globals"
@@ -43,7 +44,7 @@ func Permission() gin.HandlerFunc {
 		// 根据用户角色获取权限
 		err = globals.DBCli.Model(&models.UserRole{}).Where("name = ?", user.Role).First(&role).Error
 		if err != nil {
-			response.PermissionFail(context)
+			response.Fail(context, fmt.Sprintf("获取用户 %s 的角色失败, 角色名称: %s", user.UserName, user.Role), "failed")
 			globals.Logger.Sugar().Errorf("获取用户 %s 的角色失败 -> %s", user.UserName, err.Error())
 			context.Abort()
 			return
