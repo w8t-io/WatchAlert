@@ -38,12 +38,15 @@ func (adss *AlertDataSourceService) Create(dataSource models.AlertDataSource) er
 	httpStr, _ := json.Marshal(dataSource.HTTPJson)
 
 	data := models.AlertDataSource{
-		Id:          id,
-		Name:        dataSource.Name,
-		Type:        dataSource.Type,
-		HTTP:        string(httpStr),
-		Enabled:     strconv.FormatBool(dataSource.EnabledBool),
-		Description: dataSource.Description,
+		Id:               id,
+		Name:             dataSource.Name,
+		Type:             dataSource.Type,
+		HTTP:             string(httpStr),
+		AliCloudEndpoint: dataSource.AliCloudEndpoint,
+		AliCloudAk:       dataSource.AliCloudAk,
+		AliCloudSk:       dataSource.AliCloudSk,
+		Enabled:          strconv.FormatBool(dataSource.EnabledBool),
+		Description:      dataSource.Description,
 	}
 
 	err = repo.DBCli.Create(models.AlertDataSource{}, &data)
@@ -63,12 +66,15 @@ func (adss *AlertDataSourceService) Update(dataSource models.AlertDataSource) er
 		Table: models.AlertDataSource{},
 		Where: []string{"id = ?", dataSource.Id},
 		Updates: models.AlertDataSource{
-			Id:          dataSource.Id,
-			Name:        dataSource.Name,
-			Type:        dataSource.Type,
-			HTTP:        string(httpStr),
-			Enabled:     strconv.FormatBool(dataSource.EnabledBool),
-			Description: dataSource.Description,
+			Id:               dataSource.Id,
+			Name:             dataSource.Name,
+			Type:             dataSource.Type,
+			HTTP:             string(httpStr),
+			AliCloudEndpoint: dataSource.AliCloudEndpoint,
+			AliCloudAk:       dataSource.AliCloudAk,
+			AliCloudSk:       dataSource.AliCloudSk,
+			Enabled:          strconv.FormatBool(dataSource.EnabledBool),
+			Description:      dataSource.Description,
 		},
 	}
 

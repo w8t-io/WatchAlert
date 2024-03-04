@@ -242,11 +242,8 @@ func (ec *EvalConsume) handleAlert(alerts []models.AlertCurEvent) {
 
 	noticeData := services.NewInterAlertNoticeService().GetNoticeObject(noticeId)
 
-	switch alertOne.DatasourceType {
-	case "Prometheus":
-		prom := &notice.Prometheus{}
-		notice.NewEntryNotice(prom, alertOne, noticeData)
-	}
+	var tmpl notice.Template
+	notice.NewEntryNotice(&tmpl, alertOne, noticeData)
 
 }
 

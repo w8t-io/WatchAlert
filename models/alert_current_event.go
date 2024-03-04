@@ -2,9 +2,7 @@ package models
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
-	"strings"
 	"time"
 	"watchAlert/globals"
 )
@@ -19,7 +17,6 @@ type AlertCurEvent struct {
 	Fingerprint            string                 `json:"fingerprint"`
 	Severity               int64                  `json:"severity"`
 	PromQl                 string                 `json:"prom_ql"`
-	Instance               string                 `json:"instance"`
 	Metric                 string                 `json:"-" gorm:"metric"`
 	MetricMap              map[string]interface{} `json:"metric" gorm:"-"`
 	LabelsMap              map[string]string      `json:"labels" gorm:"-"`
@@ -32,12 +29,12 @@ type AlertCurEvent struct {
 	Annotations            string                 `json:"annotations" gorm:"-"`
 	IsRecovered            bool                   `json:"is_recovered" gorm:"-"`
 	FirstTriggerTime       int64                  `json:"first_trigger_time"` // 第一次触发时间
-	FirstTriggerTimeFormat string                 `json:"-" gorm:"-"`
+	FirstTriggerTimeFormat string                 `json:"first_trigger_time_format" gorm:"-"`
 	RepeatNoticeInterval   int64                  `json:"repeat_notice_interval"`  // 重复通知间隔时间
 	LastEvalTime           int64                  `json:"last_eval_time" gorm:"-"` // 上一次评估时间
 	LastSendTime           int64                  `json:"last_send_time" gorm:"-"` // 上一次发送时间
 	RecoverTime            int64                  `json:"recover_time" gorm:"-"`   // 恢复时间
-	RecoverTimeFormat      string                 `json:"-" gorm:"-"`
+	RecoverTimeFormat      string                 `json:"recover_time_format" gorm:"-"`
 	DutyUser               string                 `json:"duty_user" gorm:"-"`
 }
 
@@ -103,57 +100,9 @@ func (ace *AlertCurEvent) DelCache(key string) {
 
 }
 
-// ParserAnnotation 处理变量形式的字符串，替换为对应的值
-func (ace *AlertCurEvent) ParserAnnotation(annotations string) string {
+func (ace *AlertCurEvent) GetFirstTime(key string) int64 {
 
-	// 查找变量形式的字符串，并替换为对应的值
-	result := annotations
-	for strings.Contains(result, "${") && strings.Contains(result, "}") {
-		startIndex := strings.Index(result, "${")
-		endIndex := strings.Index(result, "}")
-		if startIndex == -1 || endIndex == -1 || endIndex <= startIndex {
-			break
-		}
-
-		// 获取变量名称
-		variable := result[startIndex+2 : endIndex]
-
-		// 获取对应的值
-		value := getJSONValue(ace.MetricMap, variable)
-
-		// 替换变量形式的字符串为对应的值
-		result = strings.Replace(result, "${"+variable+"}", fmt.Sprintf("%v", value), 1)
-	}
-
-	return result
-
-}
-
-// 通过变量形式 ${key} 获取 JSON 数据中的值
-func getJSONValue(data map[string]interface{}, variable string) interface{} {
-	// 将变量形式的字符串分割为键名数组
-	keys := strings.Split(variable, ".")
-
-	// 逐级获取 JSON 数据中的值
-	value := data
-	for _, key := range keys {
-		if v, ok := value[key]; ok {
-			if nextValue, ok := v.(map[string]interface{}); ok {
-				value = nextValue
-			} else {
-				return v
-			}
-		} else {
-			return nil
-		}
-	}
-
-	return nil
-}
-
-func (ace *AlertCurEvent) GetFirstTime() int64 {
-
-	ft := ace.GetCache(ace.CurAlertCacheKey(ace.RuleId, ace.DatasourceId, ace.Fingerprint)).FirstTriggerTime
+	ft := ace.GetCache(key).FirstTriggerTime
 	if ft == 0 {
 		return time.Now().Unix()
 	}
@@ -161,10 +110,10 @@ func (ace *AlertCurEvent) GetFirstTime() int64 {
 
 }
 
-func (ace *AlertCurEvent) GetLastEvalTime() int64 {
+func (ace *AlertCurEvent) GetLastEvalTime(key string) int64 {
 
 	curTime := time.Now().Unix()
-	let := ace.GetCache(ace.CurAlertCacheKey(ace.RuleId, ace.DatasourceId, ace.Fingerprint)).LastEvalTime
+	let := ace.GetCache(key).LastEvalTime
 	if let == 0 || let < curTime {
 		return curTime
 	}
@@ -173,8 +122,8 @@ func (ace *AlertCurEvent) GetLastEvalTime() int64 {
 
 }
 
-func (ace *AlertCurEvent) GetLastSendTime() int64 {
+func (ace *AlertCurEvent) GetLastSendTime(key string) int64 {
 
-	return ace.GetCache(ace.CurAlertCacheKey(ace.RuleId, ace.DatasourceId, ace.Fingerprint)).LastSendTime
+	return ace.GetCache(key).LastSendTime
 
 }

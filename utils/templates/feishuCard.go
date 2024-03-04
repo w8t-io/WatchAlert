@@ -35,7 +35,7 @@ func (f *FeiShu) Template(alert models.AlertCurEvent, notice models.AlertNotice)
 		defaultTemplate.Card.Elements = tmplC.Elements
 		defaultTemplate.Card.Header = tmplC.Header
 		cardContentString = cmd.JsonMarshal(defaultTemplate)
-		cardContentString = ParserTemplate("", alert, cardContentString)
+		cardContentString = ParserTemplate("Card", alert, cardContentString)
 
 	} else {
 

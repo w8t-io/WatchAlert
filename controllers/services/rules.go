@@ -10,7 +10,6 @@ import (
 
 type RuleService struct {
 	rule chan *models.AlertRule
-	quit chan *string
 }
 
 type InterRuleService interface {
@@ -24,7 +23,6 @@ type InterRuleService interface {
 func NewInterRuleService() InterRuleService {
 	return &RuleService{
 		rule: queue.AlertRuleChannel,
-		quit: queue.QuitAlertRuleChannel,
 	}
 }
 
@@ -60,10 +58,14 @@ func (rs *RuleService) Update(rule models.AlertRule) error {
 	globals.DBCli.Model(&models.AlertRule{}).Where("rule_id = ?", rule.RuleId).Find(&alertInfo)
 
 	if alertInfo.Enabled == "true" && newRule.EnabledBool == false {
-		rs.quit <- &newRule.RuleId
+		if cancel, exists := queue.WatchCtxMap[newRule.RuleId]; exists {
+			cancel()
+		}
 	}
 	if alertInfo.Enabled == "true" && newRule.EnabledBool == true {
-		rs.quit <- &newRule.RuleId
+		if cancel, exists := queue.WatchCtxMap[newRule.RuleId]; exists {
+			cancel()
+		}
 	}
 
 	// 删除缓存
@@ -78,7 +80,7 @@ func (rs *RuleService) Update(rule models.AlertRule) error {
 	// 启动协程
 	if newRule.EnabledBool {
 		rs.rule <- newRule
-		globals.Logger.Sugar().Infof("重启 RuleId 为 %s 的Watch 进程", newRule.RuleId)
+		globals.Logger.Sugar().Infof("重启 RuleId 为 %s 的 Watch 进程", newRule.RuleId)
 	}
 
 	// 更新数据
@@ -112,7 +114,10 @@ func (rs *RuleService) Delete(id string) error {
 	// 退出该规则的协程
 	if alertRule.EnabledBool {
 		globals.Logger.Sugar().Infof("停止 RuleId 为 %s 的Watch 进程", id)
-		rs.quit <- &id
+		if cancel, exists := queue.WatchCtxMap[id]; exists {
+			cancel()
+		}
+		//rs.quit <- &id
 	}
 
 	iter := globals.RedisCli.Scan(0, models.CachePrefix+id+"*", 0).Iterator()

@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -12,10 +13,10 @@ import (
 
 type AlertRuleWork struct {
 	sync.RWMutex
+	query.RuleQuery
 	rule       chan *models.AlertRule
 	alertEvent models.AlertCurEvent
 	quit       <-chan *string
-	prom       query.Prometheus
 }
 
 type InterAlertRuleWork interface {
@@ -26,7 +27,6 @@ func NewInterAlertRuleWork() InterAlertRuleWork {
 
 	return &AlertRuleWork{
 		rule: queue.AlertRuleChannel,
-		quit: queue.QuitAlertRuleChannel,
 	}
 
 }
@@ -38,7 +38,10 @@ func (arw *AlertRuleWork) Run() {
 		for {
 			select {
 			case rule := <-arw.rule:
-				go arw.watch(*rule)
+				// 创建一个用于停止协程的上下文
+				ctx, cancel := context.WithCancel(context.Background())
+				queue.WatchCtxMap[rule.RuleId] = cancel
+				go arw.watch(*rule, ctx)
 			}
 		}
 	}()
@@ -48,7 +51,7 @@ func (arw *AlertRuleWork) Run() {
 
 }
 
-func (arw *AlertRuleWork) watch(rule models.AlertRule) {
+func (arw *AlertRuleWork) watch(rule models.AlertRule, ctx context.Context) {
 
 	ei := time.Second * time.Duration(rule.EvalInterval)
 	timer := time.NewTimer(ei)
@@ -56,16 +59,12 @@ func (arw *AlertRuleWork) watch(rule models.AlertRule) {
 	for {
 		select {
 		case <-timer.C:
-			switch rule.GetRuleType() {
-			case "Prometheus":
-				globals.Logger.Sugar().Infof("规则评估 -> %v", rule)
-				arw.prom.Query(rule)
-			}
+			globals.Logger.Sugar().Infof("规则评估 -> %v", rule)
+			arw.Query(rule)
 
-		case <-arw.quit:
-			timer.Stop()
+		case <-ctx.Done():
+			globals.Logger.Sugar().Infof("停止 RuleId 为 %v 的 Watch 协程", rule.RuleId)
 			return
-
 		}
 
 		timer.Reset(time.Second * time.Duration(rule.EvalInterval))

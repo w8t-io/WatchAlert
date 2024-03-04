@@ -9,7 +9,7 @@ import (
 )
 
 type EntryNotice interface {
-	NewTemplate(alert models.AlertCurEvent, notice models.AlertNotice) Prometheus
+	NewTemplate(alert models.AlertCurEvent, notice models.AlertNotice) Template
 }
 
 func NewEntryNotice(e EntryNotice, alert models.AlertCurEvent, notice models.AlertNotice) {
@@ -32,14 +32,14 @@ func NewEntryNotice(e EntryNotice, alert models.AlertCurEvent, notice models.Ale
 func SendNotice(notice models.AlertNotice, cardContentMsg string) error {
 
 	cardContentByte := bytes.NewReader([]byte(cardContentMsg))
-	_, err := http.Post(notice.Hook, cardContentByte)
-	if err != nil {
-		globals.Logger.Sugar().Error("Hook 发送失败 ->", err.Error())
+	res, err := http.Post(notice.Hook, cardContentByte)
+	if err != nil || res.StatusCode != 200 {
+		globals.Logger.Sugar().Errorf("Hook 发送失败 -> code: %d data: %s", res.StatusCode, cardContentMsg)
 		return err
 	}
 
 	globals.Logger.Sugar().Info("Hook 发送成功 ->", cardContentMsg)
 
 	return nil
-	
+
 }

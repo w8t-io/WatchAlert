@@ -36,15 +36,34 @@ type AlertRule struct {
 	Annotations          string     `json:"annotations"`
 	RuleConfigJson       RuleConfig `json:"ruleConfig" gorm:"-"`
 	RuleConfig           string     `json:"-" gorm:"ruleConfig"`
-	LabelsMap            LabelsMap   `json:"labels" gorm:"-"`
-	Labels               string      `json:"-" gorm:"labels"`
-	NoticeId             string      `json:"noticeId"`
-	NoticeGroupList      NoticeGroup `json:"noticeGroup" gorm:"-"`
-	NoticeGroup          string      `json:"-" gorm:"noticeGroup"`
-	EnabledBool          bool        `json:"enabled" gorm:"-"`
-	Enabled              string      `json:"-" gorm:"enabled"`
+	LabelsMap            LabelsMap  `json:"labels" gorm:"-"`
+	Labels               string     `json:"-" gorm:"labels"`
+
+	// 阿里云SLS
+	AliCloudSLSConfig     string            `json:"-" gorm:"alicloudSLSConfig"`
+	AliCloudSLSConfigJson AliCloudSLSConfig `json:"alicloudSLSConfig" gorm:"-"`
+
+	NoticeId        string      `json:"noticeId"`
+	NoticeGroupList NoticeGroup `json:"noticeGroup" gorm:"-"`
+	NoticeGroup     string      `json:"-" gorm:"noticeGroup"`
+	EnabledBool     bool        `json:"enabled" gorm:"-"`
+	Enabled         string      `json:"-" gorm:"enabled"`
 }
 
+type AliCloudSLSConfig struct {
+	AliCloudProject             string                `json:"alicloudProject"`
+	AliCloudLogstore            string                `json:"alicloudLogstore"`
+	AliCloudQueryLogScope       int                   `json:"alicloudQueryLogScope"` // 相对查询的日志范围（单位分钟）,1(min) 5(min)...
+	AliCloudQuerySQL            string                `json:"alicloudQuerySql"`
+	AliCloudEvalConditionString string                `json:"-" gorm:"alicloudEvalCondition"`
+	AliCloudEvalConditionJson   AliCloudEvalCondition `json:"alicloudEvalCondition" gorm:"-"`
+}
+
+type AliCloudEvalCondition struct {
+	Type     string `json:"type"`
+	Operator string `json:"operator"`
+	Value    int    `json:"value"`
+}
 type Fingerprint uint64
 
 var (
@@ -92,16 +111,20 @@ func (a *AlertRule) GetRuleType() string {
 func (a *AlertRule) ParserRuleToJson() *AlertRule {
 
 	var (
-		ruleConfig       RuleConfig
-		labelsMap        map[string]string
-		noticeGroupList  NoticeGroup
-		datasourceIdList []string
+		ruleConfig        RuleConfig
+		aliCloudSLSConfig AliCloudSLSConfig
+		labelsMap         map[string]string
+		noticeGroupList   NoticeGroup
+		datasourceIdList  []string
 	)
 
 	a.RuleIdStr = RuleId(a.RuleId)
 
 	_ = json.Unmarshal([]byte(a.RuleConfig), &ruleConfig)
 	a.RuleConfigJson = ruleConfig
+
+	_ = json.Unmarshal([]byte(a.AliCloudSLSConfig), &aliCloudSLSConfig)
+	a.AliCloudSLSConfigJson = aliCloudSLSConfig
 
 	_ = json.Unmarshal([]byte(a.Labels), &labelsMap)
 	a.LabelsMap = labelsMap
@@ -122,6 +145,12 @@ func (a *AlertRule) ParserRuleToGorm() *AlertRule {
 
 	ruleConfigStr, _ := json.Marshal(a.RuleConfigJson)
 	a.RuleConfig = string(ruleConfigStr)
+
+	aliCloudSLSConfigString, _ := json.Marshal(a.AliCloudSLSConfigJson)
+	a.AliCloudSLSConfig = string(aliCloudSLSConfigString)
+
+	aliCloudEvalConditionString, _ := json.Marshal(a.AliCloudSLSConfigJson.AliCloudEvalConditionJson)
+	a.AliCloudSLSConfigJson.AliCloudEvalConditionString = string(aliCloudEvalConditionString)
 
 	labelsStr, _ := json.Marshal(a.LabelsMap)
 	a.Labels = string(labelsStr)
