@@ -223,8 +223,6 @@ func (u *UserController) changeCache(ctx *gin.Context, userId string) {
 	result, err := globals.RedisCli.Get("uid-" + userId).Result()
 	if err != nil {
 		globals.Logger.Sugar().Error(err)
-		response.Fail(ctx, err.Error(), "failed")
-		return
 	}
 	_ = json.Unmarshal([]byte(result), &cacheUser)
 
