@@ -54,6 +54,8 @@ services:
     privileged: true
     ports:
       - "9001:9001"
+    depends_on:
+      - w8t-mysql
     networks:
       - w8t
 
@@ -74,7 +76,7 @@ services:
     networks:
       - w8t
 
-  redis:
+  w8t-redis:
     container_name: w8t-redis
     image: redis:latest
     environment:
@@ -83,7 +85,7 @@ services:
     networks:
       - w8t
 
-  mysql:
+  w8t-mysql:
     container_name: w8t-mysql
     image: mysql:latest
     ports:

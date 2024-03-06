@@ -10,6 +10,7 @@ type RuleTemplate struct {
 	RuleGroupName     string            `json:"ruleGroupName"`
 	RuleName          string            `json:"ruleName"`
 	DatasourceType    string            `json:"datasourceType"`
+	Severity          int64             `json:"severity"`
 	PrometheusConfig  PrometheusConfig  `json:"prometheusConfig" gorm:"prometheusConfig;serializer:json"`
 	AliCloudSLSConfig AliCloudSLSConfig `json:"alicloudSLSConfig" gorm:"alicloudSLSConfig;serializer:json"`
 	LokiConfig        LokiConfig        `json:"lokiConfig" gorm:"lokiConfig;serializer:json"`
