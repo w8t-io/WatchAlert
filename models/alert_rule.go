@@ -9,39 +9,34 @@ import (
 
 type Duration int64
 
-type RuleConfig struct {
-	PromQL   string `json:"promQL"`
-	Severity int64  `json:"severity"`
-}
-
 type LabelsMap map[string]string
-
-type RuleId string
 
 type NoticeGroup []map[string]string
 
 type AlertRule struct {
 	//gorm.Model
-	RuleIdStr            RuleId     `json:"ruleId" gorm:"-"`
-	RuleId               string     `json:"-" gorm:"ruleId"`
-	RuleGroupId          string     `json:"ruleGroupId"`
-	DatasourceType       string     `json:"datasourceType"`
-	DatasourceIdList     []string   `json:"datasourceId" gorm:"-"`
-	DatasourceId         string     `json:"-" gorm:"datasourceId"`
-	RuleName             string     `json:"ruleName"`
-	EvalInterval         int64      `json:"evalInterval"`
-	ForDuration          int64      `json:"forDuration"`
-	RepeatNoticeInterval int64      `json:"repeatNoticeInterval"`
-	Description          string     `json:"description"`
-	Annotations          string     `json:"annotations"`
-	RuleConfigJson       RuleConfig `json:"ruleConfig" gorm:"-"`
-	RuleConfig           string     `json:"-" gorm:"ruleConfig"`
-	LabelsMap            LabelsMap  `json:"labels" gorm:"-"`
-	Labels               string     `json:"-" gorm:"labels"`
+	RuleId               string    `json:"ruleId" gorm:"ruleId"`
+	RuleGroupId          string    `json:"ruleGroupId"`
+	DatasourceType       string    `json:"datasourceType"`
+	DatasourceIdList     []string  `json:"datasourceId" gorm:"-"`
+	DatasourceId         string    `json:"-" gorm:"datasourceId"`
+	RuleName             string    `json:"ruleName"`
+	EvalInterval         int64     `json:"evalInterval"`
+	ForDuration          int64     `json:"forDuration"`
+	RepeatNoticeInterval int64     `json:"repeatNoticeInterval"`
+	Description          string    `json:"description"`
+	Annotations          string    `json:"annotations"`
+	Labels               LabelsMap `json:"labels" gorm:"labels;serializer:json"`
+	Severity             int64     `json:"severity"`
+
+	// Prometheus
+	PrometheusConfig PrometheusConfig `json:"prometheusConfig" gorm:"prometheusConfig;serializer:json"`
 
 	// 阿里云SLS
-	AliCloudSLSConfig     string            `json:"-" gorm:"alicloudSLSConfig"`
-	AliCloudSLSConfigJson AliCloudSLSConfig `json:"alicloudSLSConfig" gorm:"-"`
+	AliCloudSLSConfig AliCloudSLSConfig `json:"alicloudSLSConfig" gorm:"alicloudSLSConfig;serializer:json"`
+
+	// Loki
+	LokiConfig LokiConfig `json:"lokiConfig" gorm:"lokiConfig;serializer:json"`
 
 	NoticeId        string      `json:"noticeId"`
 	NoticeGroupList NoticeGroup `json:"noticeGroup" gorm:"-"`
@@ -50,20 +45,31 @@ type AlertRule struct {
 	Enabled         string      `json:"-" gorm:"enabled"`
 }
 
-type AliCloudSLSConfig struct {
-	AliCloudProject             string                `json:"alicloudProject"`
-	AliCloudLogstore            string                `json:"alicloudLogstore"`
-	AliCloudQueryLogScope       int                   `json:"alicloudQueryLogScope"` // 相对查询的日志范围（单位分钟）,1(min) 5(min)...
-	AliCloudQuerySQL            string                `json:"alicloudQuerySql"`
-	AliCloudEvalConditionString string                `json:"-" gorm:"alicloudEvalCondition"`
-	AliCloudEvalConditionJson   AliCloudEvalCondition `json:"alicloudEvalCondition" gorm:"-"`
+type PrometheusConfig struct {
+	PromQL string `json:"promQL"`
 }
 
-type AliCloudEvalCondition struct {
+type AliCloudSLSConfig struct {
+	Project       string        `json:"project"`
+	Logstore      string        `json:"logstore"`
+	LogQL         string        `json:"logQL"`    // 查询语句
+	LogScope      int           `json:"logScope"` // 相对查询的日志范围（单位分钟）,1(min) 5(min)...
+	EvalCondition EvalCondition `json:"evalCondition" gorm:"evalCondition;serializer:json"`
+}
+
+type LokiConfig struct {
+	LogQL         string        `json:"logQL"`
+	LogScope      int           `json:"logScope"`
+	EvalCondition EvalCondition `json:"evalCondition" gorm:"evalCondition;serializer:json"`
+}
+
+// EvalCondition 日志评估条件
+type EvalCondition struct {
 	Type     string `json:"type"`
 	Operator string `json:"operator"`
 	Value    int    `json:"value"`
 }
+
 type Fingerprint uint64
 
 var (
@@ -78,13 +84,13 @@ const SeparatorByte byte = 255
 func (a *AlertRule) Fingerprint() Fingerprint {
 
 	// 没有配置标签，则用随机生成
-	if len(a.LabelsMap) == 0 {
+	if len(a.Labels) == 0 {
 		return Fingerprint(emptyLabelSignature)
 	}
 
 	// 定义map存储所有标签
-	labelNames := make([]string, 0, len(a.LabelsMap))
-	for labelName := range a.LabelsMap {
+	labelNames := make([]string, 0, len(a.Labels))
+	for labelName := range a.Labels {
 		labelNames = append(labelNames, labelName)
 	}
 	// 标签排序。用于根据标签做hash
@@ -95,7 +101,7 @@ func (a *AlertRule) Fingerprint() Fingerprint {
 	for _, labelName := range labelNames {
 		sum = hash.HashAdd(sum, labelName)
 		sum = hash.HashAddByte(sum, SeparatorByte)
-		sum = hash.HashAdd(sum, string(a.LabelsMap[labelName]))
+		sum = hash.HashAdd(sum, a.Labels[labelName])
 		sum = hash.HashAddByte(sum, SeparatorByte)
 	}
 	return Fingerprint(sum)
@@ -111,23 +117,9 @@ func (a *AlertRule) GetRuleType() string {
 func (a *AlertRule) ParserRuleToJson() *AlertRule {
 
 	var (
-		ruleConfig        RuleConfig
-		aliCloudSLSConfig AliCloudSLSConfig
-		labelsMap         map[string]string
-		noticeGroupList   NoticeGroup
-		datasourceIdList  []string
+		noticeGroupList  NoticeGroup
+		datasourceIdList []string
 	)
-
-	a.RuleIdStr = RuleId(a.RuleId)
-
-	_ = json.Unmarshal([]byte(a.RuleConfig), &ruleConfig)
-	a.RuleConfigJson = ruleConfig
-
-	_ = json.Unmarshal([]byte(a.AliCloudSLSConfig), &aliCloudSLSConfig)
-	a.AliCloudSLSConfigJson = aliCloudSLSConfig
-
-	_ = json.Unmarshal([]byte(a.Labels), &labelsMap)
-	a.LabelsMap = labelsMap
 
 	_ = json.Unmarshal([]byte(a.NoticeGroup), &noticeGroupList)
 	a.NoticeGroupList = noticeGroupList
@@ -142,18 +134,6 @@ func (a *AlertRule) ParserRuleToJson() *AlertRule {
 }
 
 func (a *AlertRule) ParserRuleToGorm() *AlertRule {
-
-	ruleConfigStr, _ := json.Marshal(a.RuleConfigJson)
-	a.RuleConfig = string(ruleConfigStr)
-
-	aliCloudSLSConfigString, _ := json.Marshal(a.AliCloudSLSConfigJson)
-	a.AliCloudSLSConfig = string(aliCloudSLSConfigString)
-
-	aliCloudEvalConditionString, _ := json.Marshal(a.AliCloudSLSConfigJson.AliCloudEvalConditionJson)
-	a.AliCloudSLSConfigJson.AliCloudEvalConditionString = string(aliCloudEvalConditionString)
-
-	labelsStr, _ := json.Marshal(a.LabelsMap)
-	a.Labels = string(labelsStr)
 
 	noticeGroup, _ := json.Marshal(a.NoticeGroupList)
 	a.NoticeGroup = string(noticeGroup)

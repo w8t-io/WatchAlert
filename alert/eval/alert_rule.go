@@ -16,7 +16,6 @@ type AlertRuleWork struct {
 	query.RuleQuery
 	rule       chan *models.AlertRule
 	alertEvent models.AlertCurEvent
-	quit       <-chan *string
 }
 
 type InterAlertRuleWork interface {

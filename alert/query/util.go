@@ -3,6 +3,8 @@ package query
 import (
 	"fmt"
 	"sort"
+	"strconv"
+	"time"
 	"watchAlert/controllers/repo"
 	"watchAlert/globals"
 	"watchAlert/models"
@@ -62,9 +64,7 @@ func parserDefaultEvent(key string, rule models.AlertRule) models.AlertCurEvent 
 		DatasourceType:       rule.DatasourceType,
 		RuleId:               rule.RuleId,
 		RuleName:             rule.RuleName,
-		Severity:             rule.RuleConfigJson.Severity,
-		PromQl:               rule.RuleConfigJson.PromQL,
-		LabelsMap:            rule.LabelsMap,
+		Severity:             rule.Severity,
 		Labels:               rule.Labels,
 		EvalInterval:         rule.EvalInterval,
 		ForDuration:          rule.ForDuration,
@@ -89,6 +89,59 @@ func saveEventCache(event models.AlertCurEvent) {
 	if err != nil {
 		globals.Logger.Sugar().Errorf("Failed inserting AlertCurEvent into the database: %s", err)
 		return
+	}
+
+}
+
+// 获取时间区间的开始时间
+func parserDuration(curTime time.Time, logScope int, timeType string) time.Time {
+
+	duration, err := time.ParseDuration(strconv.Itoa(logScope) + timeType)
+	if err != nil {
+		globals.Logger.Sugar().Error("解析相对时间失败 ->", err.Error())
+		return time.Time{}
+	}
+	startsAt := curTime.Add(-duration)
+
+	return startsAt
+
+}
+
+// 评估告警条件
+func evalCondition(f func(), count int, ec models.EvalCondition) {
+
+	switch ec.Type {
+	case "count":
+		switch ec.Operator {
+		case ">":
+			if count > ec.Value {
+				f()
+			}
+		case ">=":
+			if count >= ec.Value {
+				f()
+			}
+		case "<":
+			if count < ec.Value {
+				f()
+			}
+		case "<=":
+			if count <= ec.Value {
+				f()
+			}
+		case "==":
+			if count == ec.Value {
+				f()
+			}
+		case "!=":
+			if count != ec.Value {
+				f()
+			}
+		default:
+			globals.Logger.Sugar().Error("无效的评估条件", ec.Type, ec.Operator, ec.Value)
+		}
+	default:
+		globals.Logger.Sugar().Error("无效的评估类型", ec.Type)
 	}
 
 }

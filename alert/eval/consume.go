@@ -260,7 +260,7 @@ func (ec *EvalConsume) noticeSplitGroup(alert models.AlertCurEvent) string {
 		}
 
 		// 从Metric中获取Key/Value
-		for metricKey, metricValue := range alert.MetricMap {
+		for metricKey, metricValue := range alert.Metric {
 			// 如果配置分组的Key/Value 和 Metric中的Key/Value 一致，则使用分组的 noticeId，匹配不到则用默认的。
 			for _, noticeInfo := range noticeGroup {
 				value, ok := noticeInfo[metricKey]
@@ -279,7 +279,7 @@ func (ec *EvalConsume) noticeSplitGroup(alert models.AlertCurEvent) string {
 // RecordAlertHisEvent 记录历史告警
 func (ec *EvalConsume) RecordAlertHisEvent(alert models.AlertCurEvent) error {
 
-	metric, _ := json.Marshal(alert.MetricMap)
+	metric, _ := json.Marshal(alert.Metric)
 	hisData := models.AlertHisEvent{
 		DatasourceId:     alert.DatasourceId,
 		Fingerprint:      alert.Fingerprint,

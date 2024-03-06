@@ -28,8 +28,7 @@ func NewInterRuleService() InterRuleService {
 
 func (rs *RuleService) Create(rule models.AlertRule) error {
 
-	rule.RuleIdStr = models.RuleId("a-" + cmd.RandId())
-	rule.RuleId = string(rule.RuleIdStr)
+	rule.RuleId = "a-" + cmd.RandId()
 
 	newRule := rule.ParserRuleToGorm()
 
@@ -45,8 +44,6 @@ func (rs *RuleService) Create(rule models.AlertRule) error {
 }
 
 func (rs *RuleService) Update(rule models.AlertRule) error {
-
-	rule.RuleId = string(rule.RuleIdStr)
 
 	newRule := rule.ParserRuleToGorm()
 

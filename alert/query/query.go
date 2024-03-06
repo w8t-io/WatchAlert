@@ -5,8 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"sort"
-	"strconv"
-	"strings"
 	"time"
 	"watchAlert/globals"
 	"watchAlert/models"
@@ -30,6 +28,8 @@ func (rq *RuleQuery) Query(rule models.AlertRule) {
 			curKeys = rq.prometheus(dsId, rule)
 		case "AliCloudSLS":
 			curKeys = rq.aliCloudSLS(dsId, rule)
+		case "Loki":
+			curKeys = rq.loki(dsId, rule)
 		}
 
 		// 处理恢复逻辑
@@ -57,7 +57,7 @@ func (rq *RuleQuery) Query(rule models.AlertRule) {
 // Prometheus 数据源
 func (rq *RuleQuery) prometheus(datasourceId string, rule models.AlertRule) []string {
 
-	resQuery, _, err := client.NewPromClient(datasourceId).Query(rule.RuleConfigJson.PromQL)
+	resQuery, _, err := client.NewPromClient(datasourceId).Query(rule.PrometheusConfig.PromQL)
 	if err != nil {
 		return nil
 	}
@@ -83,9 +83,8 @@ func (rq *RuleQuery) prometheus(datasourceId string, rule models.AlertRule) []st
 			event := parserDefaultEvent(key, rule)
 			event.DatasourceId = datasourceId
 			event.Fingerprint = fingerprint
-			event.Metric = strings.Join(metricArr, ",,")
-			event.MetricMap = metricMap
-			event.Annotations = cmd.ParserVariables(rule.Annotations, event.MetricMap)
+			event.Metric = metricMap
+			event.Annotations = cmd.ParserVariables(rule.Annotations, event.Metric)
 
 			saveEventCache(event)
 		}
@@ -99,19 +98,13 @@ func (rq *RuleQuery) prometheus(datasourceId string, rule models.AlertRule) []st
 func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) []string {
 
 	curAt := time.Now()
-	duration, err := time.ParseDuration(strconv.Itoa(rule.AliCloudSLSConfigJson.AliCloudQueryLogScope) + "m")
-	if err != nil {
-		globals.Logger.Sugar().Error("解析相对时间失败 ->", err.Error())
-		return nil
-	}
-
-	startsAt := curAt.Add(-duration)
+	startsAt := parserDuration(curAt, rule.AliCloudSLSConfig.LogScope, "m")
 	args := client.AliCloudSlsQueryArgs{
-		Project:  rule.AliCloudSLSConfigJson.AliCloudProject,
-		Logstore: rule.AliCloudSLSConfigJson.AliCloudLogstore,
+		Project:  rule.AliCloudSLSConfig.Project,
+		Logstore: rule.AliCloudSLSConfig.Logstore,
 		StartsAt: int32(startsAt.Unix()),
 		EndsAt:   int32(curAt.Unix()),
-		Query:    rule.AliCloudSLSConfigJson.AliCloudQuerySQL,
+		Query:    rule.AliCloudSLSConfig.LogQL,
 	}
 
 	res, err := client.NewAliCloudSlsClient(datasourceId).Query(args)
@@ -133,55 +126,113 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) []s
 	key := rq.alertEvent.CurAlertCacheKey(rule.RuleId, datasourceId, fingerprint)
 	curKeys = append(curKeys, key)
 
-	/*
-		触发告警的条件
-		- 有数据 > number	// 有数据并大于多少条。
-	*/
-	t := rule.AliCloudSLSConfigJson.AliCloudEvalConditionJson.Type
-	operator := rule.AliCloudSLSConfigJson.AliCloudEvalConditionJson.Operator
-	value := rule.AliCloudSLSConfigJson.AliCloudEvalConditionJson.Value
-
 	event := func() {
 		event := parserDefaultEvent(key, rule)
 		event.DatasourceId = datasourceId
 		event.Fingerprint = fingerprint
 		bodyString, _ := json.Marshal(res.Body[0])
+
+		// 标签，用于推送告警消息时 获取相关 label 信息
+		metricMap := make(map[string]interface{})
+		err := json.Unmarshal(bodyString, &metricMap)
+		if err != nil {
+			globals.Logger.Sugar().Errorf("解析 SLS Metric Label 失败, %s", err.Error())
+		}
+
+		// 删除多余 label
+		delete(metricMap, "_image_name_")
+		delete(metricMap, "content")
+		delete(metricMap, "__topic__")
+		delete(metricMap, "_container_ip_")
+		delete(metricMap, "_pod_uid_")
+		delete(metricMap, "_source_")
+		delete(metricMap, "_time_")
+		delete(metricMap, "__time__")
+
 		event.Annotations = string(bodyString)
+		event.Metric = metricMap
+
 		saveEventCache(event)
 	}
 
-	switch t {
-	case "count":
-		switch operator {
-		case ">":
-			if count > value {
-				event()
-			}
-		case ">=":
-			if count >= value {
-				event()
-			}
-		case "<":
-			if count < value {
-				event()
-			}
-		case "<=":
-			if count <= value {
-				event()
-			}
-		case "==":
-			if count == value {
-				event()
-			}
-		case "!=":
-			if count != value {
-				event()
-			}
-		default:
-			globals.Logger.Sugar().Error("无效的评估条件", t, operator, value)
+	options := models.EvalCondition{
+		/*
+			触发告警的条件
+			- 有数据 > number	// 有数据并大于多少条。
+		*/
+		Type:     rule.AliCloudSLSConfig.EvalCondition.Type,
+		Operator: rule.AliCloudSLSConfig.EvalCondition.Operator,
+		Value:    rule.AliCloudSLSConfig.EvalCondition.Value,
+	}
+
+	// 评估告警条件
+	evalCondition(event, count, options)
+
+	return curKeys
+
+}
+
+// Loki 数据源
+func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) []string {
+
+	curAt := time.Now().UTC()
+	startsAt := parserDuration(curAt, rule.LokiConfig.LogScope, "m")
+	args := client.QueryOptions{
+		Query:   rule.LokiConfig.LogQL,
+		StartAt: startsAt.Format(time.RFC3339Nano),
+		EndAt:   curAt.Format(time.RFC3339Nano),
+	}
+
+	res, err := client.NewLokiClient(datasourceId).QueryRange(args)
+	if err != nil {
+		globals.Logger.Sugar().Errorf("查询 Loki 日志失败 %s", err.Error())
+		return nil
+	}
+
+	var curKeys []string
+
+	for _, v := range res {
+
+		count := len(v.Values)
+		if count <= 0 {
+			continue
 		}
-	default:
-		globals.Logger.Sugar().Error("无效的评估类型", t)
+
+		// 使用 Loki 提供的 Stream label 进行 Hash 作为告警指纹.
+		h := md5.New()
+		streamString := cmd.JsonMarshal(v.Stream)
+		h.Write([]byte(streamString))
+		fingerprint := hex.EncodeToString(h.Sum(nil))
+		key := rq.alertEvent.CurAlertCacheKey(rule.RuleId, datasourceId, fingerprint)
+		curKeys = append(curKeys, key)
+
+		// 标签，用于推送告警消息时 获取相关 label 信息
+		metricMap := make(map[string]interface{})
+		for label, value := range v.Stream {
+			metricMap[label] = value
+		}
+
+		delete(metricMap, "stream")
+
+		event := func() {
+			event := parserDefaultEvent(key, rule)
+			event.DatasourceId = datasourceId
+			event.Fingerprint = fingerprint
+			bodyString, _ := json.Marshal(v.Values)
+			event.Metric = metricMap
+			event.Annotations = string(bodyString)
+			saveEventCache(event)
+		}
+
+		options := models.EvalCondition{
+			Type:     rule.LokiConfig.EvalCondition.Type,
+			Operator: rule.LokiConfig.EvalCondition.Operator,
+			Value:    rule.LokiConfig.EvalCondition.Value,
+		}
+
+		// 评估告警条件
+		evalCondition(event, count, options)
+
 	}
 
 	return curKeys

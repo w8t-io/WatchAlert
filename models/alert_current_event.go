@@ -17,10 +17,8 @@ type AlertCurEvent struct {
 	Fingerprint            string                 `json:"fingerprint"`
 	Severity               int64                  `json:"severity"`
 	PromQl                 string                 `json:"prom_ql"`
-	Metric                 string                 `json:"-" gorm:"metric"`
-	MetricMap              map[string]interface{} `json:"metric" gorm:"-"`
-	LabelsMap              map[string]string      `json:"labels" gorm:"-"`
-	Labels                 string                 `json:"-" gorm:"labels"`
+	Metric                 map[string]interface{} `json:"metric" gorm:"metric;serializer:json"`
+	Labels                 map[string]string      `json:"labels" gorm:"labels;serializer:json"`
 	EvalInterval           int64                  `json:"eval_interval"`
 	ForDuration            int64                  `json:"for_duration"`
 	NoticeId               string                 `json:"notice_id" gorm:"-"` // 默认通知对象ID

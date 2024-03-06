@@ -31,6 +31,7 @@ func ParserTemplate(defineName string, alert models.AlertCurEvent, templateStr s
 
 	if defineName == "Card" {
 		err = tmpl.Execute(&buf, alert)
+		// 当前告警的 json 反序列化成 map 对象, 用于解析报警事件详情中的 ${xx} 变量
 		data := parserEvent(alert)
 		return cmd.ParserVariables(buf.String(), data)
 	}
@@ -65,15 +66,23 @@ func parserEvent(alert models.AlertCurEvent) map[string]interface{} {
 		eventJson = strings.ReplaceAll(eventJson, "\\{", "{")
 		eventJson = strings.ReplaceAll(eventJson, "\\", "")
 		eventJson = strings.ReplaceAll(eventJson, "\\\\\\\\", "")
-		_ = json.Unmarshal([]byte(eventJson), &data)
+		err := json.Unmarshal([]byte(eventJson), &data)
+		if err != nil {
+			globals.Logger.Sugar().Error("parserEvent Unmarshal failed for AliCloudSLS: ", err)
+		}
 
 		annotations, _ := data["annotations"].(map[string]interface{})
 		// 将content进行转义, 在 ${annotations.content} 获取日志信息时用到.
 		contentString := strconv.Quote(cmd.JsonMarshal(annotations["content"]))
 		annotations["content"] = contentString
-	} else {
+	}
+
+	if alert.DatasourceType == "Prometheus" || alert.DatasourceType == "Loki" {
 		eventJson := cmd.JsonMarshal(alert)
-		_ = json.Unmarshal([]byte(eventJson), &data)
+		err := json.Unmarshal([]byte(eventJson), &data)
+		if err != nil {
+			globals.Logger.Sugar().Error("parserEvent Unmarshal failed for Prometheus or Loki: ", err)
+		}
 	}
 
 	return data

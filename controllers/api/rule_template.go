@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"watchAlert/controllers/repo"
 	"watchAlert/controllers/response"
@@ -61,9 +60,6 @@ func (rtg *RuleTmplController) Create(ctx *gin.Context) {
 	var resRT models.RuleTemplate
 	_ = ctx.ShouldBindJSON(&resRT)
 
-	ruleConfigStr, _ := json.Marshal(resRT.RuleConfigJson)
-	resRT.RuleConfig = string(ruleConfigStr)
-
 	err := repo.DBCli.Create(&models.RuleTemplate{}, &resRT)
 	if err != nil {
 		response.Fail(ctx, err.Error(), "failed")
@@ -94,12 +90,6 @@ func (rtg *RuleTmplController) List(ctx *gin.Context) {
 
 	var resRT []models.RuleTemplate
 	globals.DBCli.Model(&models.RuleTemplate{}).Where("rule_group_name = ?", ruleGroupName).Find(&resRT)
-
-	for k, v := range resRT {
-		var ruleC models.RuleConfig
-		_ = json.Unmarshal([]byte(v.RuleConfig), &ruleC)
-		resRT[k].RuleConfigJson = ruleC
-	}
 
 	response.Success(ctx, resRT, "success")
 

@@ -7,12 +7,13 @@ type RuleTemplateGroup struct {
 }
 
 type RuleTemplate struct {
-	RuleGroupName  string     `json:"ruleGroupName"`
-	RuleName       string     `json:"ruleName"`
-	DatasourceType string     `json:"datasourceType"`
-	RuleConfigJson RuleConfig `json:"ruleConfig" gorm:"-"`
-	RuleConfig     string     `json:"-" gorm:"ruleConfig"`
-	EvalInterval   int64      `json:"evalInterval"`
-	ForDuration    int64      `json:"forDuration"`
-	Annotations    string     `json:"annotations"`
+	RuleGroupName     string            `json:"ruleGroupName"`
+	RuleName          string            `json:"ruleName"`
+	DatasourceType    string            `json:"datasourceType"`
+	PrometheusConfig  PrometheusConfig  `json:"prometheusConfig" gorm:"prometheusConfig;serializer:json"`
+	AliCloudSLSConfig AliCloudSLSConfig `json:"alicloudSLSConfig" gorm:"alicloudSLSConfig;serializer:json"`
+	LokiConfig        LokiConfig        `json:"lokiConfig" gorm:"lokiConfig;serializer:json"`
+	EvalInterval      int64             `json:"evalInterval"`
+	ForDuration       int64             `json:"forDuration"`
+	Annotations       string            `json:"annotations"`
 }
