@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"strconv"
-	"strings"
 	"text/template"
 	"time"
 	"watchAlert/globals"
@@ -58,23 +57,14 @@ func parserEvent(alert models.AlertCurEvent) map[string]interface{} {
 
 	if alert.DatasourceType == "AliCloudSLS" {
 		eventJson := cmd.JsonMarshal(alert)
-		eventJson = strings.ReplaceAll(eventJson, "\"{", "{")
-		eventJson = strings.ReplaceAll(eventJson, "\\\\\"", "\"")
-		eventJson = strings.ReplaceAll(eventJson, "\\\"", "\"")
-		eventJson = strings.ReplaceAll(eventJson, "}\"", "}")
-		eventJson = strings.ReplaceAll(eventJson, "}\\n\"", "}")
-		eventJson = strings.ReplaceAll(eventJson, "\\{", "{")
-		eventJson = strings.ReplaceAll(eventJson, "\\", "")
-		eventJson = strings.ReplaceAll(eventJson, "\\\\\\\\", "")
 		err := json.Unmarshal([]byte(eventJson), &data)
 		if err != nil {
 			globals.Logger.Sugar().Error("parserEvent Unmarshal failed for AliCloudSLS: ", err)
 		}
 
-		annotations, _ := data["annotations"].(map[string]interface{})
-		// 将content进行转义, 在 ${annotations.content} 获取日志信息时用到.
-		contentString := strconv.Quote(cmd.JsonMarshal(annotations["content"]))
-		annotations["content"] = contentString
+		// 需要转义, 日志中可能会出现特殊符号
+		alarmInfo := strconv.Quote(data["annotations"].(string))
+		data["annotations"] = alarmInfo[1 : len(alarmInfo)-1]
 	}
 
 	if alert.DatasourceType == "Prometheus" || alert.DatasourceType == "Loki" {
