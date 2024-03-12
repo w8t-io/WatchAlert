@@ -37,10 +37,12 @@ func (arw *AlertRuleWork) Run() {
 		for {
 			select {
 			case rule := <-arw.rule:
-				// 创建一个用于停止协程的上下文
-				ctx, cancel := context.WithCancel(context.Background())
-				queue.WatchCtxMap[rule.RuleId] = cancel
-				go arw.watch(*rule, ctx)
+				if rule.EnabledBool {
+					// 创建一个用于停止协程的上下文
+					ctx, cancel := context.WithCancel(context.Background())
+					queue.WatchCtxMap[rule.RuleId] = cancel
+					go arw.watch(*rule, ctx)
+				}
 			}
 		}
 	}()
