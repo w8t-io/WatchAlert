@@ -118,10 +118,29 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) []s
 		return nil
 	}
 
+	bodyString, _ := json.Marshal(res.Body[0])
+	// 标签，用于推送告警消息时 获取相关 label 信息
+	metricMap := make(map[string]interface{})
+	err = json.Unmarshal(bodyString, &metricMap)
+	if err != nil {
+		globals.Logger.Sugar().Errorf("解析 SLS Metric Label 失败, %s", err.Error())
+	}
+
+	// 删除多余 label
+	delete(metricMap, "_image_name_")
+	delete(metricMap, "__topic__")
+	delete(metricMap, "_container_ip_")
+	delete(metricMap, "_pod_uid_")
+	delete(metricMap, "_source_")
+	delete(metricMap, "_time_")
+	delete(metricMap, "__time__")
+	annotation := metricMap["content"].(string)
+	delete(metricMap, "content")
+
 	var curKeys []string
 	h := md5.New()
-	// 使用 Query 查询条件进行 Hash 作为告警指纹，可以有效地作为恢复逻辑的判断条件。
-	h.Write([]byte((*res.Headers["x-log-where-query"])))
+	// 使用 label 进行 Hash 作为告警指纹，可以有效地作为恢复逻辑的判断条件。
+	h.Write([]byte(cmd.JsonMarshal(metricMap)))
 	fingerprint := hex.EncodeToString(h.Sum(nil))
 	key := rq.alertEvent.CurAlertCacheKey(rule.RuleId, datasourceId, fingerprint)
 	curKeys = append(curKeys, key)
@@ -130,26 +149,7 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) []s
 		event := parserDefaultEvent(key, rule)
 		event.DatasourceId = datasourceId
 		event.Fingerprint = fingerprint
-		bodyString, _ := json.Marshal(res.Body[0])
-
-		// 标签，用于推送告警消息时 获取相关 label 信息
-		metricMap := make(map[string]interface{})
-		err := json.Unmarshal(bodyString, &metricMap)
-		if err != nil {
-			globals.Logger.Sugar().Errorf("解析 SLS Metric Label 失败, %s", err.Error())
-		}
-
-		// 删除多余 label
-		delete(metricMap, "_image_name_")
-		delete(metricMap, "content")
-		delete(metricMap, "__topic__")
-		delete(metricMap, "_container_ip_")
-		delete(metricMap, "_pod_uid_")
-		delete(metricMap, "_source_")
-		delete(metricMap, "_time_")
-		delete(metricMap, "__time__")
-
-		event.Annotations = string(bodyString)
+		event.Annotations = annotation
 		event.Metric = metricMap
 
 		saveEventCache(event)
@@ -213,6 +213,7 @@ func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) []string {
 		}
 
 		delete(metricMap, "stream")
+		delete(metricMap, "filename")
 
 		event := func() {
 			event := parserDefaultEvent(key, rule)
