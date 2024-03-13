@@ -1,7 +1,6 @@
 package services
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"watchAlert/controllers/repo"
@@ -35,13 +34,11 @@ func (adss *AlertDataSourceService) Create(dataSource models.AlertDataSource) er
 
 	id := "ds-" + cmd.RandId()
 
-	httpStr, _ := json.Marshal(dataSource.HTTPJson)
-
 	data := models.AlertDataSource{
 		Id:               id,
 		Name:             dataSource.Name,
 		Type:             dataSource.Type,
-		HTTP:             string(httpStr),
+		HTTP:             dataSource.HTTP,
 		AliCloudEndpoint: dataSource.AliCloudEndpoint,
 		AliCloudAk:       dataSource.AliCloudAk,
 		AliCloudSk:       dataSource.AliCloudSk,
@@ -60,8 +57,6 @@ func (adss *AlertDataSourceService) Create(dataSource models.AlertDataSource) er
 
 func (adss *AlertDataSourceService) Update(dataSource models.AlertDataSource) error {
 
-	httpStr, _ := json.Marshal(dataSource.HTTPJson)
-
 	data := repo.Updates{
 		Table: models.AlertDataSource{},
 		Where: []string{"id = ?", dataSource.Id},
@@ -69,7 +64,7 @@ func (adss *AlertDataSourceService) Update(dataSource models.AlertDataSource) er
 			Id:               dataSource.Id,
 			Name:             dataSource.Name,
 			Type:             dataSource.Type,
-			HTTP:             string(httpStr),
+			HTTP:             dataSource.HTTP,
 			AliCloudEndpoint: dataSource.AliCloudEndpoint,
 			AliCloudAk:       dataSource.AliCloudAk,
 			AliCloudSk:       dataSource.AliCloudSk,
@@ -112,9 +107,6 @@ func (adss *AlertDataSourceService) List() ([]models.AlertDataSource, error) {
 	globals.DBCli.Find(&data)
 
 	for k, v := range data {
-		var httpJson models.HTTP
-		_ = json.Unmarshal([]byte(v.HTTP), &httpJson)
-		data[k].HTTPJson = httpJson
 		data[k].EnabledBool, _ = strconv.ParseBool(v.Enabled)
 	}
 
@@ -139,10 +131,6 @@ func (adss *AlertDataSourceService) Get(id, dsType string) []models.AlertDataSou
 	}
 
 	for k := range data {
-		var httpJson models.HTTP
-		if err = json.Unmarshal([]byte(data[k].HTTP), &httpJson); err == nil {
-			data[k].HTTPJson = httpJson
-		}
 		data[k].EnabledBool, _ = strconv.ParseBool(data[k].Enabled)
 	}
 
@@ -155,7 +143,7 @@ func (adss *AlertDataSourceService) Check(dataSource models.AlertDataSource) err
 	switch dataSource.Type {
 	case "Prometheus":
 		path := "/api/v1/format_query?query=foo/bar"
-		fullPath := dataSource.HTTPJson.URL + path
+		fullPath := dataSource.HTTP.URL + path
 		res, err := http.Get(fullPath)
 		if err != nil {
 			return err

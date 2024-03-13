@@ -23,7 +23,7 @@ func NewPromClient(dsId string) API {
 	datasource := services.NewInterAlertDataSourceService().Get(dsId, "Prometheus")
 
 	client, err := api.NewClient(api.Config{
-		Address: datasource[0].HTTPJson.URL,
+		Address: datasource[0].HTTP.URL,
 	})
 	if err != nil {
 		globals.Logger.Sugar().Errorf("Prometheus 初始化客户端失败: %s", err)
@@ -124,4 +124,3 @@ func ConvertVectors(value model.Value) (lst []Vector) {
 
 	return
 }
-

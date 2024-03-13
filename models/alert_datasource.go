@@ -4,8 +4,7 @@ type AlertDataSource struct {
 	Id               string `json:"id"`
 	Name             string `json:"name"`
 	Type             string `json:"type"`
-	HTTPJson         HTTP   `json:"http" gorm:"-"`
-	HTTP             string `json:"-" gorm:"http"`
+	HTTP             HTTP   `json:"http" gorm:"http;serializer:json"`
 	AliCloudEndpoint string `json:"alicloudEndpoint"`
 	AliCloudAk       string `json:"alicloudAk"`
 	AliCloudSk       string `json:"alicloudSk"`
@@ -16,5 +15,5 @@ type AlertDataSource struct {
 
 type HTTP struct {
 	URL     string `json:"url"`
-	Timeout string `json:"timeout"`
+	Timeout int64  `json:"timeout"`
 }

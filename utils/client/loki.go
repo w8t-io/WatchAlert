@@ -29,11 +29,8 @@ func NewLokiClient(datasourceId string) LokiClient {
 
 	var datasource models.AlertDataSource
 	globals.DBCli.Model(&models.AlertDataSource{}).Where("id = ?", datasourceId).First(&datasource)
-	var httpInfo models.HTTP
-	_ = json.Unmarshal([]byte(datasource.HTTP), &httpInfo)
-	datasource.HTTPJson = httpInfo
 
-	return LokiClient{BaseURL: datasource.HTTPJson.URL}
+	return LokiClient{BaseURL: datasource.HTTP.URL}
 
 }
 
