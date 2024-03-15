@@ -1,5 +1,7 @@
 Server:
   port: "9001"
+  # 定义相同的Group之间发送告警通知的时间间隔(s)
+  groupInterval: 120
 
 MySQL:
   host: 127.0.0.1

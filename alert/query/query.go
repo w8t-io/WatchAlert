@@ -134,6 +134,7 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) []s
 	delete(metricMap, "_source_")
 	delete(metricMap, "_time_")
 	delete(metricMap, "__time__")
+	delete(metricMap, "__tag__:__pack_id__")
 	annotation := metricMap["content"].(string)
 	delete(metricMap, "content")
 

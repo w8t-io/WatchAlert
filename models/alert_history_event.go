@@ -2,11 +2,11 @@ package models
 
 type AlertHisEvent struct {
 	DatasourceId     string            `json:"datasource_id" gorm:"datasource_id"`
+	DatasourceType   string            `json:"datasource_type"`
 	Fingerprint      string            `json:"fingerprint"`
 	RuleId           string            `json:"rule_id"`
 	RuleName         string            `json:"rule_name"`
 	Severity         int64             `json:"severity"`
-	PromQl           string            `json:"prom_ql"`
 	Metric           string            `json:"-" gorm:"metric"`
 	MetricMap        map[string]string `json:"metric" gorm:"-"`
 	EvalInterval     int64             `json:"eval_interval"`

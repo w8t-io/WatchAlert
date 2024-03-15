@@ -10,14 +10,17 @@ import (
 	"watchAlert/controllers/services"
 	"watchAlert/globals"
 	"watchAlert/models"
+	"watchAlert/utils/hash"
 )
 
 type EvalConsume struct {
 	sync.RWMutex
 	models.AlertCurEvent
-	RedisChannel string
-	alertGroups  map[string][]models.AlertCurEvent
-	Timing       map[string]int
+	// 从 Redis 中读取当前告警事件提到内存做处理.
+	alertsMap map[string][]models.AlertCurEvent
+	// 告警分组
+	preStoreAlertGroup map[string][]models.AlertCurEvent
+	Timing             map[string]int
 }
 
 type InterEvalConsume interface {
@@ -27,8 +30,9 @@ type InterEvalConsume interface {
 func NewInterEvalConsumeWork() InterEvalConsume {
 
 	return &EvalConsume{
-		alertGroups: make(map[string][]models.AlertCurEvent),
-		Timing:      make(map[string]int),
+		alertsMap:          make(map[string][]models.AlertCurEvent),
+		preStoreAlertGroup: make(map[string][]models.AlertCurEvent),
+		Timing:             make(map[string]int),
 	}
 
 }
@@ -37,7 +41,7 @@ func NewInterEvalConsumeWork() InterEvalConsume {
 func (ec *EvalConsume) Run() {
 
 	// 定义相同的Group之间发送告警通知的时间间隔（s）
-	groupInterval := 30
+	groupInterval := globals.Config.Server.GroupInterval
 
 	action := func() {
 		alertsCurEventKeys := ec.getRedisKeys()
@@ -48,19 +52,19 @@ func (ec *EvalConsume) Run() {
 			}
 
 			ec.Lock()
-			ec.alertGroups[alert.RuleId] = append(ec.alertGroups[alert.RuleId], alert)
+			ec.alertsMap[alert.RuleId] = append(ec.alertsMap[alert.RuleId], alert)
 			ec.Unlock()
 		}
-		for key, alerts := range ec.alertGroups {
+		for key, alerts := range ec.alertsMap {
 			if len(alerts) == 0 {
 				continue
 			}
 
 			// 如果当前告警组时间到达 groupInterval 的时间则推送告警
 			if ec.Timing[key] >= groupInterval {
-				curEvent := ec.filterAlerts(ec.alertGroups[key])
+				curEvent := ec.filterAlerts(ec.alertsMap[key])
 				ec.fireAlertEvent(curEvent)
-				// 执行一波后 必须重新清空alertGroups组中的数据。
+				// 执行一波后 必须重新清空alerts组中的数据。
 				ec.clear(key)
 			}
 			ec.Timing[key]++
@@ -79,8 +83,11 @@ func (ec *EvalConsume) Run() {
 
 func (ec *EvalConsume) clear(ruleId string) {
 
-	for key := range ec.alertGroups {
-		delete(ec.alertGroups, key)
+	for key := range ec.alertsMap {
+		delete(ec.alertsMap, key)
+	}
+	for key := range ec.preStoreAlertGroup {
+		delete(ec.preStoreAlertGroup, key)
 	}
 	ec.Timing[ruleId] = 0
 
@@ -114,12 +121,12 @@ func (ec *EvalConsume) getRedisKeys() []string {
 }
 
 // 过滤告警
-func (ec *EvalConsume) filterAlerts(alertGroups []models.AlertCurEvent) map[string][]models.AlertCurEvent {
+func (ec *EvalConsume) filterAlerts(alerts []models.AlertCurEvent) map[string][]models.AlertCurEvent {
 
-	var newAlertGroups = make(map[string][]models.AlertCurEvent)
+	var newAlertsMap = make(map[string][]models.AlertCurEvent)
 
 	// 根据相同指纹进行去重
-	newAlert := ec.removeDuplicates(alertGroups)
+	newAlert := ec.removeDuplicates(alerts)
 	// 将通过指纹去重后以Fingerprint为Key的Map转换成以原来RuleName为Key的Map (同一告警类型聚合)
 	for _, alert := range newAlert {
 		// 持续时间
@@ -128,11 +135,11 @@ func (ec *EvalConsume) filterAlerts(alertGroups []models.AlertCurEvent) map[stri
 		}
 		// 重复通知，如果是初次推送不用进一步判断。
 		if alert.LastSendTime == 0 || alert.LastEvalTime >= alert.LastSendTime+alert.RepeatNoticeInterval*60 {
-			newAlertGroups[alert.RuleName] = append(newAlertGroups[alert.RuleName], alert)
+			newAlertsMap[alert.RuleName] = append(newAlertsMap[alert.RuleName], alert)
 		}
 	}
 
-	return newAlertGroups
+	return newAlertsMap
 
 }
 
@@ -157,54 +164,105 @@ func (ec *EvalConsume) removeDuplicates(alerts []models.AlertCurEvent) []models.
 	return newAlerts
 }
 
-func (ec *EvalConsume) fireAlertEvent(alertGroups map[string][]models.AlertCurEvent) {
+// 触发告警通知
+func (ec *EvalConsume) fireAlertEvent(alertsMap map[string][]models.AlertCurEvent) {
+	var wg sync.WaitGroup
 
-	fireAlertsMap := make(map[string][]models.AlertCurEvent)
-	recoverAlertsMap := make(map[string][]models.AlertCurEvent)
-
-	var (
-		syncLock sync.Mutex
-		wg       sync.WaitGroup
-	)
-
-	for _, alerts := range alertGroups {
+	for _, alerts := range alertsMap {
 		for _, alert := range alerts {
 			wg.Add(1)
 			go func(alert models.AlertCurEvent) {
 				defer wg.Done()
+				ec.addAlertToGroup(alert)
 				if alert.IsRecovered {
-					syncLock.Lock()
-					recoverAlertsMap[alert.RuleName] = append(recoverAlertsMap[alert.RuleName], alert)
-					syncLock.Unlock()
-
-					ec.DelCache(ec.CurAlertCacheKey(alert.RuleId, alert.DatasourceId, alert.Fingerprint))
-					// 记录历史告警
+					ec.removeAlertFromCache(alert)
 					err := ec.RecordAlertHisEvent(alert)
 					if err != nil {
+						globals.Logger.Sugar().Error(err.Error())
 						return
 					}
-				} else if !alert.IsRecovered {
-					syncLock.Lock()
-					fireAlertsMap[alert.RuleName] = append(fireAlertsMap[alert.RuleName], alert)
-					syncLock.Unlock()
 				}
-
 			}(alert)
 		}
 	}
 
 	wg.Wait()
 
-	for key, _ := range fireAlertsMap {
-		ec.handleAlert(fireAlertsMap[key])
+	for _, alerts := range ec.preStoreAlertGroup {
+		ec.handleAlert(alerts)
 	}
-
-	for key, _ := range recoverAlertsMap {
-		ec.handleAlert(recoverAlertsMap[key])
-	}
-
 }
 
+// 删除缓存
+func (ec *EvalConsume) removeAlertFromCache(alert models.AlertCurEvent) {
+	key := ec.CurAlertCacheKey(alert.RuleId, alert.DatasourceId, alert.Fingerprint)
+	ec.DelCache(key)
+}
+
+// 添加告警到组
+func (ec *EvalConsume) addAlertToGroup(alert models.AlertCurEvent) {
+	// 如果没有定义通知组，则直接添加到 ruleId 组中
+	if alert.NoticeGroupList == nil || len(alert.NoticeGroupList) == 0 {
+		ec.addAlertToGroupByRuleId(alert)
+		return
+	}
+
+	// 遍历所有的 Metric
+	matched := false
+	for key, value := range alert.Metric {
+		// 遍历所有的通知组
+		for _, noticeGroup := range alert.NoticeGroupList {
+			// 如果当前 Metric 的 key 和 value 与通知组中的相匹配
+			if noticeGroup["key"] == key && noticeGroup["value"] == value.(string) {
+				// 计算分组的 ID 并添加警报到对应的组
+				groupId := ec.calculateGroupHash(key, value.(string))
+				ec.addAlertToGroupById(groupId, alert)
+				matched = true
+				break // 找到匹配的组后，跳出内层循环
+			}
+		}
+		if matched {
+			break // 找到匹配的组后，跳出外层循环
+		}
+	}
+
+	// 如果没有找到任何匹配的组，则添加到 ruleId 组中
+	if !matched {
+		ec.addAlertToGroupByRuleId(alert)
+	}
+}
+
+// 以Id作为key添加到组
+func (ec *EvalConsume) addAlertToGroupById(groupId string, alert models.AlertCurEvent) {
+	ec.Lock()
+	defer ec.Unlock()
+
+	// 将告警和恢复消息再分组
+	if alert.IsRecovered {
+		groupId = "recovered-" + groupId
+	}
+
+	ec.preStoreAlertGroup[groupId] = append(ec.preStoreAlertGroup[groupId], alert)
+}
+
+// 以ruleName作为key添加到组
+func (ec *EvalConsume) addAlertToGroupByRuleId(alert models.AlertCurEvent) {
+	ec.Lock()
+	defer ec.Unlock()
+
+	// 将告警和恢复消息再分组
+	if alert.IsRecovered {
+		alert.RuleId = "recovered-" + alert.RuleId
+	}
+	ec.preStoreAlertGroup[alert.RuleId] = append(ec.preStoreAlertGroup[alert.RuleId], alert)
+}
+
+// hash
+func (ec *EvalConsume) calculateGroupHash(key, value string) string {
+	return hash.Md5Hash([]byte(key + ":" + value))
+}
+
+// 推送告警
 func (ec *EvalConsume) handleAlert(alerts []models.AlertCurEvent) {
 
 	if alerts == nil {
@@ -223,22 +281,22 @@ func (ec *EvalConsume) handleAlert(alerts []models.AlertCurEvent) {
 
 	var wg sync.WaitGroup
 	for _, alert := range alerts {
-		wg.Add(1)
-		go func(alert models.AlertCurEvent) {
-			defer wg.Done()
-			if !alert.IsRecovered {
+		if !alert.IsRecovered {
+			wg.Add(1)
+			go func(alert models.AlertCurEvent) {
+				defer wg.Done()
 				alert.LastSendTime = curTime
 				alert.SetCache(alert, 0)
-			}
-		}(alert)
+			}(alert)
+		}
 	}
 	wg.Wait()
 
-	// 聚合
+	// 聚合, 每组告警取第一位的告警数据
 	alertOne = alerts[0]
 	alertOne.Annotations += "\n" + content
 
-	noticeId := ec.noticeSplitGroup(alertOne)
+	noticeId := ec.getNoticeGroupId(alertOne)
 
 	noticeData := services.NewInterAlertNoticeService().GetNoticeObject(noticeId)
 
@@ -247,8 +305,8 @@ func (ec *EvalConsume) handleAlert(alerts []models.AlertCurEvent) {
 
 }
 
-// 告警分组
-func (ec *EvalConsume) noticeSplitGroup(alert models.AlertCurEvent) string {
+// 获取告警分组的通知ID
+func (ec *EvalConsume) getNoticeGroupId(alert models.AlertCurEvent) string {
 
 	if len(alert.NoticeGroupList) != 0 {
 		var noticeGroup []map[string]string
@@ -281,12 +339,12 @@ func (ec *EvalConsume) RecordAlertHisEvent(alert models.AlertCurEvent) error {
 
 	metric, _ := json.Marshal(alert.Metric)
 	hisData := models.AlertHisEvent{
+		DatasourceType:   alert.DatasourceType,
 		DatasourceId:     alert.DatasourceId,
 		Fingerprint:      alert.Fingerprint,
 		RuleId:           alert.RuleId,
 		RuleName:         alert.RuleName,
 		Severity:         alert.Severity,
-		PromQl:           alert.PromQl,
 		Metric:           string(metric),
 		EvalInterval:     alert.EvalInterval,
 		Annotations:      alert.Annotations,

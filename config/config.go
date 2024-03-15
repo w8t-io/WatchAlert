@@ -8,7 +8,8 @@ type App struct {
 }
 
 type Server struct {
-	Port string `json:"port"`
+	Port          string `json:"port"`
+	GroupInterval int    `json:"groupInterval"`
 }
 
 type MySQL struct {
