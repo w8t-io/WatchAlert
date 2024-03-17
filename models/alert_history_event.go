@@ -6,7 +6,7 @@ type AlertHisEvent struct {
 	Fingerprint      string            `json:"fingerprint"`
 	RuleId           string            `json:"rule_id"`
 	RuleName         string            `json:"rule_name"`
-	Severity         int64             `json:"severity"`
+	Severity         string            `json:"severity"`
 	Metric           string            `json:"-" gorm:"metric"`
 	MetricMap        map[string]string `json:"metric" gorm:"-"`
 	EvalInterval     int64             `json:"eval_interval"`

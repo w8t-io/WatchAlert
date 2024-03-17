@@ -11,11 +11,7 @@ type AlertNoticeObjectController struct{}
 func (ano *AlertNoticeObjectController) List(ctx *gin.Context) {
 
 	object := alertNoticeService.SearchNoticeObject()
-	ctx.JSON(200, gin.H{
-		"code": "4000",
-		"data": object,
-		"msg":  "查询成功",
-	})
+	response.Success(ctx, object, "success")
 
 }
 
@@ -63,11 +59,7 @@ func (ano *AlertNoticeObjectController) Get(ctx *gin.Context) {
 
 	uuid := ctx.Query("uuid")
 	object := alertNoticeService.GetNoticeObject(uuid)
-	ctx.JSON(200, gin.H{
-		"code": "4000",
-		"data": object,
-		"msg":  "查询成功",
-	})
+	response.Success(ctx, object, "success")
 
 }
 
@@ -75,10 +67,6 @@ func (ano *AlertNoticeObjectController) CheckNoticeStatus(ctx *gin.Context) {
 
 	uuid := ctx.Query("uuid")
 	status := alertNoticeService.CheckNoticeObjectStatus(uuid)
-	ctx.JSON(200, gin.H{
-		"code": "4000",
-		"data": status,
-		"msg":  "检查成功",
-	})
+	response.Success(ctx, status, "success")
 
 }

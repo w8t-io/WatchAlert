@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"watchAlert/controllers/response"
 	"watchAlert/models"
 )
 
@@ -15,18 +16,10 @@ func (adsc *AlertDataSourceController) Create(ctx *gin.Context) {
 	err := dataSourceService.Create(dataSource)
 
 	if err != nil {
-		ctx.JSON(401, gin.H{
-			"code": "401",
-			"data": err.Error(),
-			"msg":  "failed",
-		})
+		response.Fail(ctx, err.Error(), "failed")
 		return
 	}
-	ctx.JSON(200, gin.H{
-		"code": "200",
-		"data": "",
-		"msg":  "success",
-	})
+	response.Success(ctx, "", "success")
 
 }
 
@@ -34,12 +27,7 @@ func (adsc *AlertDataSourceController) List(ctx *gin.Context) {
 
 	data, _ := dataSourceService.List()
 
-	ctx.JSON(200, gin.H{
-		"code": "200",
-		"data": data,
-		"msg":  "success",
-	})
-
+	response.Success(ctx, data, "success")
 }
 
 func (adsc *AlertDataSourceController) Search(ctx *gin.Context) {
@@ -48,11 +36,7 @@ func (adsc *AlertDataSourceController) Search(ctx *gin.Context) {
 	dsType := ctx.Query("dsType")
 
 	data := dataSourceService.Get(id, dsType)
-	ctx.JSON(200, gin.H{
-		"code": "200",
-		"data": data,
-		"msg":  "success",
-	})
+	response.Success(ctx, data, "success")
 
 }
 
@@ -64,18 +48,10 @@ func (adsc *AlertDataSourceController) Update(ctx *gin.Context) {
 	err := dataSourceService.Update(datasource)
 
 	if err != nil {
-		ctx.JSON(401, gin.H{
-			"code": "401",
-			"data": err.Error(),
-			"msg":  "failed",
-		})
+		response.Fail(ctx, err.Error(), "failed")
+		return
 	}
-
-	ctx.JSON(200, gin.H{
-		"code": "200",
-		"data": "",
-		"msg":  "success",
-	})
+	response.Success(ctx, "", "success")
 
 }
 
@@ -84,16 +60,9 @@ func (adsc *AlertDataSourceController) Delete(ctx *gin.Context) {
 	id := ctx.Query("id")
 	err := dataSourceService.Delete(id)
 	if err != nil {
-		ctx.JSON(401, gin.H{
-			"code": "401",
-			"data": err.Error(),
-			"msg":  "failed",
-		})
+		response.Fail(ctx, err.Error(), "failed")
+		return
 	}
+	response.Success(ctx, "", "success")
 
-	ctx.JSON(200, gin.H{
-		"code": "200",
-		"data": "",
-		"msg":  "success",
-	})
 }

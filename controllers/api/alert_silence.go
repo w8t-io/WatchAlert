@@ -20,18 +20,12 @@ func (asc *AlertSilenceController) Create(ctx *gin.Context) {
 
 	err := alertSilenceService.CreateAlertSilence(silence)
 	if err != nil {
-		ctx.JSON(401, gin.H{
-			"code": "401",
-			"data": err.Error(),
-			"msg":  "failed",
-		})
+		response.Fail(ctx, err.Error(), "failed")
 		return
 	}
-	ctx.JSON(200, gin.H{
-		"code": "200",
-		"data": "",
-		"msg":  "success",
-	})
+
+	response.Success(ctx, "", "success")
+
 }
 
 func (asc *AlertSilenceController) Update(ctx *gin.Context) {
@@ -47,7 +41,7 @@ func (asc *AlertSilenceController) Update(ctx *gin.Context) {
 		response.Fail(ctx, err.Error(), "failed")
 		return
 	}
-	
+
 	response.Success(ctx, data, "success")
 
 }
@@ -57,18 +51,11 @@ func (asc *AlertSilenceController) Delete(ctx *gin.Context) {
 	id := ctx.Query("id")
 	err := alertSilenceService.DeleteAlertSilence(id)
 	if err != nil {
-		ctx.JSON(401, gin.H{
-			"code": "401",
-			"data": err.Error(),
-			"msg":  "failed",
-		})
+		response.Fail(ctx, err.Error(), "failed")
 		return
 	}
-	ctx.JSON(200, gin.H{
-		"code": "200",
-		"data": "",
-		"msg":  "success",
-	})
+
+	response.Success(ctx, "", "success")
 
 }
 
@@ -76,17 +63,10 @@ func (asc *AlertSilenceController) List(ctx *gin.Context) {
 
 	data, err := alertSilenceService.ListAlertSilence()
 	if err != nil {
-		ctx.JSON(401, gin.H{
-			"code": "401",
-			"data": err.Error(),
-			"msg":  "failed",
-		})
+		response.Fail(ctx, err.Error(), "failed")
 		return
 	}
-	ctx.JSON(200, gin.H{
-		"code": "200",
-		"data": data,
-		"msg":  "success",
-	})
+
+	response.Success(ctx, data, "success")
 
 }

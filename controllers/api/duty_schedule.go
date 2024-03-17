@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"watchAlert/controllers/response"
 	"watchAlert/models"
 )
 
@@ -14,18 +15,12 @@ func (sc *DutyScheduleController) Create(ctx *gin.Context) {
 
 	data, err := dutyScheduleService.CreateAndUpdateDutySystem(dutySchedule)
 	if err != nil {
-		ctx.JSON(401, gin.H{
-			"code": 3003,
-			"data": err.Error(),
-			"msg":  "创建失败",
-		})
+		response.Fail(ctx, err.Error(), "failed")
 		return
 	}
-	ctx.JSON(200, gin.H{
-		"code": 3000,
-		"data": data,
-		"msg":  "创建成功",
-	})
+
+	response.Success(ctx, data, "success")
+
 }
 
 func (sc *DutyScheduleController) Update(ctx *gin.Context) {
@@ -35,18 +30,12 @@ func (sc *DutyScheduleController) Update(ctx *gin.Context) {
 
 	err := dutyScheduleService.UpdateDutySystem(dutySchedule)
 	if err != nil {
-		ctx.JSON(401, gin.H{
-			"code": 3004,
-			"data": err.Error(),
-			"msg":  "更新失败",
-		})
+		response.Fail(ctx, err.Error(), "failed")
 		return
 	}
-	ctx.JSON(200, gin.H{
-		"code": 3000,
-		"data": nil,
-		"msg":  "更新成功",
-	})
+
+	response.Success(ctx, "", "success")
+
 }
 
 func (sc *DutyScheduleController) Select(ctx *gin.Context) {
@@ -56,17 +45,10 @@ func (sc *DutyScheduleController) Select(ctx *gin.Context) {
 
 	data, err := dutyScheduleService.SelectDutySystem(dutyId, date)
 	if err != nil {
-		ctx.JSON(401, gin.H{
-			"code": 3003,
-			"data": err.Error(),
-			"msg":  "查询失败",
-		})
+		response.Fail(ctx, err.Error(), "failed")
 		return
 	}
-	ctx.JSON(200, gin.H{
-		"code": 3000,
-		"data": data,
-		"msg":  "查询成功",
-	})
+
+	response.Success(ctx, data, "success")
 
 }

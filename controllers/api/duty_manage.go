@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"watchAlert/controllers/response"
 	"watchAlert/models"
 	jwtUtils "watchAlert/utils/jwt"
 )
@@ -11,11 +12,7 @@ type DutyManageController struct{}
 func (dmc *DutyManageController) List(ctx *gin.Context) {
 
 	data := dutyManageService.ListDutyManage()
-	ctx.JSON(200, gin.H{
-		"code": 3000,
-		"data": data,
-		"msg":  "查询成功",
-	})
+	response.Success(ctx, data, "success")
 
 }
 
@@ -29,18 +26,11 @@ func (dmc *DutyManageController) Create(ctx *gin.Context) {
 
 	data, err := dutyManageService.CreateDutyManage(dutyManage)
 	if err != nil {
-		ctx.JSON(401, gin.H{
-			"code": 3010,
-			"data": err.Error(),
-			"msg":  "创建失败",
-		})
+		response.Fail(ctx, err.Error(), "failed")
 		return
 	}
-	ctx.JSON(200, gin.H{
-		"code": 3000,
-		"data": data,
-		"msg":  "创建成功",
-	})
+
+	response.Success(ctx, data, "success")
 }
 
 func (dmc *DutyManageController) Update(ctx *gin.Context) {
@@ -50,18 +40,11 @@ func (dmc *DutyManageController) Update(ctx *gin.Context) {
 
 	data, err := dutyManageService.UpdateDutyManage(dutyManage)
 	if err != nil {
-		ctx.JSON(401, gin.H{
-			"code": 3011,
-			"data": err.Error(),
-			"msg":  "更新失败",
-		})
+		response.Fail(ctx, err.Error(), "failed")
 		return
 	}
-	ctx.JSON(200, gin.H{
-		"code": 3000,
-		"data": data,
-		"msg":  "更新成功",
-	})
+
+	response.Success(ctx, data, "success")
 
 }
 
@@ -70,18 +53,11 @@ func (dmc *DutyManageController) Delete(ctx *gin.Context) {
 	id := ctx.Query("id")
 	err := dutyManageService.DeleteDutyManage(id)
 	if err != nil {
-		ctx.JSON(401, gin.H{
-			"code": 3012,
-			"data": err.Error(),
-			"msg":  "删除失败",
-		})
+		response.Fail(ctx, err.Error(), "failed")
 		return
 	}
-	ctx.JSON(200, gin.H{
-		"code": 3000,
-		"data": "",
-		"msg":  "删除成功",
-	})
+
+	response.Success(ctx, "", "success")
 
 }
 
@@ -89,10 +65,6 @@ func (dmc *DutyManageController) Get(ctx *gin.Context) {
 
 	id := ctx.Query("id")
 	data := dutyManageService.GetDutyManage(id)
-	ctx.JSON(200, gin.H{
-		"code": 3000,
-		"data": data,
-		"msg":  "查询成功",
-	})
+	response.Success(ctx, data, "success")
 
 }
