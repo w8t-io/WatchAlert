@@ -21,4 +21,5 @@ var (
 	RuleGroup         = api.ApiGroupApp.RuleGroupController
 	RuleTmplGroup     = api.ApiGroupApp.RuleTmplGroupController
 	RuleTmpl          = api.ApiGroupApp.RuleTmplController
+	DashboardInfo     = api.ApiGroupApp.DashboardInfoController
 )

@@ -24,6 +24,7 @@ func AlertEventMsg(gin *gin.Engine) {
 			system.POST("feiShuEvent", Event.FeiShuEvent)
 			system.GET("checkNoticeStatus", AlertNoticeObject.CheckNoticeStatus)
 			system.GET("userInfo", Auth.GetUserInfo)
+			system.GET("getDashboardInfo", DashboardInfo.GetDashboardInfo)
 		}
 
 		/*
@@ -161,7 +162,7 @@ func AlertEventMsg(gin *gin.Engine) {
 				notice.POST("noticeDelete", AlertNoticeObject.Delete)
 				notice.GET("noticeSearch", AlertNoticeObject.Get)
 			}
-			
+
 			/*
 				通知模版
 				/api/w8t/noticeTemplate

@@ -22,6 +22,7 @@ type ApiGroup struct {
 	RuleGroupController
 	RuleTmplGroupController
 	RuleTmplController
+	DashboardInfoController
 }
 
 var ApiGroupApp = new(ApiGroup)
