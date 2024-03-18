@@ -81,6 +81,11 @@ func (dms *DutyManageService) DeleteDutyManage(id string) error {
 		tx.Rollback()
 		return err
 	}
+	err = tx.Model(&models.DutySchedule{}).Where("duty_id = ?", id).Delete(&models.DutySchedule{}).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
 	err = tx.Commit().Error
 	if err != nil {
 		tx.Rollback()

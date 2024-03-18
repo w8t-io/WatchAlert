@@ -101,7 +101,7 @@ func InitPermissionsSQL() {
 		},
 		{
 			Key: "DutyManageDelete",
-			API: "/api/w8t/dutyManage/dutyManageUelete",
+			API: "/api/w8t/dutyManage/dutyManageDelete",
 		},
 		{
 			Key: "DutyManageList",
