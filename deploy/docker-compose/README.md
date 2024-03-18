@@ -135,4 +135,4 @@ w8t-web       /bin/sh -c REACT_APP_BACKE ...   Up      0.0.0.0:80->3000/tcp
 
 先来初始化 admin 用户的密码
 ![login.png](login.png)
-![img.png](img.png)
+![img_1.png](img_1.png)
