@@ -57,6 +57,12 @@ func (rgs *RuleGroupService) Update(group models.RuleGroups) error {
 
 func (rgs *RuleGroupService) Delete(id string) error {
 
+	var ruleNum int64
+	globals.DBCli.Model(&models.AlertRule{}).Where("rule_group_id = ?", id).Count(&ruleNum)
+	if ruleNum != 0 {
+		return fmt.Errorf("无法删除规则组 %s, 因为规则组不为空", id)
+	}
+
 	err := repo.DBCli.Delete(repo.Delete{
 		Table: &models.RuleGroups{},
 		Where: []string{"id = ?", id},

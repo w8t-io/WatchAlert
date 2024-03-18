@@ -84,6 +84,12 @@ func (adss *AlertDataSourceService) Update(dataSource models.AlertDataSource) er
 
 func (adss *AlertDataSourceService) Delete(id string) error {
 
+	var ruleNum int64
+	globals.DBCli.Model(&models.AlertRule{}).Where("datasource_id LIKE ?", "%"+id+"%").Count(&ruleNum)
+	if ruleNum != 0 {
+		return fmt.Errorf("无法删除数据源 %s, 因为已有告警规则绑定", id)
+	}
+
 	data := repo.Delete{
 		Table: models.AlertDataSource{},
 		Where: []string{"id = ?", id},

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"watchAlert/globals"
 	"watchAlert/models"
 	"watchAlert/utils/cmd"
@@ -32,7 +33,7 @@ func (ans *AlertNoticeService) SearchNoticeObject() []models.AlertNotice {
 func (ans *AlertNoticeService) CreateNoticeObject(alertNotice models.AlertNotice) (models.AlertNotice, error) {
 
 	tx := globals.DBCli.Begin()
-	alertNotice.Uuid = "n-"+cmd.RandId()
+	alertNotice.Uuid = "n-" + cmd.RandId()
 	err := tx.Create(alertNotice).Error
 	if err != nil {
 		tx.Rollback()
@@ -68,6 +69,13 @@ func (ans *AlertNoticeService) UpdateNoticeObject(alertNotice models.AlertNotice
 
 func (ans *AlertNoticeService) DeleteNoticeObject(uuid string) error {
 
+	var ruleNum1, ruleNum2 int64
+	globals.DBCli.Model(&models.AlertRule{}).Where("notice_id = ?", uuid).Count(&ruleNum1)
+	globals.DBCli.Model(&models.AlertRule{}).Where("notice_group LIKE ?", "%"+uuid+"%").Count(&ruleNum2)
+	if ruleNum1 != 0 || ruleNum2 != 0 {
+		return fmt.Errorf("无法删除通知对象 %s, 因为已有告警规则绑定", uuid)
+	}
+
 	tx := globals.DBCli.Begin()
 	err := tx.Where("uuid = ?", uuid).Delete(&models.AlertNotice{}).Error
 	if err != nil {
@@ -96,7 +104,7 @@ func (ans *AlertNoticeService) GetNoticeObject(uuid string) models.AlertNotice {
 func (ans *AlertNoticeService) CheckNoticeObjectStatus(uuid string) string {
 
 	// ToDo
-	
+
 	return ""
 }
 

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"time"
 	"watchAlert/globals"
 	"watchAlert/models"
@@ -67,6 +68,12 @@ func (dms *DutyManageService) UpdateDutyManage(dutyManage models.DutyManagement)
 }
 
 func (dms *DutyManageService) DeleteDutyManage(id string) error {
+
+	var noticeNum int64
+	globals.DBCli.Model(&models.AlertNotice{}).Where("duty_id = ?", id).Count(&noticeNum)
+	if noticeNum != 0 {
+		return fmt.Errorf("无法删除值班表 %s, 因为已有通知对象绑定", id)
+	}
 
 	tx := globals.DBCli.Begin()
 	err := tx.Where("id = ?", id).Delete(&models.DutyManagement{}).Error
