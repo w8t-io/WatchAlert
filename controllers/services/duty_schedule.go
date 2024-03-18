@@ -2,14 +2,16 @@ package services
 
 import (
 	"fmt"
-	"log"
 	"strconv"
+	"sync"
 	"time"
 	"watchAlert/globals"
 	"watchAlert/models"
 )
 
 type DutyScheduleService struct{}
+
+var layout = "2006-01"
 
 type InterDutyScheduleService interface {
 	CreateAndUpdateDutySystem(dutyUserInfo models.DutyScheduleCreate) ([]models.DutySchedule, error)
@@ -24,71 +26,64 @@ func NewInterDutyScheduleService() InterDutyScheduleService {
 // CreateAndUpdateDutySystem 创建和更新值班表
 func (dms *DutyScheduleService) CreateAndUpdateDutySystem(dutyInfo models.DutyScheduleCreate) ([]models.DutySchedule, error) {
 
-	var dutyScheduleList []models.DutySchedule
+	var (
+		dutyScheduleList []models.DutySchedule
+		wg               sync.WaitGroup
+	)
 	ch := make(chan string)
 
-	layout := "2006-01"
-	parsedTime, err := time.Parse(layout, dutyInfo.Month)
-	if err != nil {
-		return nil, err
-	}
-
-	// 获取当前月份
-	year, month, _ := parsedTime.Date()
-	// 构建下个月的第一天
-	nextMonth := time.Date(year, month+1, 1, 0, 0, 0, 0, time.UTC)
-	// 计算当前月份有多少天
-	daysInMonth := nextMonth.Add(-time.Hour * 24).Day()
-
 	go func() {
-		for i := 1; i <= daysInMonth; i++ {
-			dutyTime := strconv.Itoa(time.Now().Year()) + "-" + strconv.Itoa(int(time.Now().Month())) + "-" + strconv.Itoa(i)
-			ch <- dutyTime
+		for dutyTime := range ch {
+			if dutyTime == "" {
+				continue
+			}
+			for _, value := range dutyInfo.Users {
+				for t := 1; t <= dutyInfo.DutyPeriod; t++ {
+					ds := models.DutySchedule{
+						DutyId: dutyInfo.DutyId,
+						Time:   dutyTime,
+						Users: models.Users{
+							UserId:   value.UserId,
+							Username: value.Username,
+						},
+					}
+					dutyScheduleList = append(dutyScheduleList, ds)
+				}
+			}
 		}
-		defer close(ch)
+
+		for _, v := range dutyScheduleList {
+			// 更新当前已发布的日程表
+			dutyScheduleInfo := dutySchedule.GetDutyScheduleInfo(dutyInfo.DutyId, v.Time)
+			if dutyScheduleInfo.Time != "" {
+				if err := dms.UpdateDutySystem(v); err != nil {
+					globals.Logger.Sugar().Errorf("值班系统更新失败 %s", err)
+				}
+			} else {
+				if err := globals.DBCli.Create(&v).Error; err != nil {
+					globals.Logger.Sugar().Errorf("值班系统创建失败 %s", err)
+				}
+			}
+		}
 	}()
 
-	for i := 0; i <= daysInMonth; i++ {
-		for _, value := range dutyInfo.Users {
-			for t := 1; t <= dutyInfo.DutyPeriod; t++ {
-				dutyTime := <-ch
-				if dutyTime == "" {
-					break
-				}
-				ds := models.DutySchedule{
-					DutyId: dutyInfo.DutyId,
-					Time:   dutyTime,
-					Users: models.Users{
-						UserId:   value.UserId,
-						Username: value.Username,
-					},
-				}
-				dutyScheduleList = append(dutyScheduleList, ds)
+	// 默认从当前月份顺延到年底
+	curYear, curMonth, _ := parseTime(dutyInfo.Month)
+	wg.Add(1)
+	go func(curYear int) {
+		defer wg.Done()
+		for i := int(curMonth); i <= 12; i++ {
+			t := getDaysInMonth(curYear, time.Month(i))
+			daysInMonth, _ := getDayNumber(t.Format(layout))
+			fmt.Println(t, daysInMonth)
+			for i := 1; i <= daysInMonth; i++ {
+				dutyTime := strconv.Itoa(t.Year()) + "-" + strconv.Itoa(int(t.Month())) + "-" + strconv.Itoa(i)
+				ch <- dutyTime
 			}
 		}
-	}
-
-	for _, v := range dutyScheduleList {
-
-		// 更新当前已发布的日程表
-		dutyScheduleInfo := dutySchedule.GetDutyScheduleInfo(dutyInfo.DutyId, v.Time)
-
-		if dutyScheduleInfo.Time != "" {
-
-			if err = dms.UpdateDutySystem(v); err != nil {
-				return nil, err
-			}
-
-		} else {
-
-			if err = globals.DBCli.Create(&v).Error; err != nil {
-				log.Println("值班系统创建失败", err)
-				return nil, err
-			}
-
-		}
-
-	}
+	}(curYear)
+	wg.Wait()
+	close(ch)
 
 	return dutyScheduleList, nil
 
@@ -123,4 +118,29 @@ func (dms *DutyScheduleService) SelectDutySystem(dutyId, date string) ([]models.
 
 	return dutyScheduleList, nil
 
+}
+
+// 获取月份的天数
+func getDayNumber(month string) (int, error) {
+
+	// 获取当前年月份
+	curYear, curMonth, _ := parseTime(month)
+	// 构建下个月的第一天
+	nextMonth := getDaysInMonth(curYear, curMonth)
+	// 计算当前月份有多少天
+	daysInMonth := nextMonth.Add(-time.Hour * 24).Day()
+	return daysInMonth, nil
+}
+
+func parseTime(month string) (int, time.Month, int) {
+	parsedTime, err := time.Parse(layout, month)
+	if err != nil {
+		return 0, time.Month(0), 0
+	}
+	curYear, curMonth, curDay := parsedTime.Date()
+	return curYear, curMonth, curDay
+}
+
+func getDaysInMonth(year int, month time.Month) time.Time {
+	return time.Date(year, month, 1, 0, 0, 0, 0, time.UTC)
 }

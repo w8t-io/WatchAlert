@@ -9,7 +9,7 @@ import (
 )
 
 func InitResource() {
-	ticker := time.Tick(time.Second * 30)
+	ticker := time.Tick(time.Second * 10)
 	layout := "2006-01-02 15:04:05"
 	go func() {
 		for range ticker {
