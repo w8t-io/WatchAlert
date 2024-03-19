@@ -38,7 +38,7 @@ func (di DashboardInfoController) GetDashboardInfo(ctx *gin.Context) {
 	globals.DBCli.Model(&models.AlertRule{}).Count(&countAlertRules)
 
 	cursor := uint64(0)
-	pattern := models.CachePrefix + "*"
+	pattern := models.FiringAlertCachePrefix + "*"
 	// 每次获取的键数量
 	count := int64(100)
 

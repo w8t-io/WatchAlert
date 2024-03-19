@@ -20,7 +20,7 @@ func NewInterAlertCurEventService() InterAlertCurEventService {
 
 func (aces *AlertCurEventService) List(dsType string) ([]models.AlertCurEvent, error) {
 
-	iter := globals.RedisCli.Scan(0, models.CachePrefix+"*", 0).Iterator()
+	iter := globals.RedisCli.Scan(0, models.FiringAlertCachePrefix+"*", 0).Iterator()
 	keys := make([]string, 0)
 
 	// 遍历匹配的键

@@ -33,9 +33,8 @@ func (rq *RuleQuery) Query(rule models.AlertRule) {
 		}
 
 		// 处理恢复逻辑
-		allKey := alertCacheKeys(rule, dsId)
-		recoverKeys = getSliceDifference(allKey, curKeys)
-
+		firingKeys := getFiringAlertCacheKeys(rule, dsId)
+		recoverKeys = getSliceDifference(firingKeys, curKeys)
 		for _, key := range recoverKeys {
 			curTime := time.Now().Unix()
 			go func(key string, curTime int64) {
@@ -46,7 +45,7 @@ func (rq *RuleQuery) Query(rule models.AlertRule) {
 				event.IsRecovered = true
 				event.RecoverTime = curTime
 				event.LastSendTime = 0
-				rq.alertEvent.SetCache(event, 0)
+				event.SetFiringCache(0)
 			}(key, curTime)
 		}
 
@@ -62,35 +61,42 @@ func (rq *RuleQuery) prometheus(datasourceId string, rule models.AlertRule) []st
 		return nil
 	}
 
-	var curKeys []string
+	var curFiringKeys, curPendingKeys []string
 
-	if resQuery != nil {
-		for _, v := range resQuery {
-			fingerprint := v.Labels.FastFingerprint().String()
-			key := rq.alertEvent.CurAlertCacheKey(rule.RuleId, datasourceId, fingerprint)
-			curKeys = append(curKeys, key)
-
-			// handle series tags
-			metricMap := make(map[string]interface{})
-			for label, value := range v.Labels {
-				metricMap[string(label)] = string(value)
-			}
-			metricMap["value"] = v.Value
-
-			metricArr := labelMapToArr(metricMap)
-			sort.Strings(metricArr)
-
-			event := parserDefaultEvent(key, rule)
-			event.DatasourceId = datasourceId
-			event.Fingerprint = fingerprint
-			event.Metric = metricMap
-			event.Annotations = cmd.ParserVariables(rule.Annotations, event.Metric)
-
-			saveEventCache(event)
-		}
+	if resQuery == nil {
+		go gcPendingCache(rule, datasourceId, curPendingKeys)
+		return nil
 	}
 
-	return curKeys
+	for _, v := range resQuery {
+		fingerprint := v.Labels.FastFingerprint().String()
+		firingKey := rq.alertEvent.FiringAlertCacheKey(rule.RuleId, datasourceId, fingerprint)
+		pendingKey := rq.alertEvent.PendingAlertCacheKey(rule.RuleId, datasourceId, fingerprint)
+		curFiringKeys = append(curFiringKeys, firingKey)
+		curPendingKeys = append(curPendingKeys, pendingKey)
+
+		// handle series tags
+		metricMap := make(map[string]interface{})
+		for label, value := range v.Labels {
+			metricMap[string(label)] = string(value)
+		}
+		metricMap["value"] = v.Value
+
+		metricArr := labelMapToArr(metricMap)
+		sort.Strings(metricArr)
+
+		event := parserDefaultEvent(rule)
+		event.DatasourceId = datasourceId
+		event.Fingerprint = fingerprint
+		event.Metric = metricMap
+		event.Annotations = cmd.ParserVariables(rule.Annotations, event.Metric)
+
+		saveEventCache(event)
+	}
+
+	go gcPendingCache(rule, datasourceId, curPendingKeys)
+
+	return curFiringKeys
 
 }
 
@@ -143,11 +149,11 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) []s
 	// 使用 label 进行 Hash 作为告警指纹，可以有效地作为恢复逻辑的判断条件。
 	h.Write([]byte(cmd.JsonMarshal(metricMap)))
 	fingerprint := hex.EncodeToString(h.Sum(nil))
-	key := rq.alertEvent.CurAlertCacheKey(rule.RuleId, datasourceId, fingerprint)
+	key := rq.alertEvent.FiringAlertCacheKey(rule.RuleId, datasourceId, fingerprint)
 	curKeys = append(curKeys, key)
 
 	event := func() {
-		event := parserDefaultEvent(key, rule)
+		event := parserDefaultEvent(rule)
 		event.DatasourceId = datasourceId
 		event.Fingerprint = fingerprint
 		event.Annotations = annotation
@@ -204,7 +210,7 @@ func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) []string {
 		streamString := cmd.JsonMarshal(v.Stream)
 		h.Write([]byte(streamString))
 		fingerprint := hex.EncodeToString(h.Sum(nil))
-		key := rq.alertEvent.CurAlertCacheKey(rule.RuleId, datasourceId, fingerprint)
+		key := rq.alertEvent.FiringAlertCacheKey(rule.RuleId, datasourceId, fingerprint)
 		curKeys = append(curKeys, key)
 
 		// 标签，用于推送告警消息时 获取相关 label 信息
@@ -217,7 +223,7 @@ func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) []string {
 		delete(metricMap, "filename")
 
 		event := func() {
-			event := parserDefaultEvent(key, rule)
+			event := parserDefaultEvent(rule)
 			event.DatasourceId = datasourceId
 			event.Fingerprint = fingerprint
 			bodyString, _ := json.Marshal(v.Values)

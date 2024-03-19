@@ -7,7 +7,8 @@ import (
 	"watchAlert/globals"
 )
 
-const CachePrefix = "alert-"
+const FiringAlertCachePrefix = "firing-alert-"
+const PendingAlertCachePrefix = "pending-alert-"
 
 type AlertCurEvent struct {
 	RuleId                 string                 `json:"rule_id"`
@@ -35,11 +36,16 @@ type AlertCurEvent struct {
 	DutyUser               string                 `json:"duty_user" gorm:"-"`
 }
 
-func (ace *AlertCurEvent) CurAlertCacheKey(ruleId, dsId, fingerprint string) string {
+func (ace *AlertCurEvent) FiringAlertCacheKey(ruleId, dsId, fingerprint string) string {
+	return FiringAlertCachePrefix + ace.AlertCacheTailKey(ruleId, dsId, fingerprint)
+}
 
-	// alert-xxx-xxx
-	return CachePrefix + ruleId + "-" + dsId + "-" + fingerprint
+func (ace *AlertCurEvent) PendingAlertCacheKey(ruleId, dsId, fingerprint string) string {
+	return PendingAlertCachePrefix + ace.AlertCacheTailKey(ruleId, dsId, fingerprint)
+}
 
+func (ace *AlertCurEvent) AlertCacheTailKey(ruleId, dsId, fingerprint string) string {
+	return ruleId + "-" + dsId + "-" + fingerprint
 }
 
 func (ace *AlertCurEvent) GetCache(key string) AlertCurEvent {
@@ -56,16 +62,31 @@ func (ace *AlertCurEvent) GetCache(key string) AlertCurEvent {
 
 }
 
-func (ace *AlertCurEvent) SetCache(alert AlertCurEvent, expiration time.Duration) {
-
-	var alertRule AlertRule
+func (ace *AlertCurEvent) SetFiringCache(expiration time.Duration) {
+	alertJson, _ := json.Marshal(ace)
 	// 设置缓存前检查当前 Rule 是否存在，避免出现删除/禁用规则后依旧能添加缓存。
-	globals.DBCli.Where("rule_id = ? and enabled = ?", alert.RuleId, "true").Find(&alertRule)
-	if alertRule.RuleId == alert.RuleId {
-		alertJson, _ := json.Marshal(alert)
-		globals.RedisCli.Set(ace.CurAlertCacheKey(alert.RuleId, alert.DatasourceId, alert.Fingerprint), string(alertJson), expiration)
+	exist := ace.GetRuleIsExist(ace.RuleId)
+	if exist {
+		globals.RedisCli.Set(ace.FiringAlertCacheKey(ace.RuleId, ace.DatasourceId, ace.Fingerprint), string(alertJson), expiration)
 	}
+}
 
+func (ace *AlertCurEvent) SetPendingCache(expiration time.Duration) {
+	alertJson, _ := json.Marshal(ace)
+	exist := ace.GetRuleIsExist(ace.RuleId)
+	if exist {
+		globals.RedisCli.Set(ace.PendingAlertCacheKey(ace.RuleId, ace.DatasourceId, ace.Fingerprint), string(alertJson), expiration)
+	}
+}
+
+// GetRuleIsExist 检查 Rule 是否存在
+func (ace *AlertCurEvent) GetRuleIsExist(ruleId string) bool {
+	var ruleNum int64
+	globals.DBCli.Model(&AlertRule{}).Where("rule_id = ? and enabled = ?", ruleId, "true").Count(&ruleNum)
+	if ruleNum > 0 {
+		return true
+	}
+	return false
 }
 
 func (ace *AlertCurEvent) DelCache(key string) {

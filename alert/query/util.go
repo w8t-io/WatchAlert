@@ -5,22 +5,27 @@ import (
 	"sort"
 	"strconv"
 	"time"
-	"watchAlert/controllers/repo"
 	"watchAlert/globals"
 	"watchAlert/models"
 )
 
-func alertCacheKeys(rule models.AlertRule, dsId string) []string {
-
+// 获取缓存中与 Rule 相关所有的Firing key
+func getFiringAlertCacheKeys(rule models.AlertRule, dsId string) []string {
 	var alertCurEvent models.AlertCurEvent
-	// 获取所有keys
-	keyPrefix := alertCurEvent.CurAlertCacheKey(rule.RuleId, dsId, "*")
+	keyPrefix := alertCurEvent.FiringAlertCacheKey(rule.RuleId, dsId, "*")
 	keys, _ := globals.RedisCli.Keys(keyPrefix).Result()
-
 	return keys
-
 }
 
+// 获取缓存中与 Rule 相关所有的Pending key
+func getPendingAlertCacheKeys(rule models.AlertRule, dsId string) []string {
+	var alertCurEvent models.AlertCurEvent
+	keyPrefix := alertCurEvent.PendingAlertCacheKey(rule.RuleId, dsId, "*")
+	keys, _ := globals.RedisCli.Keys(keyPrefix).Result()
+	return keys
+}
+
+// 获取差异key. 当slice1中存在, slice2不存在则标记为可恢复告警
 func getSliceDifference(slice1 []string, slice2 []string) []string {
 	difference := []string{}
 
@@ -58,7 +63,7 @@ func labelMapToArr(m map[string]interface{}) []string {
 	return labelStrings
 }
 
-func parserDefaultEvent(key string, rule models.AlertRule) models.AlertCurEvent {
+func parserDefaultEvent(rule models.AlertRule) models.AlertCurEvent {
 
 	event := models.AlertCurEvent{
 		DatasourceType:       rule.DatasourceType,
@@ -74,9 +79,6 @@ func parserDefaultEvent(key string, rule models.AlertRule) models.AlertCurEvent 
 		RepeatNoticeInterval: rule.RepeatNoticeInterval,
 		DutyUser:             "暂无", // 默认暂无值班人员, 渲染模版时会实际判断 Notice 是否存在值班人员
 	}
-	event.FirstTriggerTime = event.GetFirstTime(key)
-	event.LastEvalTime = event.GetLastEvalTime(key)
-	event.LastSendTime = event.GetLastSendTime(key)
 
 	return event
 
@@ -84,12 +86,29 @@ func parserDefaultEvent(key string, rule models.AlertRule) models.AlertCurEvent 
 
 func saveEventCache(event models.AlertCurEvent) {
 
-	event.SetCache(event, 0)
-	err := repo.DBCli.Create(models.AlertCurEvent{}, &event)
-	if err != nil {
-		globals.Logger.Sugar().Errorf("Failed inserting AlertCurEvent into the database: %s", err)
+	firingKey := event.FiringAlertCacheKey(event.RuleId, event.DatasourceId, event.Fingerprint)
+	pendingKey := event.PendingAlertCacheKey(event.RuleId, event.DatasourceId, event.Fingerprint)
+
+	// 判断改事件是否是Firing状态, 如果不是Firing状态 则标记Pending状态
+	resFiring := event.GetCache(firingKey)
+	if resFiring.Fingerprint != "" {
+		event.FirstTriggerTime = resFiring.FirstTriggerTime
+		event.LastEvalTime = event.GetLastEvalTime(firingKey)
+		event.LastSendTime = resFiring.LastSendTime
+	} else {
+		event.FirstTriggerTime = event.GetFirstTime(pendingKey)
+		event.LastEvalTime = event.GetLastEvalTime(pendingKey)
+		event.LastSendTime = event.GetLastSendTime(pendingKey)
+		event.SetPendingCache(0)
+	}
+
+	// 持续时间
+	if event.LastEvalTime-event.FirstTriggerTime < event.ForDuration {
 		return
 	}
+
+	event.SetFiringCache(0)
+	event.DelCache(pendingKey)
 
 }
 
@@ -144,4 +163,18 @@ func evalCondition(f func(), count int, ec models.EvalCondition) {
 		globals.Logger.Sugar().Error("无效的评估类型", ec.Type)
 	}
 
+}
+
+/*
+	清理 Pending 数据的缓存.
+	场景: 第一次查询到有异常的指标会写入 Pending 缓存, 当该指标持续 Pending 到达持续时间后才会写入 Firing 缓存,
+	那么未到达持续时间并且该指标恢复正常, 那么就需要清理该指标的 Pending 数据.
+*/
+func gcPendingCache(rule models.AlertRule, dsId string, curKeys []string) {
+	var ae models.AlertCurEvent
+	pendingKeys := getPendingAlertCacheKeys(rule, dsId)
+	gcPendingKeys := getSliceDifference(pendingKeys, curKeys)
+	for _, key := range gcPendingKeys {
+		ae.DelCache(key)
+	}
 }

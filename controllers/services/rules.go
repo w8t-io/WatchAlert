@@ -66,7 +66,7 @@ func (rs *RuleService) Update(rule models.AlertRule) error {
 	}
 
 	// 删除缓存
-	iter := globals.RedisCli.Scan(0, models.CachePrefix+rule.RuleId+"*", 0).Iterator()
+	iter := globals.RedisCli.Scan(0, models.FiringAlertCachePrefix+rule.RuleId+"*", 0).Iterator()
 	keys := make([]string, 0)
 	for iter.Next() {
 		key := iter.Val()
@@ -117,7 +117,7 @@ func (rs *RuleService) Delete(id string) error {
 		//rs.quit <- &id
 	}
 
-	iter := globals.RedisCli.Scan(0, models.CachePrefix+id+"*", 0).Iterator()
+	iter := globals.RedisCli.Scan(0, models.FiringAlertCachePrefix+id+"*", 0).Iterator()
 	keys := make([]string, 0)
 	for iter.Next() {
 		key := iter.Val()

@@ -93,11 +93,11 @@ func (ec *EvalConsume) clear(ruleId string) {
 
 }
 
-// 获取缓存所有Keys
+// 获取缓存所有Firing的Keys
 func (ec *EvalConsume) getRedisKeys() []string {
 	var keys []string
 	cursor := uint64(0)
-	pattern := models.CachePrefix + "*"
+	pattern := models.FiringAlertCachePrefix + "*"
 	// 每次获取的键数量
 	count := int64(100)
 
@@ -129,10 +129,6 @@ func (ec *EvalConsume) filterAlerts(alerts []models.AlertCurEvent) map[string][]
 	newAlert := ec.removeDuplicates(alerts)
 	// 将通过指纹去重后以Fingerprint为Key的Map转换成以原来RuleName为Key的Map (同一告警类型聚合)
 	for _, alert := range newAlert {
-		// 持续时间
-		if alert.LastEvalTime-alert.FirstTriggerTime < alert.ForDuration {
-			continue
-		}
 		// 重复通知，如果是初次推送不用进一步判断。
 		if alert.LastSendTime == 0 || alert.LastEvalTime >= alert.LastSendTime+alert.RepeatNoticeInterval*60 {
 			newAlertsMap[alert.RuleName] = append(newAlertsMap[alert.RuleName], alert)
@@ -195,7 +191,7 @@ func (ec *EvalConsume) fireAlertEvent(alertsMap map[string][]models.AlertCurEven
 
 // 删除缓存
 func (ec *EvalConsume) removeAlertFromCache(alert models.AlertCurEvent) {
-	key := ec.CurAlertCacheKey(alert.RuleId, alert.DatasourceId, alert.Fingerprint)
+	key := ec.FiringAlertCacheKey(alert.RuleId, alert.DatasourceId, alert.Fingerprint)
 	ec.DelCache(key)
 }
 
@@ -286,7 +282,7 @@ func (ec *EvalConsume) handleAlert(alerts []models.AlertCurEvent) {
 			go func(alert models.AlertCurEvent) {
 				defer wg.Done()
 				alert.LastSendTime = curTime
-				alert.SetCache(alert, 0)
+				alert.SetFiringCache(0)
 			}(alert)
 		}
 	}
