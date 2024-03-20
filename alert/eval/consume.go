@@ -40,28 +40,33 @@ func NewInterEvalConsumeWork() InterEvalConsume {
 // Run 启动告警消费进程
 func (ec *EvalConsume) Run() {
 
-	// 定义相同的Group之间发送告警通知的时间间隔（s）
-	groupInterval := globals.Config.Server.GroupInterval
-
 	action := func() {
 		alertsCurEventKeys := ec.getRedisKeys()
 		for _, key := range alertsCurEventKeys {
 			alert := ec.GetCache(key)
+			// 过滤空指纹告警
 			if alert.Fingerprint == "" {
 				continue
 			}
-
-			ec.Lock()
-			ec.alertsMap[alert.RuleId] = append(ec.alertsMap[alert.RuleId], alert)
-			ec.Unlock()
+			ec.addAlertToRuleIdMap(alert)
 		}
+
 		for key, alerts := range ec.alertsMap {
 			if len(alerts) == 0 {
 				continue
 			}
 
-			// 如果当前告警组时间到达 groupInterval 的时间则推送告警
-			if ec.Timing[key] >= groupInterval {
+			// 计算告警组的等待时间
+			var waitTime int
+			alert := ec.GetCache(key)
+			if alert.LastSendTime == 0 {
+				// 如果是初次告警, 那么等当前告警组时间到达 groupWait 的时间则推送告警
+				waitTime = globals.Config.Server.GroupWait
+			} else {
+				// 当前告警组时间到达 groupInterval 的时间则推送告警
+				waitTime = globals.Config.Server.GroupInterval
+			}
+			if ec.Timing[key] >= waitTime {
 				curEvent := ec.filterAlerts(ec.alertsMap[key])
 				ec.fireAlertEvent(curEvent)
 				// 执行一波后 必须重新清空alerts组中的数据。
@@ -79,6 +84,12 @@ func (ec *EvalConsume) Run() {
 		}
 	}()
 
+}
+
+func (ec *EvalConsume) addAlertToRuleIdMap(alert models.AlertCurEvent) {
+	ec.Lock()
+	ec.alertsMap[alert.RuleId] = append(ec.alertsMap[alert.RuleId], alert)
+	ec.Unlock()
 }
 
 func (ec *EvalConsume) clear(ruleId string) {

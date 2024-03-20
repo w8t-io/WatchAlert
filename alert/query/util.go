@@ -102,9 +102,11 @@ func saveEventCache(event models.AlertCurEvent) {
 		event.SetPendingCache(0)
 	}
 
-	// 持续时间
-	if event.LastEvalTime-event.FirstTriggerTime < event.ForDuration {
-		return
+	// 初次告警需要比对持续时间
+	if resFiring.LastSendTime == 0 {
+		if event.LastEvalTime-event.FirstTriggerTime < event.ForDuration {
+			return
+		}
 	}
 
 	event.SetFiringCache(0)
