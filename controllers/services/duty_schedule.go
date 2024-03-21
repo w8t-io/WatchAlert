@@ -2,7 +2,6 @@ package services
 
 import (
 	"fmt"
-	"strconv"
 	"sync"
 	"time"
 	"watchAlert/globals"
@@ -28,17 +27,27 @@ func (dms *DutyScheduleService) CreateAndUpdateDutySystem(dutyInfo models.DutySc
 
 	var (
 		dutyScheduleList []models.DutySchedule
+		timeC            = make(chan string, 370)
 		wg               sync.WaitGroup
 	)
-	ch := make(chan string)
+	// 默认从当前月份顺延到年底
+	curYear, curMonth, _ := parseTime(dutyInfo.Month)
 
+	wg.Add(1)
 	go func() {
-		for dutyTime := range ch {
-			if dutyTime == "" {
-				continue
+		defer wg.Done()
+		// 生产值班日期
+		for mon := int(curMonth); mon <= 12; mon++ {
+			for day := 1; day <= 31; day++ {
+				dutyTime := fmt.Sprintf("%d-%d-%d", curYear, mon, day)
+				timeC <- dutyTime
 			}
+		}
+		// 产出值班表数据结构
+		for len(timeC) != 0 {
 			for _, value := range dutyInfo.Users {
 				for t := 1; t <= dutyInfo.DutyPeriod; t++ {
+					dutyTime := <-timeC
 					ds := models.DutySchedule{
 						DutyId: dutyInfo.DutyId,
 						Time:   dutyTime,
@@ -51,7 +60,11 @@ func (dms *DutyScheduleService) CreateAndUpdateDutySystem(dutyInfo models.DutySc
 				}
 			}
 		}
+	}()
+	wg.Wait()
+	close(timeC)
 
+	go func(dutyScheduleList []models.DutySchedule) {
 		for _, v := range dutyScheduleList {
 			// 更新当前已发布的日程表
 			dutyScheduleInfo := dutySchedule.GetDutyScheduleInfo(dutyInfo.DutyId, v.Time)
@@ -65,25 +78,7 @@ func (dms *DutyScheduleService) CreateAndUpdateDutySystem(dutyInfo models.DutySc
 				}
 			}
 		}
-	}()
-
-	// 默认从当前月份顺延到年底
-	curYear, curMonth, _ := parseTime(dutyInfo.Month)
-	wg.Add(1)
-	go func(curYear int) {
-		defer wg.Done()
-		for i := int(curMonth); i <= 12; i++ {
-			t := getDaysInMonth(curYear, time.Month(i))
-			daysInMonth, _ := getDayNumber(t.Format(layout))
-			fmt.Println(t, daysInMonth)
-			for i := 1; i <= daysInMonth; i++ {
-				dutyTime := strconv.Itoa(t.Year()) + "-" + strconv.Itoa(int(t.Month())) + "-" + strconv.Itoa(i)
-				ch <- dutyTime
-			}
-		}
-	}(curYear)
-	wg.Wait()
-	close(ch)
+	}(dutyScheduleList)
 
 	return dutyScheduleList, nil
 
@@ -120,18 +115,6 @@ func (dms *DutyScheduleService) SelectDutySystem(dutyId, date string) ([]models.
 
 }
 
-// 获取月份的天数
-func getDayNumber(month string) (int, error) {
-
-	// 获取当前年月份
-	curYear, curMonth, _ := parseTime(month)
-	// 构建下个月的第一天
-	nextMonth := getDaysInMonth(curYear, curMonth)
-	// 计算当前月份有多少天
-	daysInMonth := nextMonth.Add(-time.Hour * 24).Day()
-	return daysInMonth, nil
-}
-
 func parseTime(month string) (int, time.Month, int) {
 	parsedTime, err := time.Parse(layout, month)
 	if err != nil {
@@ -139,8 +122,4 @@ func parseTime(month string) (int, time.Month, int) {
 	}
 	curYear, curMonth, curDay := parsedTime.Date()
 	return curYear, curMonth, curDay
-}
-
-func getDaysInMonth(year int, month time.Month) time.Time {
-	return time.Date(year, month, 1, 0, 0, 0, 0, time.UTC)
 }
