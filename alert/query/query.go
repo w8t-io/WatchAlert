@@ -228,7 +228,9 @@ func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) []string {
 			event.Fingerprint = fingerprint
 			bodyString, _ := json.Marshal(v.Values)
 			event.Metric = metricMap
-			event.Annotations = string(bodyString)
+			var bs [][]string
+			_ = json.Unmarshal(bodyString, &bs)
+			event.Annotations = bs[0][1]
 			saveEventCache(event)
 		}
 
