@@ -1,6 +1,7 @@
 package query
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strconv"
@@ -179,4 +180,9 @@ func gcPendingCache(rule models.AlertRule, dsId string, curKeys []string) {
 	for _, key := range gcPendingKeys {
 		ae.DelCache(key)
 	}
+}
+
+func isJSON(str string) bool {
+	var js map[string]interface{}
+	return json.Unmarshal([]byte(str), &js) == nil
 }
