@@ -141,7 +141,26 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) []s
 	delete(metricMap, "_time_")
 	delete(metricMap, "__time__")
 	delete(metricMap, "__tag__:__pack_id__")
-	annotation := metricMap["content"].(string)
+	var annotation string
+	if metricMap["content"] != nil {
+		annotation = metricMap["content"].(string)
+		if isJSON(annotation) {
+			// 将字符串解析为map类型
+			var data map[string]interface{}
+			err = json.Unmarshal([]byte(annotation), &data)
+			if err != nil {
+				globals.Logger.Sugar().Errorf("Error parsing JSON: %s", err.Error())
+			} else {
+				// 格式化JSON并输出
+				formattedJson, err := json.MarshalIndent(data, "", "  ")
+				if err != nil {
+					globals.Logger.Sugar().Errorf("Error marshalling JSON: %s", err.Error())
+				} else {
+					annotation = string(formattedJson)
+				}
+			}
+		}
+	}
 	delete(metricMap, "content")
 
 	var curKeys []string
@@ -226,11 +245,26 @@ func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) []string {
 			event := parserDefaultEvent(rule)
 			event.DatasourceId = datasourceId
 			event.Fingerprint = fingerprint
-			bodyString, _ := json.Marshal(v.Values)
 			event.Metric = metricMap
-			var bs [][]string
-			_ = json.Unmarshal(bodyString, &bs)
-			event.Annotations = bs[0][1]
+
+			var logValue string
+			if v.Values[0] != nil {
+				if v.Values[0].([]interface{}) != nil {
+					logValue = v.Values[0].([]interface{})[1].(string)
+				}
+			}
+
+			var logV10 client.LogValueV10
+			err := json.Unmarshal([]byte(logValue), &logV10)
+			if err != nil {
+				event.Annotations = logValue
+			} else {
+				if logV10.Log == "" {
+					return
+				}
+				event.Annotations = logV10.Log.(string)
+			}
+
 			saveEventCache(event)
 		}
 

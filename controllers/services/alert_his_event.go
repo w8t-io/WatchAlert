@@ -49,14 +49,8 @@ func (ahes *AlertHisEventService) List(ctx *gin.Context) (response.HistoryEvent,
 	}
 
 	data, err := ahes.GetHistoryEvent(datasourceType, severity, startAtInt64, endAtInt64, pageIndex, pageSize)
-	count, err := ahes.CountHistoryEvent()
 
-	return response.HistoryEvent{
-		List:       data,
-		PageIndex:  pageIndex,
-		PageSize:   pageSize,
-		TotalCount: count,
-	}, err
+	return data, err
 
 }
 

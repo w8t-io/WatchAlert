@@ -55,24 +55,16 @@ func parserEvent(alert models.AlertCurEvent) map[string]interface{} {
 
 	data := make(map[string]interface{})
 
-	if alert.DatasourceType == "AliCloudSLS" {
-		eventJson := cmd.JsonMarshal(alert)
-		err := json.Unmarshal([]byte(eventJson), &data)
-		if err != nil {
-			globals.Logger.Sugar().Error("parserEvent Unmarshal failed for AliCloudSLS: ", err)
-		}
+	eventJson := cmd.JsonMarshal(alert)
+	err := json.Unmarshal([]byte(eventJson), &data)
+	if err != nil {
+		globals.Logger.Sugar().Error("parserEvent Unmarshal failed: ", err)
+	}
 
+	if alert.DatasourceType == "AliCloudSLS" {
 		// 需要转义, 日志中可能会出现特殊符号
 		alarmInfo := strconv.Quote(data["annotations"].(string))
 		data["annotations"] = alarmInfo[1 : len(alarmInfo)-1]
-	}
-
-	if alert.DatasourceType == "Prometheus" || alert.DatasourceType == "Loki" {
-		eventJson := cmd.JsonMarshal(alert)
-		err := json.Unmarshal([]byte(eventJson), &data)
-		if err != nil {
-			globals.Logger.Sugar().Error("parserEvent Unmarshal failed for Prometheus or Loki: ", err)
-		}
 	}
 
 	return data
