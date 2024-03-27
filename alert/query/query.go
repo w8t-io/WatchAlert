@@ -245,22 +245,26 @@ func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) []string {
 			event := parserDefaultEvent(rule)
 			event.DatasourceId = datasourceId
 			event.Fingerprint = fingerprint
+			event.Metric = metricMap
+
 			var logValue string
 			if v.Values[0] != nil {
 				if v.Values[0].([]interface{}) != nil {
 					logValue = v.Values[0].([]interface{})[1].(string)
 				}
 			}
-			if !isJSON(logValue) {
-				bodyString, _ := json.Marshal(v.Values)
-				event.Metric = metricMap
-				var bs [][]string
-				_ = json.Unmarshal(bodyString, &bs)
-				event.Annotations = bs[0][1]
-			} else {
-				event.Annotations = logValue
 
+			var logV10 client.LogValueV10
+			err := json.Unmarshal([]byte(logValue), &logV10)
+			if err != nil {
+				event.Annotations = logValue
+			} else {
+				if logV10.Log == "" {
+					return
+				}
+				event.Annotations = logV10.Log.(string)
 			}
+
 			saveEventCache(event)
 		}
 

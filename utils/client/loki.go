@@ -48,6 +48,10 @@ type Result struct {
 	Values []interface{}     `json:"values"`
 }
 
+type LogValueV10 struct {
+	Log interface{} `json:"log"`
+}
+
 func (lc LokiClient) QueryRange(options QueryOptions) ([]Result, error) {
 
 	curTime := time.Now()
