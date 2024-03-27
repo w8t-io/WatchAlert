@@ -1,7 +1,6 @@
 package eval
 
 import (
-	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -344,7 +343,6 @@ func (ec *EvalConsume) getNoticeGroupId(alert models.AlertCurEvent) string {
 // RecordAlertHisEvent 记录历史告警
 func (ec *EvalConsume) RecordAlertHisEvent(alert models.AlertCurEvent) error {
 
-	metric, _ := json.Marshal(alert.Metric)
 	hisData := models.AlertHisEvent{
 		DatasourceType:   alert.DatasourceType,
 		DatasourceId:     alert.DatasourceId,
@@ -352,7 +350,7 @@ func (ec *EvalConsume) RecordAlertHisEvent(alert models.AlertCurEvent) error {
 		RuleId:           alert.RuleId,
 		RuleName:         alert.RuleName,
 		Severity:         alert.Severity,
-		Metric:           string(metric),
+		Metric:           alert.Metric,
 		EvalInterval:     alert.EvalInterval,
 		Annotations:      alert.Annotations,
 		IsRecovered:      true,
