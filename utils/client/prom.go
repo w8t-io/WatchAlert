@@ -124,3 +124,17 @@ func ConvertVectors(value model.Value) (lst []Vector) {
 
 	return
 }
+
+func (v Vector) GetFingerprint() string {
+	return v.Labels.FastFingerprint().String()
+}
+
+func (v Vector) GetMetric() map[string]interface{} {
+	// handle series tags
+	metricMap := make(map[string]interface{})
+	for label, value := range v.Labels {
+		metricMap[string(label)] = string(value)
+	}
+	metricMap["value"] = v.Value
+	return metricMap
+}

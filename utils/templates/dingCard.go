@@ -2,7 +2,6 @@ package templates
 
 import (
 	"fmt"
-	"strings"
 	"watchAlert/models"
 	"watchAlert/utils/cmd"
 )
@@ -37,8 +36,6 @@ func (d DingDing) Template(alert models.AlertCurEvent, notice models.AlertNotice
 	}
 
 	cardContentString := cmd.JsonMarshal(t)
-
-	cardContentString = strings.ReplaceAll(cardContentString, "\\n", "<br>")
 
 	return cardContentString
 
