@@ -1,7 +1,6 @@
 package query
 
 import (
-	"fmt"
 	"time"
 	"watchAlert/alert/queue"
 	"watchAlert/globals"
@@ -33,7 +32,6 @@ func (rq *RuleQuery) alertRecover(rule models.AlertRule, dsId string, curKeys []
 	firingKeys := getFiringAlertCacheKeys(rule, dsId)
 	// 获取已恢复告警的keys
 	recoverKeys := getSliceDifference(firingKeys, curKeys)
-	fmt.Println("recoverKeys->", recoverKeys)
 	if recoverKeys == nil {
 		return
 	}
