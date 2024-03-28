@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"regexp"
 	"time"
+	"watchAlert/globals"
 )
 
 func RandId() string {
@@ -84,4 +85,32 @@ func getJSONValue(data map[string]interface{}, variable string) interface{} {
 	}
 
 	return nil
+}
+
+func IsJSON(str string) bool {
+	var js map[string]interface{}
+	return json.Unmarshal([]byte(str), &js) == nil
+}
+
+func FormatJson(s string) string {
+	var ns string
+	if IsJSON(s) {
+		// 将字符串解析为map类型
+		var data map[string]interface{}
+		err := json.Unmarshal([]byte(s), &data)
+		if err != nil {
+			globals.Logger.Sugar().Errorf("Error parsing JSON: %s", err.Error())
+		} else {
+			// 格式化JSON并输出
+			formattedJson, err := json.MarshalIndent(data, "", "  ")
+			if err != nil {
+				globals.Logger.Sugar().Errorf("Error marshalling JSON: %s", err.Error())
+			} else {
+				ns = string(formattedJson)
+			}
+		}
+	} else {
+		ns = s
+	}
+	return ns
 }
