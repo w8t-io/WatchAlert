@@ -2,9 +2,10 @@ package query
 
 import (
 	"fmt"
-	"sort"
 	"strconv"
+	"strings"
 	"time"
+	"watchAlert/alert/queue"
 	"watchAlert/globals"
 	"watchAlert/models"
 )
@@ -48,19 +49,17 @@ func getSliceDifference(slice1 []string, slice2 []string) []string {
 	return difference
 }
 
-func labelMapToArr(m map[string]interface{}) []string {
-	numLabels := len(m)
-
-	labelStrings := make([]string, 0, numLabels)
-	for label, value := range m {
-		labelStrings = append(labelStrings, fmt.Sprintf("%s=%s", label, value))
+// 获取相同key, 当slice1中存在, slice2也存在则标记为正在告警中撤销告警恢复
+func getSliceSame(slice1 []string, slice2 []string) []string {
+	same := []string{}
+	for _, item1 := range slice1 {
+		for _, item2 := range slice2 {
+			if item1 == item2 {
+				same = append(same, item1)
+			}
+		}
 	}
-
-	if numLabels > 1 {
-		sort.Strings(labelStrings)
-	}
-
-	return labelStrings
+	return same
 }
 
 func parserDefaultEvent(rule models.AlertRule) models.AlertCurEvent {
@@ -179,4 +178,26 @@ func gcPendingCache(rule models.AlertRule, dsId string, curKeys []string) {
 	for _, key := range gcPendingKeys {
 		ae.DelCache(key)
 	}
+}
+
+func gcRecoverWaitCache(rule models.AlertRule, curKeys []string) {
+	// 获取等待恢复告警的keys
+	recoverWaitKeys := getRecoverWaitList(queue.RecoverWaitMap, rule)
+	// 删除正常告警的key
+	firingKeys := getSliceSame(recoverWaitKeys, curKeys)
+	for _, key := range firingKeys {
+		delete(queue.RecoverWaitMap, key)
+	}
+}
+
+func getRecoverWaitList(m map[string]int64, rule models.AlertRule) []string {
+	var l []string
+	for k, _ := range m {
+		// 只获取当前规则组的告警。
+		keyPrefix := fmt.Sprintf("%s", models.FiringAlertCachePrefix+rule.RuleId+"-"+rule.DatasourceIdList[0]+"-")
+		if strings.HasPrefix(k, keyPrefix) {
+			l = append(l, k)
+		}
+	}
+	return l
 }

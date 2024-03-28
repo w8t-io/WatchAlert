@@ -11,6 +11,7 @@ type Server struct {
 	Port          string `json:"port"`
 	GroupWait     int    `json:"groupWait"`
 	GroupInterval int    `json:"groupInterval"`
+	RecoverWait   int    `json:"recoverWait"`
 }
 
 type MySQL struct {

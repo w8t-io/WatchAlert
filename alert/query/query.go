@@ -1,7 +1,9 @@
 package query
 
 import (
+	"fmt"
 	"time"
+	"watchAlert/alert/queue"
 	"watchAlert/globals"
 	"watchAlert/models"
 	"watchAlert/utils/client"
@@ -15,54 +17,71 @@ type RuleQuery struct {
 func (rq *RuleQuery) Query(rule models.AlertRule) {
 
 	for _, dsId := range rule.DatasourceIdList {
-		var curKeys []string
 		switch rule.DatasourceType {
 		case "Prometheus":
-			curKeys = rq.prometheus(dsId, rule)
+			rq.prometheus(dsId, rule)
 		case "AliCloudSLS":
-			curKeys = rq.aliCloudSLS(dsId, rule)
+			rq.aliCloudSLS(dsId, rule)
 		case "Loki":
-			curKeys = rq.loki(dsId, rule)
+			rq.loki(dsId, rule)
 		}
-
-		// 处理恢复逻辑
-		rq.alertRecover(rule, dsId, curKeys)
 	}
 
 }
 
 func (rq *RuleQuery) alertRecover(rule models.AlertRule, dsId string, curKeys []string) {
-	var recoverKeys []string
 	firingKeys := getFiringAlertCacheKeys(rule, dsId)
-	recoverKeys = getSliceDifference(firingKeys, curKeys)
+	// 获取已恢复告警的keys
+	recoverKeys := getSliceDifference(firingKeys, curKeys)
+	fmt.Println("recoverKeys->", recoverKeys)
+	if recoverKeys == nil {
+		return
+	}
+
+	curTime := time.Now().Unix()
 	for _, key := range recoverKeys {
-		curTime := time.Now().Unix()
-		go func(key string, curTime int64) {
-			event := rq.alertEvent.GetCache(key)
-			if event.IsRecovered == true {
-				return
-			}
+		event := rq.alertEvent.GetCache(key)
+		if event.IsRecovered == true {
+			return
+		}
+
+		if _, exists := queue.RecoverWaitMap[key]; !exists {
+			// 如果没有，则记录当前时间
+			queue.RecoverWaitMap[key] = curTime
+			continue
+		}
+
+		// 判断是否在等待时间范围内
+		rt := time.Unix(queue.RecoverWaitMap[key], 0).Add(time.Minute * time.Duration(globals.Config.Server.RecoverWait)).Unix()
+		if rt > curTime {
+			continue
+		}
+
+		go func(key string, curTime int64, event models.AlertCurEvent) {
 			event.IsRecovered = true
 			event.RecoverTime = curTime
 			event.LastSendTime = 0
 			event.SetFiringCache(0)
-		}(key, curTime)
+		}(key, curTime, event)
+
+		// 触发恢复删除带恢复中的 key
+		delete(queue.RecoverWaitMap, key)
 	}
 }
 
 // Prometheus 数据源
-func (rq *RuleQuery) prometheus(datasourceId string, rule models.AlertRule) []string {
+func (rq *RuleQuery) prometheus(datasourceId string, rule models.AlertRule) {
 
 	resQuery, _, err := client.NewPromClient(datasourceId).Query(rule.PrometheusConfig.PromQL)
 	if err != nil {
-		return nil
+		return
 	}
 
 	var curFiringKeys, curPendingKeys []string
 
 	if resQuery == nil {
 		go gcPendingCache(rule, datasourceId, curPendingKeys)
-		return nil
+		return
 	}
 
 	for _, v := range resQuery {
@@ -83,12 +102,12 @@ func (rq *RuleQuery) prometheus(datasourceId string, rule models.AlertRule) []st
 
 	go gcPendingCache(rule, datasourceId, curPendingKeys)
 
-	return curFiringKeys
+	rq.alertRecover(rule, datasourceId, curFiringKeys)
 
 }
 
 // AliCloudSLS 数据源
-func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) []string {
+func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) {
 
 	curAt := time.Now()
 	startsAt := parserDuration(curAt, rule.AliCloudSLSConfig.LogScope, "m")
@@ -103,12 +122,12 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) []s
 	res, err := client.NewAliCloudSlsClient(datasourceId).Query(args)
 	if err != nil {
 		globals.Logger.Sugar().Error("查询 AliCloudSls 日志失败 ->", err.Error())
-		return nil
+		return
 	}
 
 	count := len(res.Body)
 	if count <= 0 {
-		return nil
+		return
 	}
 
 	body := client.GetSLSBodyData(res)
@@ -141,12 +160,12 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) []s
 	// 评估告警条件
 	evalCondition(event, count, options)
 
-	return curKeys
+	rq.alertRecover(rule, datasourceId, curKeys)
 
 }
 
 // Loki 数据源
-func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) []string {
+func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) {
 
 	curAt := time.Now().UTC()
 	startsAt := parserDuration(curAt, rule.LokiConfig.LogScope, "m")
@@ -159,7 +178,7 @@ func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) []string {
 	res, err := client.NewLokiClient(datasourceId).QueryRange(args)
 	if err != nil {
 		globals.Logger.Sugar().Errorf("查询 Loki 日志失败 %s", err.Error())
-		return nil
+		return
 	}
 
 	var curKeys []string
@@ -196,6 +215,6 @@ func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) []string {
 
 	}
 
-	return curKeys
+	rq.alertRecover(rule, datasourceId, curKeys)
 
 }
