@@ -55,12 +55,10 @@ func (rq *RuleQuery) alertRecover(rule models.AlertRule, dsId string, curKeys []
 			continue
 		}
 
-		go func(key string, curTime int64, event models.AlertCurEvent) {
-			event.IsRecovered = true
-			event.RecoverTime = curTime
-			event.LastSendTime = 0
-			event.SetFiringCache(0)
-		}(key, curTime, event)
+		event.IsRecovered = true
+		event.RecoverTime = curTime
+		event.LastSendTime = 0
+		event.SetFiringCache(0)
 
 		// 触发恢复删除带恢复中的 key
 		delete(queue.RecoverWaitMap, key)
