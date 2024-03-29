@@ -55,12 +55,10 @@ func (rq *RuleQuery) alertRecover(rule models.AlertRule, dsId string, curKeys []
 			continue
 		}
 
-		go func(key string, curTime int64, event models.AlertCurEvent) {
-			event.IsRecovered = true
-			event.RecoverTime = curTime
-			event.LastSendTime = 0
-			event.SetFiringCache(0)
-		}(key, curTime, event)
+		event.IsRecovered = true
+		event.RecoverTime = curTime
+		event.LastSendTime = 0
+		event.SetFiringCache(0)
 
 		// 触发恢复删除带恢复中的 key
 		delete(queue.RecoverWaitMap, key)
@@ -69,16 +67,19 @@ func (rq *RuleQuery) alertRecover(rule models.AlertRule, dsId string, curKeys []
 
 // Prometheus 数据源
 func (rq *RuleQuery) prometheus(datasourceId string, rule models.AlertRule) {
+	var curFiringKeys, curPendingKeys []string
+	defer func() {
+		go gcPendingCache(rule, datasourceId, curPendingKeys)
+		rq.alertRecover(rule, datasourceId, curFiringKeys)
+		go gcRecoverWaitCache(rule, curFiringKeys)
+	}()
 
 	resQuery, _, err := client.NewPromClient(datasourceId).Query(rule.PrometheusConfig.PromQL)
 	if err != nil {
 		return
 	}
 
-	var curFiringKeys, curPendingKeys []string
-
 	if resQuery == nil {
-		go gcPendingCache(rule, datasourceId, curPendingKeys)
 		return
 	}
 
@@ -98,14 +99,15 @@ func (rq *RuleQuery) prometheus(datasourceId string, rule models.AlertRule) {
 		saveEventCache(event)
 	}
 
-	go gcPendingCache(rule, datasourceId, curPendingKeys)
-
-	rq.alertRecover(rule, datasourceId, curFiringKeys)
-
 }
 
 // AliCloudSLS 数据源
 func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) {
+	var curKeys []string
+	defer func() {
+		rq.alertRecover(rule, datasourceId, curKeys)
+		go gcRecoverWaitCache(rule, curKeys)
+	}()
 
 	curAt := time.Now()
 	startsAt := parserDuration(curAt, rule.AliCloudSLSConfig.LogScope, "m")
@@ -128,42 +130,46 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) {
 		return
 	}
 
-	body := client.GetSLSBodyData(res)
+	bodyList := client.GetSLSBodyData(res)
 
-	var curKeys []string
-	fingerprint := body.GetFingerprint()
-	key := rq.alertEvent.FiringAlertCacheKey(rule.RuleId, datasourceId, fingerprint)
-	curKeys = append(curKeys, key)
+	for _, body := range bodyList.MetricList {
+		fingerprint := body.GetFingerprint()
+		key := rq.alertEvent.FiringAlertCacheKey(rule.RuleId, datasourceId, fingerprint)
+		curKeys = append(curKeys, key)
 
-	event := func() {
-		event := parserDefaultEvent(rule)
-		event.DatasourceId = datasourceId
-		event.Fingerprint = fingerprint
-		event.Annotations = body.GetAnnotations()
-		event.Metric = body.GetMetric()
+		event := func() {
+			event := parserDefaultEvent(rule)
+			event.DatasourceId = datasourceId
+			event.Fingerprint = fingerprint
+			event.Annotations = body.GetAnnotations()
+			event.Metric = body.GetMetric()
 
-		saveEventCache(event)
+			saveEventCache(event)
+		}
+
+		options := models.EvalCondition{
+			/*
+				触发告警的条件
+				- 有数据 > number	// 有数据并大于多少条。
+			*/
+			Type:     rule.AliCloudSLSConfig.EvalCondition.Type,
+			Operator: rule.AliCloudSLSConfig.EvalCondition.Operator,
+			Value:    rule.AliCloudSLSConfig.EvalCondition.Value,
+		}
+
+		// 评估告警条件
+		evalCondition(event, count, options)
 	}
-
-	options := models.EvalCondition{
-		/*
-			触发告警的条件
-			- 有数据 > number	// 有数据并大于多少条。
-		*/
-		Type:     rule.AliCloudSLSConfig.EvalCondition.Type,
-		Operator: rule.AliCloudSLSConfig.EvalCondition.Operator,
-		Value:    rule.AliCloudSLSConfig.EvalCondition.Value,
-	}
-
-	// 评估告警条件
-	evalCondition(event, count, options)
-
-	rq.alertRecover(rule, datasourceId, curKeys)
 
 }
 
 // Loki 数据源
 func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) {
+	var curKeys []string
+	defer func() {
+		rq.alertRecover(rule, datasourceId, curKeys)
+		go gcRecoverWaitCache(rule, curKeys)
+	}()
 
 	curAt := time.Now().UTC()
 	startsAt := parserDuration(curAt, rule.LokiConfig.LogScope, "m")
@@ -178,8 +184,6 @@ func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) {
 		globals.Logger.Sugar().Errorf("查询 Loki 日志失败 %s", err.Error())
 		return
 	}
-
-	var curKeys []string
 
 	for _, v := range res {
 
@@ -212,7 +216,5 @@ func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) {
 		evalCondition(event, count, options)
 
 	}
-
-	rq.alertRecover(rule, datasourceId, curKeys)
 
 }

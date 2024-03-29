@@ -101,8 +101,12 @@ func (lc LokiClient) QueryRange(options QueryOptions) ([]Result, error) {
 
 func (r Result) GetFingerprint() string {
 	// 使用 Loki 提供的 Stream label 进行 Hash 作为告警指纹.
+	newMetric := map[string]interface{}{
+		"namespace": r.Stream["namespace"],
+		"container": r.Stream["container"],
+	}
 	h := md5.New()
-	streamString := cmd.JsonMarshal(r.Stream)
+	streamString := cmd.JsonMarshal(newMetric)
 	h.Write([]byte(streamString))
 	fingerprint := hex.EncodeToString(h.Sum(nil))
 	return fingerprint

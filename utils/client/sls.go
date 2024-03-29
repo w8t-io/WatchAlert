@@ -70,50 +70,60 @@ func (sca AliCloudSlsClientApi) Query(args AliCloudSlsQueryArgs) (res *sls202012
 }
 
 type SlsBody struct {
-	metric map[string]interface{}
+	MetricList []Metric
 }
+type Metric map[string]interface{}
 
 func GetSLSBodyData(res *sls20201230.GetLogsResponse) SlsBody {
-	bodyString, _ := json.Marshal(res.Body[0])
-	// 标签，用于推送告警消息时 获取相关 label 信息
-	metricMap := make(map[string]interface{})
-	err := json.Unmarshal(bodyString, &metricMap)
-	if err != nil {
-		globals.Logger.Sugar().Errorf("解析 SLS Metric Label 失败, %s", err.Error())
+
+	var metricMapList []Metric
+	for _, body := range res.Body {
+		// 标签，用于推送告警消息时 获取相关 label 信息
+		metricMap := make(map[string]interface{})
+		err := json.Unmarshal([]byte(cmd.JsonMarshal(body)), &metricMap)
+		if err != nil {
+			globals.Logger.Sugar().Errorf("解析 SLS Metric Label 失败, %s", err.Error())
+		}
+		metricMapList = append(metricMapList, metricMap)
 	}
-	return SlsBody{metric: metricMap}
+
+	return SlsBody{MetricList: metricMapList}
 }
 
-func (sb SlsBody) GetMetric() map[string]interface{} {
+func (m Metric) GetMetric() map[string]interface{} {
 	// 删除多余 label
-	delete(sb.metric, "_image_name_")
-	delete(sb.metric, "__topic__")
-	delete(sb.metric, "_container_ip_")
-	delete(sb.metric, "_pod_uid_")
-	delete(sb.metric, "_source_")
-	delete(sb.metric, "_time_")
-	delete(sb.metric, "__time__")
-	delete(sb.metric, "__tag__:__pack_id__")
-	return sb.metric
+	delete(m, "_image_name_")
+	delete(m, "__topic__")
+	delete(m, "_container_ip_")
+	delete(m, "_pod_uid_")
+	delete(m, "_source_")
+	delete(m, "_time_")
+	delete(m, "__time__")
+	delete(m, "__tag__:__pack_id__")
+	return m
 }
 
-func (sb SlsBody) GetAnnotations() string {
+func (m Metric) GetAnnotations() string {
 	var annotation string
-	if sb.metric["content"] != nil {
-		annotation = sb.metric["content"].(string)
+	if m["content"] != nil {
+		annotation = m["content"].(string)
 		if cmd.IsJSON(annotation) {
 			a := cmd.FormatJson(annotation)
 			annotation = a
 		}
 	}
-	delete(sb.metric, "content")
+	delete(m, "content")
 	return annotation
 }
 
-func (sb SlsBody) GetFingerprint() string {
-	h := md5.New()
+func (m Metric) GetFingerprint() string {
 	// 使用 label 进行 Hash 作为告警指纹，可以有效地作为恢复逻辑的判断条件。
-	h.Write([]byte(cmd.JsonMarshal(sb.metric)))
+	newMetric := map[string]interface{}{
+		"_namespace_":      m["_namespace_"],
+		"_container_name_": m["_container_name_"],
+	}
+	h := md5.New()
+	h.Write([]byte(cmd.JsonMarshal(newMetric)))
 	fingerprint := hex.EncodeToString(h.Sum(nil))
 	return fingerprint
 }
