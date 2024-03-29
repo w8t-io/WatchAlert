@@ -69,16 +69,19 @@ func (rq *RuleQuery) alertRecover(rule models.AlertRule, dsId string, curKeys []
 
 // Prometheus 数据源
 func (rq *RuleQuery) prometheus(datasourceId string, rule models.AlertRule) {
+	var curFiringKeys, curPendingKeys []string
+	defer func() {
+		go gcPendingCache(rule, datasourceId, curPendingKeys)
+		rq.alertRecover(rule, datasourceId, curFiringKeys)
+		go gcRecoverWaitCache(rule, curFiringKeys)
+	}()
 
 	resQuery, _, err := client.NewPromClient(datasourceId).Query(rule.PrometheusConfig.PromQL)
 	if err != nil {
 		return
 	}
 
-	var curFiringKeys, curPendingKeys []string
-
 	if resQuery == nil {
-		go gcPendingCache(rule, datasourceId, curPendingKeys)
 		return
 	}
 
@@ -98,15 +101,15 @@ func (rq *RuleQuery) prometheus(datasourceId string, rule models.AlertRule) {
 		saveEventCache(event)
 	}
 
-	go gcPendingCache(rule, datasourceId, curPendingKeys)
-
-	rq.alertRecover(rule, datasourceId, curFiringKeys)
-	go gcRecoverWaitCache(rule, curFiringKeys)
-
 }
 
 // AliCloudSLS 数据源
 func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) {
+	var curKeys []string
+	defer func() {
+		rq.alertRecover(rule, datasourceId, curKeys)
+		go gcRecoverWaitCache(rule, curKeys)
+	}()
 
 	curAt := time.Now()
 	startsAt := parserDuration(curAt, rule.AliCloudSLSConfig.LogScope, "m")
@@ -131,7 +134,6 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) {
 
 	bodyList := client.GetSLSBodyData(res)
 
-	var curKeys []string
 	for _, body := range bodyList.MetricList {
 		fingerprint := body.GetFingerprint()
 		key := rq.alertEvent.FiringAlertCacheKey(rule.RuleId, datasourceId, fingerprint)
@@ -161,13 +163,15 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) {
 		evalCondition(event, count, options)
 	}
 
-	rq.alertRecover(rule, datasourceId, curKeys)
-	go gcRecoverWaitCache(rule, curKeys)
-
 }
 
 // Loki 数据源
 func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) {
+	var curKeys []string
+	defer func() {
+		rq.alertRecover(rule, datasourceId, curKeys)
+		go gcRecoverWaitCache(rule, curKeys)
+	}()
 
 	curAt := time.Now().UTC()
 	startsAt := parserDuration(curAt, rule.LokiConfig.LogScope, "m")
@@ -182,8 +186,6 @@ func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) {
 		globals.Logger.Sugar().Errorf("查询 Loki 日志失败 %s", err.Error())
 		return
 	}
-
-	var curKeys []string
 
 	for _, v := range res {
 
@@ -216,8 +218,5 @@ func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) {
 		evalCondition(event, count, options)
 
 	}
-
-	rq.alertRecover(rule, datasourceId, curKeys)
-	go gcRecoverWaitCache(rule, curKeys)
 
 }

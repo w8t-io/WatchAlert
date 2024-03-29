@@ -140,7 +140,12 @@ func (ec *EvalConsume) filterAlerts(alerts []models.AlertCurEvent) map[string][]
 	// 将通过指纹去重后以Fingerprint为Key的Map转换成以原来RuleName为Key的Map (同一告警类型聚合)
 	for _, alert := range newAlert {
 		// 重复通知，如果是初次推送不用进一步判断。
-		if alert.LastSendTime == 0 || alert.LastEvalTime >= alert.LastSendTime+alert.RepeatNoticeInterval*60 {
+		if !alert.IsRecovered {
+			if alert.LastSendTime == 0 || alert.LastEvalTime >= alert.LastSendTime+alert.RepeatNoticeInterval*60 {
+				newAlertsMap[alert.RuleName] = append(newAlertsMap[alert.RuleName], alert)
+			}
+		}
+		if alert.IsRecovered {
 			newAlertsMap[alert.RuleName] = append(newAlertsMap[alert.RuleName], alert)
 		}
 	}
