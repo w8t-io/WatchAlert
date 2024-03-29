@@ -101,6 +101,7 @@ func (rq *RuleQuery) prometheus(datasourceId string, rule models.AlertRule) {
 	go gcPendingCache(rule, datasourceId, curPendingKeys)
 
 	rq.alertRecover(rule, datasourceId, curFiringKeys)
+	go gcRecoverWaitCache(rule, curFiringKeys)
 
 }
 
@@ -128,37 +129,40 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) {
 		return
 	}
 
-	body := client.GetSLSBodyData(res)
+	bodyList := client.GetSLSBodyData(res)
 
 	var curKeys []string
-	fingerprint := body.GetFingerprint()
-	key := rq.alertEvent.FiringAlertCacheKey(rule.RuleId, datasourceId, fingerprint)
-	curKeys = append(curKeys, key)
+	for _, body := range bodyList.MetricList {
+		fingerprint := body.GetFingerprint()
+		key := rq.alertEvent.FiringAlertCacheKey(rule.RuleId, datasourceId, fingerprint)
+		curKeys = append(curKeys, key)
 
-	event := func() {
-		event := parserDefaultEvent(rule)
-		event.DatasourceId = datasourceId
-		event.Fingerprint = fingerprint
-		event.Annotations = body.GetAnnotations()
-		event.Metric = body.GetMetric()
+		event := func() {
+			event := parserDefaultEvent(rule)
+			event.DatasourceId = datasourceId
+			event.Fingerprint = fingerprint
+			event.Annotations = body.GetAnnotations()
+			event.Metric = body.GetMetric()
 
-		saveEventCache(event)
+			saveEventCache(event)
+		}
+
+		options := models.EvalCondition{
+			/*
+				触发告警的条件
+				- 有数据 > number	// 有数据并大于多少条。
+			*/
+			Type:     rule.AliCloudSLSConfig.EvalCondition.Type,
+			Operator: rule.AliCloudSLSConfig.EvalCondition.Operator,
+			Value:    rule.AliCloudSLSConfig.EvalCondition.Value,
+		}
+
+		// 评估告警条件
+		evalCondition(event, count, options)
 	}
-
-	options := models.EvalCondition{
-		/*
-			触发告警的条件
-			- 有数据 > number	// 有数据并大于多少条。
-		*/
-		Type:     rule.AliCloudSLSConfig.EvalCondition.Type,
-		Operator: rule.AliCloudSLSConfig.EvalCondition.Operator,
-		Value:    rule.AliCloudSLSConfig.EvalCondition.Value,
-	}
-
-	// 评估告警条件
-	evalCondition(event, count, options)
 
 	rq.alertRecover(rule, datasourceId, curKeys)
+	go gcRecoverWaitCache(rule, curKeys)
 
 }
 
@@ -214,5 +218,6 @@ func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) {
 	}
 
 	rq.alertRecover(rule, datasourceId, curKeys)
+	go gcRecoverWaitCache(rule, curKeys)
 
 }
