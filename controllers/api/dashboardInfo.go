@@ -70,7 +70,7 @@ func (di DashboardInfoController) GetDashboardInfo(ctx *gin.Context) {
 	response.Success(ctx, ResponseDashboardInfo{
 		CountAlertRules: countAlertRules,
 		CurAlerts:       len(keys),
-		CurAlertList:    curAlertList,
+		CurAlertList:    curAlertList[:5],
 		AlarmDistribution: AlarmDistribution{
 			P0: alarmDistribution["P0"],
 			P1: alarmDistribution["P1"],
