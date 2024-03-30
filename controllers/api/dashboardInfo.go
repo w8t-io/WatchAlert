@@ -60,10 +60,10 @@ func (di DashboardInfoController) GetDashboardInfo(ctx *gin.Context) {
 
 	var curAlertList []string
 	for _, v := range keys {
+		alarmDistribution[di.GetCache(v).Severity] += 1
 		if len(curAlertList) >= 5 {
 			continue
 		}
-		alarmDistribution[di.GetCache(v).Severity] += 1
 		curAlertList = append(curAlertList, di.GetCache(v).Annotations)
 	}
 
