@@ -231,6 +231,22 @@ func InitPermissionsSQL() {
 			Key: "RuleTmplList",
 			API: "/api/w8t/ruleTmpl/ruleTmplList",
 		},
+		{
+			Key: "CreateTenant",
+			API: "/api/w8t/tenant/createTenant",
+		},
+		{
+			Key: "UpdateTenant",
+			API: "/api/w8t/tenant/updateTenant",
+		},
+		{
+			Key: "DeleteTenant",
+			API: "/api/w8t/tenant/deleteTenant",
+		},
+		{
+			Key: "GetTenantList",
+			API: "/api/w8t/tenant/getTenantList",
+		},
 	}
 
 	perms = permissions

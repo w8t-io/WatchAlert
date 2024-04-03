@@ -25,10 +25,10 @@ type AliCloudSlsQueryArgs struct {
 	Query    string
 }
 
-func NewAliCloudSlsClient(datasourceId string) AliCloudSlsClientApi {
+func NewAliCloudSlsClient(tid, datasourceId string) AliCloudSlsClientApi {
 
 	var datasource models.AlertDataSource
-	globals.DBCli.Model(&models.AlertDataSource{}).Where("id = ?", datasourceId).First(&datasource)
+	globals.DBCli.Model(&models.AlertDataSource{}).Where("tenant_id = ? AND id = ?", tid, datasourceId).First(&datasource)
 
 	config := &openapi.Config{
 		AccessKeyId:     &datasource.AliCloudAk,

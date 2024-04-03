@@ -10,7 +10,7 @@ type AlertNoticeObjectController struct{}
 
 func (ano *AlertNoticeObjectController) List(ctx *gin.Context) {
 
-	object := alertNoticeService.SearchNoticeObject()
+	object := alertNoticeService.SearchNoticeObject(ctx)
 	response.Success(ctx, object, "success")
 
 }
@@ -19,7 +19,8 @@ func (ano *AlertNoticeObjectController) Create(ctx *gin.Context) {
 
 	var alertNotice models.AlertNotice
 	_ = ctx.ShouldBindJSON(&alertNotice)
-
+	tid, _ := ctx.Get("TenantID")
+	alertNotice.TenantId = tid.(string)
 	object, err := alertNoticeService.CreateNoticeObject(alertNotice)
 	if err != nil {
 		response.Fail(ctx, err.Error(), "failed")
@@ -33,7 +34,8 @@ func (ano *AlertNoticeObjectController) Update(ctx *gin.Context) {
 
 	var alertNotice models.AlertNotice
 	_ = ctx.ShouldBindJSON(&alertNotice)
-
+	tid, _ := ctx.Get("TenantID")
+	alertNotice.TenantId = tid.(string)
 	object, err := alertNoticeService.UpdateNoticeObject(alertNotice)
 	if err != nil {
 		response.Fail(ctx, err.Error(), "failed")
@@ -46,7 +48,8 @@ func (ano *AlertNoticeObjectController) Update(ctx *gin.Context) {
 func (ano *AlertNoticeObjectController) Delete(ctx *gin.Context) {
 
 	uuid := ctx.Query("uuid")
-	err := alertNoticeService.DeleteNoticeObject(uuid)
+	tid, _ := ctx.Get("TenantID")
+	err := alertNoticeService.DeleteNoticeObject(tid.(string), uuid)
 	if err != nil {
 		response.Fail(ctx, err.Error(), "failed")
 		return
@@ -58,7 +61,8 @@ func (ano *AlertNoticeObjectController) Delete(ctx *gin.Context) {
 func (ano *AlertNoticeObjectController) Get(ctx *gin.Context) {
 
 	uuid := ctx.Query("uuid")
-	object := alertNoticeService.GetNoticeObject(uuid)
+	tid, _ := ctx.Get("TenantID")
+	object := alertNoticeService.GetNoticeObject(tid.(string), uuid)
 	response.Success(ctx, object, "success")
 
 }
@@ -66,7 +70,8 @@ func (ano *AlertNoticeObjectController) Get(ctx *gin.Context) {
 func (ano *AlertNoticeObjectController) CheckNoticeStatus(ctx *gin.Context) {
 
 	uuid := ctx.Query("uuid")
-	status := alertNoticeService.CheckNoticeObjectStatus(uuid)
+	tid, _ := ctx.Get("TenantID")
+	status := alertNoticeService.CheckNoticeObjectStatus(tid.(string), uuid)
 	response.Success(ctx, status, "success")
 
 }

@@ -98,7 +98,7 @@ func (u *UserController) Update(ctx *gin.Context) {
 	user.Password = dbUser.Password
 	err := repo.DBCli.Updates(repo.Updates{
 		Table:   models.Member{},
-		Where:   []string{"user_id = ?", user.UserId},
+		Where:   []interface{}{"user_id = ?", user.UserId},
 		Updates: user,
 	})
 	if err != nil {
@@ -128,32 +128,32 @@ func (u *UserController) CheckUser(ctx *gin.Context) {
 
 }
 
-func (u *UserController) List(ctx *gin.Context)  {
+func (u *UserController) List(ctx *gin.Context) {
 
 	var userList []models.Member
 	err := globals.DBCli.Find(&userList).Error
-	if err != nil{
-		response.Fail(ctx,err.Error(),"failed")
+	if err != nil {
+		response.Fail(ctx, err.Error(), "failed")
 		return
 	}
 
-	response.Success(ctx,userList,"success")
-	
+	response.Success(ctx, userList, "success")
+
 }
 
 func (u *UserController) ChangePass(ctx *gin.Context) {
 
 	id := ctx.Query("userid")
-	var data struct{
+	var data struct {
 		Password string `json:"password"`
 	}
-    _ = ctx.ShouldBindJSON(&data)
+	_ = ctx.ShouldBindJSON(&data)
 	arr := md5.Sum([]byte(data.Password))
 	hashPassword := hex.EncodeToString(arr[:])
 
 	err := repo.DBCli.Update(repo.Update{
 		Table:  models.Member{},
-		Where:  []string{"user_id = ?", id},
+		Where:  []interface{}{"user_id = ?", id},
 		Update: []string{"password", hashPassword},
 	})
 	if err != nil {
@@ -167,13 +167,13 @@ func (u *UserController) ChangePass(ctx *gin.Context) {
 
 }
 
-func (u *UserController) Delete(ctx *gin.Context)  {
+func (u *UserController) Delete(ctx *gin.Context) {
 
 	id := ctx.Query("userid")
 
 	err := repo.DBCli.Delete(repo.Delete{
 		Table: models.Member{},
-		Where: []string{"user_id = ?", id},
+		Where: []interface{}{"user_id = ?", id},
 	})
 	if err != nil {
 		return

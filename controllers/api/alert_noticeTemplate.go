@@ -33,7 +33,7 @@ func (ant *AlertNoticeTemplateController) Update(ctx *gin.Context) {
 
 	err := repo.DBCli.Updates(repo.Updates{
 		Table:   &models.NoticeTemplateExample{},
-		Where:   []string{"id = ?", tmpl.Id},
+		Where:   []interface{}{"id = ?", tmpl.Id},
 		Updates: &tmpl,
 	})
 	if err != nil {
@@ -50,7 +50,7 @@ func (ant *AlertNoticeTemplateController) Delete(ctx *gin.Context) {
 
 	err := repo.DBCli.Delete(repo.Delete{
 		Table: &models.NoticeTemplateExample{},
-		Where: []string{"id = ?", id},
+		Where: []interface{}{"id = ?", id},
 	})
 	if err != nil {
 		response.Fail(ctx, err.Error(), "failed")

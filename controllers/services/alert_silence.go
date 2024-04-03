@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"time"
 	"watchAlert/controllers/repo"
 	"watchAlert/globals"
@@ -16,8 +17,8 @@ type AlertSilenceService struct {
 type InterAlertSilenceService interface {
 	CreateAlertSilence(silence models2.AlertSilences) error
 	UpdateAlertSilence(silence models2.AlertSilences) (models2.AlertSilences, error)
-	DeleteAlertSilence(id string) error
-	ListAlertSilence() ([]models2.AlertSilences, error)
+	DeleteAlertSilence(tid, id string) error
+	ListAlertSilence(ctx *gin.Context) ([]models2.AlertSilences, error)
 }
 
 func NewInterAlertSilenceService() InterAlertSilenceService {
@@ -28,6 +29,7 @@ func (ass *AlertSilenceService) CreateAlertSilence(silence models2.AlertSilences
 
 	createAt := time.Now().Unix()
 	silenceEvent := models2.AlertSilences{
+		TenantId:       silence.TenantId,
 		Id:             "s-" + cmd.RandId(),
 		Fingerprint:    silence.Fingerprint,
 		Datasource:     silence.Datasource,
@@ -69,7 +71,7 @@ func (ass *AlertSilenceService) UpdateAlertSilence(silence models2.AlertSilences
 
 	err := repo.DBCli.Updates(repo.Updates{
 		Table:   models2.AlertSilences{},
-		Where:   []string{"id = ?", silence.Id},
+		Where:   []interface{}{"tenant_id = ? AND id = ?", silence.TenantId, silence.Id},
 		Updates: silence,
 	})
 
@@ -81,18 +83,18 @@ func (ass *AlertSilenceService) UpdateAlertSilence(silence models2.AlertSilences
 
 }
 
-func (ass *AlertSilenceService) DeleteAlertSilence(id string) error {
+func (ass *AlertSilenceService) DeleteAlertSilence(tid, id string) error {
 
 	var silence models2.AlertSilences
-	globals.DBCli.Where("id = ?", id).Find(&silence)
+	globals.DBCli.Where("tenant_id = ? AND id = ?", tid, id).Find(&silence)
 
 	del := repo.Delete{
 		Table: models2.AlertSilences{},
-		Where: []string{"id = ?", id},
+		Where: []interface{}{"tenant_id = ? AND id = ?", tid, id},
 	}
 	repo.DBCli.Delete(del)
 
-	_, err := globals.RedisCli.Del(models2.SilenceCachePrefix + silence.Fingerprint).Result()
+	_, err := globals.RedisCli.Del(tid + ":" + models2.SilenceCachePrefix + silence.Fingerprint).Result()
 	if err != nil {
 		return err
 	}
@@ -100,10 +102,11 @@ func (ass *AlertSilenceService) DeleteAlertSilence(id string) error {
 
 }
 
-func (ass *AlertSilenceService) ListAlertSilence() ([]models2.AlertSilences, error) {
+func (ass *AlertSilenceService) ListAlertSilence(ctx *gin.Context) ([]models2.AlertSilences, error) {
 
 	var silenceList []models2.AlertSilences
-	err := globals.DBCli.Find(&silenceList).Error
+	tid, _ := ctx.Get("TenantID")
+	err := globals.DBCli.Where("tenant_id = ?", tid.(string)).Find(&silenceList).Error
 
 	if err != nil {
 		return []models2.AlertSilences{}, err

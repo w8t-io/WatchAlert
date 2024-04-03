@@ -11,16 +11,16 @@ import (
 type AlertCurEventService struct{}
 
 type InterAlertCurEventService interface {
-	List(dsType string) ([]models.AlertCurEvent, error)
+	List(tid, dsType string) ([]models.AlertCurEvent, error)
 }
 
 func NewInterAlertCurEventService() InterAlertCurEventService {
 	return &AlertCurEventService{}
 }
 
-func (aces *AlertCurEventService) List(dsType string) ([]models.AlertCurEvent, error) {
+func (aces *AlertCurEventService) List(tid, dsType string) ([]models.AlertCurEvent, error) {
 
-	iter := globals.RedisCli.Scan(0, models.FiringAlertCachePrefix+"*", 0).Iterator()
+	iter := globals.RedisCli.Scan(0, tid+":"+models.FiringAlertCachePrefix+"*", 0).Iterator()
 	keys := make([]string, 0)
 
 	// 遍历匹配的键

@@ -38,25 +38,15 @@ func (GormDBCli *GormDBCli) Create(table, value interface{}) error {
 
 type Update struct {
 	Table  interface{}
-	Where  []string
+	Where  []interface{}
 	Update []string
 }
 
 func (GormDBCli *GormDBCli) Update(value Update) error {
 
-	//updateData := Update{
-	//	Table: dao.People{},
-	//	Where: []string{
-	//		"Name =?", "xxx", "xxx",
-	//	},
-	//	Update: []string{
-	//		"Description", "xxx",
-	//	},
-	//}
-
 	tx := globals.DBCli.Begin()
 	err := tx.Model(value.Table).
-		Where(value.Where[0], value.Where[1:]).
+		Where(value.Where).
 		Update(value.Update[0], value.Update[1:]).Error
 	if err != nil {
 		tx.Rollback()
@@ -74,7 +64,7 @@ func (GormDBCli *GormDBCli) Update(value Update) error {
 
 type Updates struct {
 	Table   interface{}
-	Where   []string
+	Where   []interface{}
 	Updates interface{}
 }
 
@@ -82,7 +72,7 @@ func (GormDBCli *GormDBCli) Updates(value Updates) error {
 
 	tx := globals.DBCli.Begin()
 	err := tx.Model(value.Table).
-		Where(value.Where[0], value.Where[1:]).
+		Where(value.Where).
 		Updates(value.Updates).Error
 	if err != nil {
 		tx.Rollback()
@@ -100,13 +90,13 @@ func (GormDBCli *GormDBCli) Updates(value Updates) error {
 
 type Delete struct {
 	Table interface{}
-	Where []string
+	Where []interface{}
 }
 
 func (GormDBCli *GormDBCli) Delete(value Delete) error {
 
 	tx := globals.DBCli.Begin()
-	err := tx.Where(value.Where[0], value.Where[1:]).
+	err := tx.Where(value.Where).
 		Delete(&value.Table).Error
 	if err != nil {
 		tx.Rollback()

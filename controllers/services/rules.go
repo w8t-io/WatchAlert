@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"watchAlert/alert/queue"
 	"watchAlert/controllers/repo"
 	"watchAlert/globals"
@@ -10,14 +11,15 @@ import (
 
 type RuleService struct {
 	rule chan *models.AlertRule
+	repo.RuleRepo
 }
 
 type InterRuleService interface {
 	Create(rule models.AlertRule) error
 	Update(rule models.AlertRule) error
-	Delete(id string) error
-	List(ruleGroupId string) ([]models.AlertRule, error)
-	Search(ruleId string) models.AlertRule
+	Delete(tid, id string) error
+	List(tid, ruleGroupId string) ([]models.AlertRule, error)
+	Search(tid, ruleId string) models.AlertRule
 }
 
 func NewInterRuleService() InterRuleService {
@@ -27,6 +29,11 @@ func NewInterRuleService() InterRuleService {
 }
 
 func (rs *RuleService) Create(rule models.AlertRule) error {
+
+	ok := rs.RuleRepo.GetQuota(rule.TenantId)
+	if !ok {
+		return fmt.Errorf("创建失败, 配额不足")
+	}
 
 	rule.RuleId = "a-" + cmd.RandId()
 
@@ -52,7 +59,7 @@ func (rs *RuleService) Update(rule models.AlertRule) error {
 		判断当前状态是否是false 并且 历史状态是否为true
 	*/
 	alertInfo := models.AlertRule{}
-	globals.DBCli.Model(&models.AlertRule{}).Where("rule_id = ?", rule.RuleId).Find(&alertInfo)
+	globals.DBCli.Model(&models.AlertRule{}).Where("tenant_id = ? AND rule_id = ?", rule.TenantId, rule.RuleId).Find(&alertInfo)
 
 	if alertInfo.Enabled == "true" && newRule.EnabledBool == false {
 		if cancel, exists := queue.WatchCtxMap[newRule.RuleId]; exists {
@@ -66,7 +73,7 @@ func (rs *RuleService) Update(rule models.AlertRule) error {
 	}
 
 	// 删除缓存
-	iter := globals.RedisCli.Scan(0, models.FiringAlertCachePrefix+rule.RuleId+"*", 0).Iterator()
+	iter := globals.RedisCli.Scan(0, rule.TenantId+":"+models.FiringAlertCachePrefix+rule.RuleId+"*", 0).Iterator()
 	keys := make([]string, 0)
 	for iter.Next() {
 		key := iter.Val()
@@ -83,7 +90,7 @@ func (rs *RuleService) Update(rule models.AlertRule) error {
 	// 更新数据
 	data := repo.Updates{
 		Table:   models.AlertRule{},
-		Where:   []string{"rule_id = ?", newRule.RuleId},
+		Where:   []interface{}{"tenant_id = ? AND rule_id = ?", rule.TenantId, newRule.RuleId},
 		Updates: &newRule,
 	}
 	err := repo.DBCli.Updates(data)
@@ -95,12 +102,12 @@ func (rs *RuleService) Update(rule models.AlertRule) error {
 
 }
 
-func (rs *RuleService) Delete(id string) error {
+func (rs *RuleService) Delete(tid, id string) error {
 
 	var alertRule models.AlertRule
 	data := repo.Delete{
 		Table: alertRule,
-		Where: []string{"rule_id = ?", id},
+		Where: []interface{}{"tenant_id = ? and rule_id = ?", tid, id},
 	}
 
 	err := repo.DBCli.Delete(data)
@@ -117,7 +124,7 @@ func (rs *RuleService) Delete(id string) error {
 		//rs.quit <- &id
 	}
 
-	iter := globals.RedisCli.Scan(0, models.FiringAlertCachePrefix+id+"*", 0).Iterator()
+	iter := globals.RedisCli.Scan(0, tid+":"+models.FiringAlertCachePrefix+id+"*", 0).Iterator()
 	keys := make([]string, 0)
 	for iter.Next() {
 		key := iter.Val()
@@ -131,11 +138,14 @@ func (rs *RuleService) Delete(id string) error {
 
 }
 
-func (rs *RuleService) List(ruleGroupId string) ([]models.AlertRule, error) {
+func (rs *RuleService) List(tid, ruleGroupId string) ([]models.AlertRule, error) {
 
 	var alertRuleList []models.AlertRule
 
-	globals.DBCli.Model(&models.AlertRule{}).Where("rule_group_id = ?", ruleGroupId).Find(&alertRuleList)
+	db := globals.DBCli.Model(&models.AlertRule{})
+	db.Where("tenant_id = ?", tid)
+	db.Where("rule_group_id = ?", ruleGroupId)
+	db.Find(&alertRuleList)
 
 	for k, v := range alertRuleList {
 		newRule := v.ParserRuleToJson()
@@ -146,10 +156,10 @@ func (rs *RuleService) List(ruleGroupId string) ([]models.AlertRule, error) {
 
 }
 
-func (rs *RuleService) Search(ruleId string) models.AlertRule {
+func (rs *RuleService) Search(tid, ruleId string) models.AlertRule {
 
 	var alertRule models.AlertRule
-	globals.DBCli.Where("rule_id", ruleId).Find(&alertRule)
+	globals.DBCli.Where("tenant_id = ? and rule_id = ?", tid, ruleId).Find(&alertRule)
 
 	if alertRule.RuleName == "" {
 		return models.AlertRule{}

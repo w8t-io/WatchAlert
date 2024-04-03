@@ -3,6 +3,6 @@ package services
 import "watchAlert/controllers/repo"
 
 var (
-	alertNotice  = repo.RepoGroupEntry.AlertNoticeRepo
+	alertNotice  = repo.RepoGroupEntry.NoticeRepo
 	dutySchedule = repo.RepoGroupEntry.DutyScheduleRepo
 )

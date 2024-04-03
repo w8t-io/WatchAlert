@@ -1,6 +1,7 @@
 package models
 
 type AlertDataSource struct {
+	TenantId         string `json:"tenantId"`
 	Id               string `json:"id"`
 	Name             string `json:"name"`
 	Type             string `json:"type"`

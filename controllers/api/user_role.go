@@ -43,7 +43,7 @@ func (urc *UserRoleController) Update(ctx *gin.Context) {
 
 	err := repo.DBCli.Updates(repo.Updates{
 		Table:   &models.UserRole{},
-		Where:   []string{"id = ?", userRole.ID},
+		Where:   []interface{}{"id = ?", userRole.ID},
 		Updates: userRole,
 	})
 	if err != nil {
@@ -59,7 +59,7 @@ func (urc *UserRoleController) Delete(ctx *gin.Context) {
 	id := ctx.Query("id")
 	err := repo.DBCli.Delete(repo.Delete{
 		Table: models.UserRole{},
-		Where: []string{"id = ?", id},
+		Where: []interface{}{"id = ?", id},
 	})
 	if err != nil {
 		response.Fail(ctx, err.Error(), "failed")

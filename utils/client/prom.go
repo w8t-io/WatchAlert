@@ -18,9 +18,9 @@ type API struct {
 
 type Warnings []string
 
-func NewPromClient(dsId string) API {
+func NewPromClient(tid, dsId string) API {
 
-	datasource := services.NewInterAlertDataSourceService().Get(dsId, "Prometheus")
+	datasource := services.NewInterAlertDataSourceService().Get(tid, dsId, "Prometheus")
 
 	client, err := api.NewClient(api.Config{
 		Address: datasource[0].HTTP.URL,

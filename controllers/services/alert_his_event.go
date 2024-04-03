@@ -23,6 +23,7 @@ func NewInterAlertHisEventService() InterAlertHisEventService {
 
 func (ahes *AlertHisEventService) List(ctx *gin.Context) (response.HistoryEvent, error) {
 
+	tid, _ := ctx.Get("TenantID")
 	datasourceType := ctx.Query("datasourceType")
 	severity := ctx.Query("severity")
 	startAt := ctx.Query("startAt")
@@ -48,7 +49,7 @@ func (ahes *AlertHisEventService) List(ctx *gin.Context) (response.HistoryEvent,
 		}
 	}
 
-	data, err := ahes.GetHistoryEvent(datasourceType, severity, startAtInt64, endAtInt64, pageIndex, pageSize)
+	data, err := ahes.GetHistoryEvent(tid.(string), datasourceType, severity, startAtInt64, endAtInt64, pageIndex, pageSize)
 
 	return data, err
 

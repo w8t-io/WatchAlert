@@ -13,7 +13,8 @@ func (rc *RuleController) Create(ctx *gin.Context) {
 
 	var rule models.AlertRule
 	_ = ctx.ShouldBindJSON(&rule)
-
+	tid, _ := ctx.Get("TenantID")
+	rule.TenantId = tid.(string)
 	err := ruleService.Create(rule)
 	if err != nil {
 		response.Fail(ctx, err.Error(), "failed")
@@ -27,7 +28,8 @@ func (rc *RuleController) Update(ctx *gin.Context) {
 
 	var rule models.AlertRule
 	_ = ctx.ShouldBindJSON(&rule)
-
+	tid, _ := ctx.Get("TenantID")
+	rule.TenantId = tid.(string)
 	err := ruleService.Update(rule)
 	if err != nil {
 		response.Fail(ctx, err.Error(), "failed")
@@ -43,8 +45,9 @@ func (rc *RuleController) List(ctx *gin.Context) {
 	_ = ctx.ShouldBindJSON(&rule)
 
 	ruleGroupId := ctx.Query("ruleGroupId")
+	tid, _ := ctx.Get("TenantID")
 
-	data, err := ruleService.List(ruleGroupId)
+	data, err := ruleService.List(tid.(string), ruleGroupId)
 	if err != nil {
 		response.Fail(ctx, err.Error(), "failed")
 		return
@@ -56,7 +59,8 @@ func (rc *RuleController) List(ctx *gin.Context) {
 func (rc *RuleController) Delete(ctx *gin.Context) {
 
 	id := ctx.Query("id")
-	err := ruleService.Delete(id)
+	tid, _ := ctx.Get("TenantID")
+	err := ruleService.Delete(tid.(string), id)
 	if err != nil {
 		response.Fail(ctx, err.Error(), "failed")
 		return
@@ -68,7 +72,8 @@ func (rc *RuleController) Delete(ctx *gin.Context) {
 func (rc *RuleController) Search(ctx *gin.Context) {
 
 	ruleId := ctx.Query("ruleId")
-	data := ruleService.Search(ruleId)
+	tid, _ := ctx.Get("TenantID")
+	data := ruleService.Search(tid.(string), ruleId)
 	response.Success(ctx, data, "success")
 
 }

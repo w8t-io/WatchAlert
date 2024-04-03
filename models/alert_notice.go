@@ -5,6 +5,7 @@ import (
 )
 
 type AlertNotice struct {
+	TenantId        string `json:"tenantId"`
 	Uuid            string `json:"uuid"`
 	Name            string `json:"name"`
 	Env             string `json:"env"`

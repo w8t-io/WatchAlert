@@ -9,6 +9,7 @@ import (
 const SilenceCachePrefix = "mute-"
 
 type AlertSilences struct {
+	TenantId       string `json:"tenantId"`
 	Id             string `json:"id"`
 	Fingerprint    string `json:"fingerprint"`
 	Datasource     string `json:"datasource"`
@@ -24,13 +25,13 @@ type AlertSilences struct {
 
 func (as *AlertSilences) SetCache(expiration time.Duration) {
 
-	globals.RedisCli.Set(SilenceCachePrefix+as.Fingerprint, cmd.JsonMarshal(as), expiration)
+	globals.RedisCli.Set(as.TenantId+":"+SilenceCachePrefix+as.Fingerprint, cmd.JsonMarshal(as), expiration)
 
 }
 
 func (as *AlertSilences) GetCache(fingerprint string) (string, bool) {
 
-	event, err := globals.RedisCli.Get(SilenceCachePrefix + fingerprint).Result()
+	event, err := globals.RedisCli.Get(as.TenantId + ":" + SilenceCachePrefix + fingerprint).Result()
 	if err != nil {
 		return "", false
 	}

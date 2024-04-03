@@ -69,6 +69,7 @@ func sqlClient() {
 		&models2.RuleTemplateGroup{},
 		&models2.RuleTemplate{},
 		&models2.ServiceResource{},
+		&models2.Tenant{},
 	)
 	if err != nil {
 		return

@@ -19,7 +19,7 @@ func IsMuted(alert *models.AlertCurEvent) bool {
 		if ttl < 0 {
 			repo.DBCli.Delete(repo.Delete{
 				Table: models.AlertSilences{},
-				Where: []string{"fingerprint = ?", alert.Fingerprint},
+				Where: []interface{}{"fingerprint = ?", alert.Fingerprint},
 			})
 		}
 	}

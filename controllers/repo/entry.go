@@ -1,7 +1,7 @@
 package repo
 
 type RepoGroup struct {
-	AlertNoticeRepo
+	NoticeRepo
 	DutyScheduleRepo
 }
 
