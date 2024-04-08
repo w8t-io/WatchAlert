@@ -247,6 +247,30 @@ func InitPermissionsSQL() {
 			Key: "GetTenantList",
 			API: "/api/w8t/tenant/getTenantList",
 		},
+		{
+			Key: "CreateDashboard",
+			API: "/api/w8t/dashboard/createDashboard",
+		},
+		{
+			Key: "UpdateDashboard",
+			API: "/api/w8t/dashboard/updateDashboard",
+		},
+		{
+			Key: "DeleteDashboard",
+			API: "/api/w8t/dashboard/deleteDashboard",
+		},
+		{
+			Key: "ListDashboard",
+			API: "/api/w8t/dashboard/listDashboard",
+		},
+		{
+			Key: "GetDashboard",
+			API: "/api/w8t/dashboard/getDashboard",
+		},
+		{
+			Key: "SearchDashboard",
+			API: "/api/w8t/dashboard/searchDashboard",
+		},
 	}
 
 	perms = permissions

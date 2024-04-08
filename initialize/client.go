@@ -70,6 +70,7 @@ func sqlClient() {
 		&models2.RuleTemplate{},
 		&models2.ServiceResource{},
 		&models2.Tenant{},
+		&models2.Dashboard{},
 	)
 	if err != nil {
 		return

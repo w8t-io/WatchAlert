@@ -215,6 +215,16 @@ func AlertEventMsg(gin *gin.Engine) {
 				tenant.GET("getTenantList", Tenant.GetTenantList)
 			}
 
+			dashboard := w8t.Group("dashboard")
+			{
+				dashboard.POST("createDashboard", Dashboard.CreateDashboard)
+				dashboard.POST("updateDashboard", Dashboard.UpdateDashboard)
+				dashboard.POST("deleteDashboard", Dashboard.DeleteDashboard)
+				dashboard.GET("getDashboard", Dashboard.GetDashboard)
+				dashboard.GET("listDashboard", Dashboard.ListDashboard)
+				dashboard.GET("searchDashboard", Dashboard.SearchDashboard)
+			}
+
 		}
 
 	}

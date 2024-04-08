@@ -26,6 +26,7 @@ type ApiGroup struct {
 	RuleTmplController
 	DashboardInfoController
 	TenantController
+	DashboardController
 }
 
 var ApiGroupApp = new(ApiGroup)
@@ -42,6 +43,7 @@ var (
 	alertHisEventService = services.NewInterAlertHisEventService()
 	ruleGroupService     = services.NewInterRuleGroupService()
 	tenantService        = services.NewInterTenantService()
+	dashboardService     = services.NewInterDashboardService()
 )
 
 func Service(ctx *gin.Context, fu func() (interface{}, interface{})) {
@@ -64,7 +66,7 @@ func BindJson(ctx *gin.Context, req interface{}) {
 }
 
 func BindQuery(ctx *gin.Context, req interface{}) {
-	err := ctx.ShouldBindQuery(&req)
+	err := ctx.ShouldBindQuery(req)
 	if err != nil {
 		response.Fail(ctx, err.Error(), "failed")
 		ctx.Abort()
