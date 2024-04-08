@@ -85,7 +85,7 @@ func (rgs *RuleGroupService) List(ctx *gin.Context) []models.RuleGroups {
 	db.Where("tenant_id = ?", tid.(string)).Find(&resGroup)
 	for k, v := range resGroup {
 		var resRules []models.AlertRule
-		db.Where("tenant_id = ? AND rule_group_id = ?", tid.(string), v.ID).Find(&resRules)
+		db.Where("tenant_id = ? AND id = ?", tid.(string), v.ID).Find(&resRules)
 		resGroup[k].Number = len(resRules)
 	}
 	return resGroup

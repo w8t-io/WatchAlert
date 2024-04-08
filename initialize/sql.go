@@ -160,6 +160,10 @@ func InitPermissionsSQL() {
 			API: "/api/w8t/datasource/dataSourceList",
 		},
 		{
+			Key: "DataSourceGet",
+			API: "/api/w8t/datasource/dataSourceGet",
+		},
+		{
 			Key: "DataSourceSearch",
 			API: "/api/w8t/datasource/dataSourceSearch",
 		},

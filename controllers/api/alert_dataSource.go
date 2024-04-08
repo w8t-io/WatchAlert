@@ -32,7 +32,7 @@ func (adsc *AlertDataSourceController) List(ctx *gin.Context) {
 	response.Success(ctx, data, "success")
 }
 
-func (adsc *AlertDataSourceController) Search(ctx *gin.Context) {
+func (adsc *AlertDataSourceController) Get(ctx *gin.Context) {
 
 	tid, _ := ctx.Get("TenantID")
 	id := ctx.Query("id")
@@ -41,6 +41,16 @@ func (adsc *AlertDataSourceController) Search(ctx *gin.Context) {
 	data := dataSourceService.Get(tid.(string), id, dsType)
 	response.Success(ctx, data, "success")
 
+}
+
+func (adsc *AlertDataSourceController) Search(ctx *gin.Context) {
+	r := new(models.DatasourceQuery)
+	BindQuery(ctx, r)
+	tid, _ := ctx.Get("TenantID")
+	r.TenantId = tid.(string)
+	Service(ctx, func() (interface{}, interface{}) {
+		return dataSourceService.Search(r)
+	})
 }
 
 func (adsc *AlertDataSourceController) Update(ctx *gin.Context) {

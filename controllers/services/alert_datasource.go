@@ -12,6 +12,7 @@ import (
 )
 
 type AlertDataSourceService struct {
+	repo.DatasourceRepo
 }
 
 type InterAlertDataSourceService interface {
@@ -20,6 +21,7 @@ type InterAlertDataSourceService interface {
 	Delete(tid, id string) error
 	List(ctx *gin.Context) ([]models.AlertDataSource, error)
 	Get(tid, id, dsType string) []models.AlertDataSource
+	Search(req interface{}) (interface{}, interface{})
 }
 
 func NewInterAlertDataSourceService() InterAlertDataSourceService {
@@ -147,6 +149,22 @@ func (adss *AlertDataSourceService) Get(tid, id, dsType string) []models.AlertDa
 
 	return data
 
+}
+
+func (adss *AlertDataSourceService) Search(req interface{}) (interface{}, interface{}) {
+	var newData []models.AlertDataSource
+	r := req.(*models.DatasourceQuery)
+	data, err := adss.DatasourceRepo.SearchDatasource(*r)
+	if err != nil {
+		return nil, err
+	}
+	newData = data
+
+	for k := range data {
+		newData[k].EnabledBool, _ = strconv.ParseBool(data[k].Enabled)
+	}
+
+	return newData, nil
 }
 
 func (adss *AlertDataSourceService) Check(dataSource models.AlertDataSource) error {

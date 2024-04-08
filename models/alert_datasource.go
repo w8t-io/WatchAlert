@@ -18,3 +18,10 @@ type HTTP struct {
 	URL     string `json:"url"`
 	Timeout int64  `json:"timeout"`
 }
+
+type DatasourceQuery struct {
+	TenantId string `json:"tenantId" form:"tenantId"`
+	Id       string `json:"id" form:"id"`
+	Type     string `json:"type" form:"type"`
+	Query    string `json:"query" form:"query"`
+}

@@ -181,16 +181,17 @@ func AlertEventMsg(gin *gin.Engine) {
 			}
 
 			/*
-				通知对象
+				数据源
 				/api/w8t/datasource
 			*/
-			alert := w8t.Group("datasource")
+			datasource := w8t.Group("datasource")
 			{
-				alert.POST("dataSourceCreate", AlertDatasource.Create)
-				alert.POST("dataSourceUpdate", AlertDatasource.Update)
-				alert.POST("dataSourceDelete", AlertDatasource.Delete)
-				alert.GET("dataSourceList", AlertDatasource.List)
-				alert.GET("dataSourceSearch", AlertDatasource.Search)
+				datasource.POST("dataSourceCreate", AlertDatasource.Create)
+				datasource.POST("dataSourceUpdate", AlertDatasource.Update)
+				datasource.POST("dataSourceDelete", AlertDatasource.Delete)
+				datasource.GET("dataSourceList", AlertDatasource.List)
+				datasource.GET("dataSourceGet", AlertDatasource.Get)
+				datasource.GET("dataSourceSearch", AlertDatasource.Search)
 			}
 
 			/*
