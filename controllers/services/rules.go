@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"watchAlert/alert/queue"
 	"watchAlert/controllers/repo"
-	"watchAlert/globals"
 	models "watchAlert/models"
-	"watchAlert/utils/cmd"
+	"watchAlert/public/globals"
+	"watchAlert/public/utils/cmd"
 )
 
 type RuleService struct {

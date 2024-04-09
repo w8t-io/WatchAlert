@@ -2,9 +2,9 @@ package services
 
 import (
 	"watchAlert/controllers/repo"
-	"watchAlert/globals"
 	"watchAlert/models"
-	"watchAlert/utils/cmd"
+	"watchAlert/public/globals"
+	"watchAlert/public/utils/cmd"
 )
 
 type DashboardService struct {

@@ -8,7 +8,7 @@ import (
 	"math/rand"
 	"regexp"
 	"time"
-	"watchAlert/globals"
+	"watchAlert/public/globals"
 )
 
 func RandId() string {

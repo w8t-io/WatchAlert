@@ -2,9 +2,7 @@ package v1
 
 import (
 	"github.com/gin-gonic/gin"
-	middleware "watchAlert/middleware/jwt"
-	"watchAlert/middleware/permission"
-	"watchAlert/middleware/tenant"
+	"watchAlert/middleware"
 )
 
 func AlertEventMsg(gin *gin.Engine) {
@@ -18,7 +16,7 @@ func AlertEventMsg(gin *gin.Engine) {
 		*/
 		system := apiV1.Group("system")
 		system.Use(
-			tenant.ParseTenantInfo(),
+			middleware.ParseTenant(),
 		)
 		{
 			system.POST("register", Auth.Register)
@@ -37,9 +35,9 @@ func AlertEventMsg(gin *gin.Engine) {
 		*/
 		w8t := apiV1.Group("w8t")
 		w8t.Use(
-			middleware.JwtAuth(),
-			permission.Permission(),
-			tenant.ParseTenantInfo(),
+			middleware.Auth(),
+			middleware.Permission(),
+			middleware.ParseTenant(),
 		)
 		{
 			/*

@@ -1,4 +1,4 @@
-package requestLoggerFormatter
+package middleware
 
 import (
 	"encoding/json"
@@ -7,8 +7,8 @@ import (
 	"time"
 )
 
-// CustomLogFormatter 自定义的日志格式化函数
-func CustomLogFormatter(param gin.LogFormatterParams) string {
+// RequestLoggerFormatter 自定义的日志格式化函数
+func RequestLoggerFormatter(param gin.LogFormatterParams) string {
 	level := "info"
 	switch {
 	case param.StatusCode >= 500:

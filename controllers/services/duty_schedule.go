@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sync"
 	"time"
-	"watchAlert/globals"
 	"watchAlert/models"
+	"watchAlert/public/globals"
 )
 
 type DutyScheduleService struct{}

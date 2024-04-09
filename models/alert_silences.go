@@ -2,8 +2,8 @@ package models
 
 import (
 	"time"
-	"watchAlert/globals"
-	"watchAlert/utils/cmd"
+	"watchAlert/public/globals"
+	"watchAlert/public/utils/cmd"
 )
 
 const SilenceCachePrefix = "mute-"

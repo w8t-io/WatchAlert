@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"log"
-	"watchAlert/globals"
-	"watchAlert/utils/http"
+	"watchAlert/public/globals"
+	"watchAlert/public/utils/http"
 )
 
 type EventController struct{}

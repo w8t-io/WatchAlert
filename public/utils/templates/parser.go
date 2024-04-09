@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"text/template"
 	"time"
-	"watchAlert/globals"
 	"watchAlert/models"
-	"watchAlert/utils/cmd"
+	"watchAlert/public/globals"
+	"watchAlert/public/utils/cmd"
 )
 
 var tmpl *template.Template

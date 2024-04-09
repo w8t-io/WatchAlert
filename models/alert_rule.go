@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"sort"
 	"strconv"
-	"watchAlert/globals"
-	"watchAlert/utils/hash"
+	"watchAlert/public/globals"
+	"watchAlert/public/utils/hash"
 )
 
 type Duration int64

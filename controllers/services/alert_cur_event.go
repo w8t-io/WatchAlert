@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"log"
 	"strings"
-	"watchAlert/globals"
 	"watchAlert/models"
+	"watchAlert/public/globals"
 )
 
 type AlertCurEventService struct{}

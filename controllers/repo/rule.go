@@ -1,8 +1,8 @@
 package repo
 
 import (
-	"watchAlert/globals"
 	"watchAlert/models"
+	"watchAlert/public/globals"
 )
 
 type RuleRepo struct{}

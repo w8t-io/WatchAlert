@@ -2,9 +2,8 @@ package initialize
 
 import (
 	"github.com/gin-gonic/gin"
-	"watchAlert/globals"
-	"watchAlert/middleware/cors"
-	"watchAlert/middleware/requestLoggerFormatter"
+	"watchAlert/middleware"
+	"watchAlert/public/globals"
 	"watchAlert/routers"
 	"watchAlert/routers/v1"
 )
@@ -23,9 +22,9 @@ func InitRoute() {
 	gin.SetMode(mode)
 	ginEngine.Use(
 		// 启用CORS中间件
-		cors.Cors(),
+		middleware.Cors(),
 		// 自定义请求日志格式
-		gin.LoggerWithFormatter(requestLoggerFormatter.CustomLogFormatter),
+		gin.LoggerWithFormatter(middleware.RequestLoggerFormatter),
 	)
 	allRouter(ginEngine)
 

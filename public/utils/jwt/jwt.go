@@ -6,8 +6,8 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/spf13/viper"
 	"time"
-	"watchAlert/globals"
 	"watchAlert/models"
+	"watchAlert/public/globals"
 )
 
 // 把签发的秘钥 抛出来

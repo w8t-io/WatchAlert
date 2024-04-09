@@ -3,9 +3,9 @@ package notice
 import (
 	"bytes"
 	"watchAlert/alert/mute"
-	"watchAlert/globals"
 	"watchAlert/models"
-	"watchAlert/utils/http"
+	"watchAlert/public/globals"
+	"watchAlert/public/utils/http"
 )
 
 type EntryNotice interface {

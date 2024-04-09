@@ -3,10 +3,10 @@ package middleware
 import (
 	"github.com/gin-gonic/gin"
 	"watchAlert/controllers/response"
-	jwtUtils "watchAlert/utils/jwt"
+	jwtUtils "watchAlert/public/utils/jwt"
 )
 
-func JwtAuth() gin.HandlerFunc {
+func Auth() gin.HandlerFunc {
 
 	return func(context *gin.Context) {
 		// 获取 Token

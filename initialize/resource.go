@@ -4,8 +4,8 @@ import (
 	"runtime"
 	"time"
 	"watchAlert/controllers/repo"
-	"watchAlert/globals"
 	"watchAlert/models"
+	"watchAlert/public/globals"
 )
 
 func InitResource() {

@@ -7,8 +7,8 @@ import (
 	"time"
 	"watchAlert/alert/query"
 	"watchAlert/alert/queue"
-	"watchAlert/globals"
 	"watchAlert/models"
+	"watchAlert/public/globals"
 )
 
 type AlertRuleWork struct {

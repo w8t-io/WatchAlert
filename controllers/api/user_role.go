@@ -6,9 +6,9 @@ import (
 	"time"
 	"watchAlert/controllers/repo"
 	"watchAlert/controllers/response"
-	"watchAlert/globals"
 	"watchAlert/models"
-	"watchAlert/utils/cmd"
+	"watchAlert/public/globals"
+	"watchAlert/public/utils/cmd"
 )
 
 type UserRoleController struct {

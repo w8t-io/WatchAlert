@@ -2,8 +2,8 @@ package mute
 
 import (
 	"watchAlert/controllers/repo"
-	"watchAlert/globals"
 	"watchAlert/models"
+	"watchAlert/public/globals"
 )
 
 func IsMuted(alert *models.AlertCurEvent) bool {

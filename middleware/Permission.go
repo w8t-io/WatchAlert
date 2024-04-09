@@ -1,4 +1,4 @@
-package permission
+package middleware
 
 import (
 	"encoding/json"
@@ -6,9 +6,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"watchAlert/controllers/response"
-	"watchAlert/globals"
 	"watchAlert/models"
-	utils "watchAlert/utils/jwt"
+	"watchAlert/public/globals"
+	"watchAlert/public/utils/jwt"
 )
 
 func Permission() gin.HandlerFunc {

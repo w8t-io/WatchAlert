@@ -3,8 +3,8 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"watchAlert/controllers/response"
-	"watchAlert/globals"
 	"watchAlert/models"
+	"watchAlert/public/globals"
 )
 
 type DashboardInfoController struct {
