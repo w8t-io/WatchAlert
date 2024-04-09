@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"watchAlert/controllers/response"
 	"watchAlert/globals"
 	"watchAlert/models"
@@ -30,9 +31,11 @@ func Permission() gin.HandlerFunc {
 		// 获取当前用户
 		var user models.Member
 		err := globals.DBCli.Model(&models.Member{}).Where("user_id = ?", userId).First(&user).Error
+		if gorm.ErrRecordNotFound == err {
+			globals.Logger.Sugar().Errorf("用户不存在, uid: %s", userId)
+		}
 		if err != nil {
 			response.PermissionFail(context)
-			globals.Logger.Sugar().Error("获取当前用户失败 ->", err.Error())
 			context.Abort()
 			return
 		}
