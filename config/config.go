@@ -8,6 +8,7 @@ type App struct {
 }
 
 type Server struct {
+	Mode          string `json:"mode"`
 	Port          string `json:"port"`
 	GroupWait     int    `json:"groupWait"`
 	GroupInterval int    `json:"groupInterval"`

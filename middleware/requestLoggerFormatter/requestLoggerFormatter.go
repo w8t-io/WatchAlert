@@ -1,0 +1,34 @@
+package requestLoggerFormatter
+
+import (
+	"encoding/json"
+	"fmt"
+	"github.com/gin-gonic/gin"
+	"time"
+)
+
+// CustomLogFormatter 自定义的日志格式化函数
+func CustomLogFormatter(param gin.LogFormatterParams) string {
+	level := "info"
+	switch {
+	case param.StatusCode >= 500:
+		level = "error"
+	case param.StatusCode >= 400:
+		level = "warn"
+	case param.StatusCode >= 300:
+		level = "debug"
+	}
+
+	logData := map[string]interface{}{
+		"level":      level,
+		"statusCode": param.StatusCode,
+		"clientIP":   param.ClientIP,
+		"method":     param.Method,
+		"path":       param.Path,
+		"time":       param.TimeStamp.Format(time.RFC3339),
+	}
+
+	// 将数据编码为JSON字符串
+	jsonData, _ := json.Marshal(logData)
+	return fmt.Sprintf("%s\n", jsonData)
+}
