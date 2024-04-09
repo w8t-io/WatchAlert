@@ -79,13 +79,13 @@ func (rgs *RuleGroupService) Delete(tid, id string) error {
 func (rgs *RuleGroupService) List(ctx *gin.Context) []models.RuleGroups {
 
 	var resGroup []models.RuleGroups
-	db := globals.DBCli.Model(&models.RuleGroups{})
+	db := globals.DBCli
 	tid, _ := ctx.Get("TenantID")
 
-	db.Where("tenant_id = ?", tid.(string)).Find(&resGroup)
+	db.Model(&models.RuleGroups{}).Where("tenant_id = ?", tid.(string)).Find(&resGroup)
 	for k, v := range resGroup {
 		var resRules []models.AlertRule
-		db.Where("tenant_id = ? AND id = ?", tid.(string), v.ID).Find(&resRules)
+		db.Model(&models.AlertRule{}).Where("tenant_id = ? AND rule_group_id = ?", tid.(string), v.ID).Find(&resRules)
 		resGroup[k].Number = len(resRules)
 	}
 	return resGroup
