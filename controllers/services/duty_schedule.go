@@ -15,7 +15,7 @@ var layout = "2006-01"
 type InterDutyScheduleService interface {
 	CreateAndUpdateDutySystem(dutyUserInfo models.DutyScheduleCreate) ([]models.DutySchedule, error)
 	UpdateDutySystem(dutySchedule models.DutySchedule) error
-	SelectDutySystem(dutyId, date string) ([]models.DutySchedule, error)
+	SelectDutySystem(tid, dutyId, date string) ([]models.DutySchedule, error)
 }
 
 func NewInterDutyScheduleService() InterDutyScheduleService {
@@ -49,8 +49,9 @@ func (dms *DutyScheduleService) CreateAndUpdateDutySystem(dutyInfo models.DutySc
 				for t := 1; t <= dutyInfo.DutyPeriod; t++ {
 					dutyTime := <-timeC
 					ds := models.DutySchedule{
-						DutyId: dutyInfo.DutyId,
-						Time:   dutyTime,
+						TenantId: dutyInfo.TenantId,
+						DutyId:   dutyInfo.DutyId,
+						Time:     dutyTime,
 						Users: models.Users{
 							UserId:   value.UserId,
 							Username: value.Username,
@@ -87,7 +88,7 @@ func (dms *DutyScheduleService) CreateAndUpdateDutySystem(dutyInfo models.DutySc
 // UpdateDutySystem 更新值班表
 func (dms *DutyScheduleService) UpdateDutySystem(dutySchedule models.DutySchedule) error {
 
-	err := globals.DBCli.Model(&models.DutySchedule{}).Where("duty_id = ? AND time = ?", dutySchedule.DutyId, dutySchedule.Time).Updates(&dutySchedule).Error
+	err := globals.DBCli.Model(&models.DutySchedule{}).Where("tenant_id = ? AND duty_id = ? AND time = ?", dutySchedule.TenantId, dutySchedule.DutyId, dutySchedule.Time).Updates(&dutySchedule).Error
 	if err != nil {
 		return err
 	}
@@ -96,20 +97,19 @@ func (dms *DutyScheduleService) UpdateDutySystem(dutySchedule models.DutySchedul
 }
 
 // SelectDutySystem 查询值班表
-func (dms *DutyScheduleService) SelectDutySystem(dutyId, date string) ([]models.DutySchedule, error) {
+func (dms *DutyScheduleService) SelectDutySystem(tid, dutyId, date string) ([]models.DutySchedule, error) {
 
-	var (
-		dutyScheduleList []models.DutySchedule
-	)
+	var dutyScheduleList []models.DutySchedule
+	db := globals.DBCli.Model(&models.DutySchedule{})
 
 	if date != "" {
-		globals.DBCli.Model(&models.DutySchedule{}).Where("duty_id = ? AND time = ?", dutyId, date).Find(&dutyScheduleList)
+		db.Where("tenant_id = ? AND duty_id = ? AND time = ?", tid, dutyId, date).Find(&dutyScheduleList)
 		return dutyScheduleList, nil
 	}
 
 	yearMonth := fmt.Sprintf("%d-%d-", time.Now().Year(), time.Now().Month())
 
-	globals.DBCli.Model(&models.DutySchedule{}).Where("duty_id = ? AND time LIKE ?", dutyId, yearMonth+"%").Find(&dutyScheduleList)
+	db.Where("tenant_id = ? AND duty_id = ? AND time LIKE ?", tid, dutyId, yearMonth+"%").Find(&dutyScheduleList)
 
 	return dutyScheduleList, nil
 

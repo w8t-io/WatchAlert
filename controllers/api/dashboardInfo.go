@@ -33,12 +33,15 @@ func (di DashboardInfoController) GetDashboardInfo(ctx *gin.Context) {
 		// 当前告警
 		keys []string
 	)
+
+	tid, _ := ctx.Get("TenantID")
+	tidString := tid.(string)
 	// 告警分布
 	alarmDistribution := make(map[string]int)
-	globals.DBCli.Model(&models.AlertRule{}).Count(&countAlertRules)
+	globals.DBCli.Model(&models.AlertRule{}).Where("tenant_id = ?", tidString).Count(&countAlertRules)
 
 	cursor := uint64(0)
-	pattern := models.FiringAlertCachePrefix + "*"
+	pattern := tidString + ":" + models.FiringAlertCachePrefix + "*"
 	// 每次获取的键数量
 	count := int64(100)
 

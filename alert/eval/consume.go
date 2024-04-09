@@ -107,7 +107,7 @@ func (ec *EvalConsume) clear(ruleId string) {
 func (ec *EvalConsume) getRedisKeys() []string {
 	var keys []string
 	cursor := uint64(0)
-	pattern := models.FiringAlertCachePrefix + "*"
+	pattern := "*" + ":" + models.FiringAlertCachePrefix + "*"
 	// 每次获取的键数量
 	count := int64(100)
 
@@ -206,7 +206,7 @@ func (ec *EvalConsume) fireAlertEvent(alertsMap map[string][]models.AlertCurEven
 
 // 删除缓存
 func (ec *EvalConsume) removeAlertFromCache(alert models.AlertCurEvent) {
-	key := ec.FiringAlertCacheKey(alert.RuleId, alert.DatasourceId, alert.Fingerprint)
+	key := alert.GetFiringAlertCacheKey()
 	ec.DelCache(key)
 }
 
@@ -309,7 +309,7 @@ func (ec *EvalConsume) handleAlert(alerts []models.AlertCurEvent) {
 
 	noticeId := ec.getNoticeGroupId(alertOne)
 
-	noticeData := services.NewInterAlertNoticeService().GetNoticeObject(noticeId)
+	noticeData := services.NewInterAlertNoticeService().GetNoticeObject(alertOne.TenantId, noticeId)
 
 	var tmpl notice.Template
 	notice.NewEntryNotice(&tmpl, alertOne, noticeData)
@@ -349,6 +349,7 @@ func (ec *EvalConsume) getNoticeGroupId(alert models.AlertCurEvent) string {
 func (ec *EvalConsume) RecordAlertHisEvent(alert models.AlertCurEvent) error {
 
 	hisData := models.AlertHisEvent{
+		TenantID:         alert.TenantId,
 		DatasourceType:   alert.DatasourceType,
 		DatasourceId:     alert.DatasourceId,
 		Fingerprint:      alert.Fingerprint,

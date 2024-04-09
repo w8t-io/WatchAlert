@@ -28,10 +28,10 @@ type QueryOptions struct {
 	EndAt     string `json:"endAt,omitempty"`     // 查询的结束时间，以纳秒 Unix 纪元表示。默认为现在
 }
 
-func NewLokiClient(datasourceId string) LokiClient {
+func NewLokiClient(tid, datasourceId string) LokiClient {
 
 	var datasource models.AlertDataSource
-	globals.DBCli.Model(&models.AlertDataSource{}).Where("id = ?", datasourceId).First(&datasource)
+	globals.DBCli.Model(&models.AlertDataSource{}).Where("tenant_id = ? AND id = ?", tid, datasourceId).First(&datasource)
 
 	return LokiClient{BaseURL: datasource.HTTP.URL}
 

@@ -160,6 +160,10 @@ func InitPermissionsSQL() {
 			API: "/api/w8t/datasource/dataSourceList",
 		},
 		{
+			Key: "DataSourceGet",
+			API: "/api/w8t/datasource/dataSourceGet",
+		},
+		{
 			Key: "DataSourceSearch",
 			API: "/api/w8t/datasource/dataSourceSearch",
 		},
@@ -230,6 +234,46 @@ func InitPermissionsSQL() {
 		{
 			Key: "RuleTmplList",
 			API: "/api/w8t/ruleTmpl/ruleTmplList",
+		},
+		{
+			Key: "CreateTenant",
+			API: "/api/w8t/tenant/createTenant",
+		},
+		{
+			Key: "UpdateTenant",
+			API: "/api/w8t/tenant/updateTenant",
+		},
+		{
+			Key: "DeleteTenant",
+			API: "/api/w8t/tenant/deleteTenant",
+		},
+		{
+			Key: "GetTenantList",
+			API: "/api/w8t/tenant/getTenantList",
+		},
+		{
+			Key: "CreateDashboard",
+			API: "/api/w8t/dashboard/createDashboard",
+		},
+		{
+			Key: "UpdateDashboard",
+			API: "/api/w8t/dashboard/updateDashboard",
+		},
+		{
+			Key: "DeleteDashboard",
+			API: "/api/w8t/dashboard/deleteDashboard",
+		},
+		{
+			Key: "ListDashboard",
+			API: "/api/w8t/dashboard/listDashboard",
+		},
+		{
+			Key: "GetDashboard",
+			API: "/api/w8t/dashboard/getDashboard",
+		},
+		{
+			Key: "SearchDashboard",
+			API: "/api/w8t/dashboard/searchDashboard",
 		},
 	}
 

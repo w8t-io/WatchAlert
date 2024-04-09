@@ -10,22 +10,6 @@ import (
 	"watchAlert/models"
 )
 
-// 获取缓存中与 Rule 相关所有的Firing key
-func getFiringAlertCacheKeys(rule models.AlertRule, dsId string) []string {
-	var alertCurEvent models.AlertCurEvent
-	keyPrefix := alertCurEvent.FiringAlertCacheKey(rule.RuleId, dsId, "*")
-	keys, _ := globals.RedisCli.Keys(keyPrefix).Result()
-	return keys
-}
-
-// 获取缓存中与 Rule 相关所有的Pending key
-func getPendingAlertCacheKeys(rule models.AlertRule, dsId string) []string {
-	var alertCurEvent models.AlertCurEvent
-	keyPrefix := alertCurEvent.PendingAlertCacheKey(rule.RuleId, dsId, "*")
-	keys, _ := globals.RedisCli.Keys(keyPrefix).Result()
-	return keys
-}
-
 // 获取差异key. 当slice1中存在, slice2不存在则标记为可恢复告警
 func getSliceDifference(slice1 []string, slice2 []string) []string {
 	difference := []string{}
@@ -65,6 +49,7 @@ func getSliceSame(slice1 []string, slice2 []string) []string {
 func parserDefaultEvent(rule models.AlertRule) models.AlertCurEvent {
 
 	event := models.AlertCurEvent{
+		TenantId:             rule.TenantId,
 		DatasourceType:       rule.DatasourceType,
 		RuleId:               rule.RuleId,
 		RuleName:             rule.RuleName,
@@ -85,8 +70,8 @@ func parserDefaultEvent(rule models.AlertRule) models.AlertCurEvent {
 
 func saveEventCache(event models.AlertCurEvent) {
 
-	firingKey := event.FiringAlertCacheKey(event.RuleId, event.DatasourceId, event.Fingerprint)
-	pendingKey := event.PendingAlertCacheKey(event.RuleId, event.DatasourceId, event.Fingerprint)
+	firingKey := event.GetFiringAlertCacheKey()
+	pendingKey := event.GetPendingAlertCacheKey()
 
 	// 判断改事件是否是Firing状态, 如果不是Firing状态 则标记Pending状态
 	resFiring := event.GetCache(firingKey)
@@ -173,7 +158,7 @@ func evalCondition(f func(), count int, ec models.EvalCondition) {
 */
 func gcPendingCache(rule models.AlertRule, dsId string, curKeys []string) {
 	var ae models.AlertCurEvent
-	pendingKeys := getPendingAlertCacheKeys(rule, dsId)
+	pendingKeys := rule.GetPendingAlertCacheKeys()
 	gcPendingKeys := getSliceDifference(pendingKeys, curKeys)
 	for _, key := range gcPendingKeys {
 		ae.DelCache(key)

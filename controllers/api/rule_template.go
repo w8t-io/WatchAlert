@@ -29,7 +29,7 @@ func (rtg *RuleTmplGroupController) Delete(ctx *gin.Context) {
 	tmplGroupName := ctx.Query("tmplGroupName")
 	err := repo.DBCli.Delete(repo.Delete{
 		Table: &models.RuleTemplateGroup{},
-		Where: []string{"name = ?", tmplGroupName},
+		Where: []interface{}{"name = ?", tmplGroupName},
 	})
 	if err != nil {
 		response.Fail(ctx, err.Error(), "failed")
@@ -74,7 +74,7 @@ func (rtg *RuleTmplController) Delete(ctx *gin.Context) {
 	ruleName := ctx.Query("ruleName")
 	err := repo.DBCli.Delete(repo.Delete{
 		Table: &models.RuleTemplate{},
-		Where: []string{"rule_name = ?", ruleName},
+		Where: []interface{}{"rule_name = ?", ruleName},
 	})
 	if err != nil {
 		response.Fail(ctx, err.Error(), "failed")

@@ -1,6 +1,7 @@
 package models
 
 type AlertDataSource struct {
+	TenantId         string `json:"tenantId"`
 	Id               string `json:"id"`
 	Name             string `json:"name"`
 	Type             string `json:"type"`
@@ -16,4 +17,11 @@ type AlertDataSource struct {
 type HTTP struct {
 	URL     string `json:"url"`
 	Timeout int64  `json:"timeout"`
+}
+
+type DatasourceQuery struct {
+	TenantId string `json:"tenantId" form:"tenantId"`
+	Id       string `json:"id" form:"id"`
+	Type     string `json:"type" form:"type"`
+	Query    string `json:"query" form:"query"`
 }

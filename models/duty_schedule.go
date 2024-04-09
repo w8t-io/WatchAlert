@@ -27,14 +27,17 @@ type JoinsPeopleGroup struct {
 }
 
 type DutyManagement struct {
+	TenantId    string `json:"tenantId"`
 	ID          string `json:"id"`
 	Name        string `json:"name"`
+	Manager     Users  `json:"manager" gorm:"manager;serializer:json"`
 	Description string `json:"description"`
 	CreateBy    string `json:"create_by"`
 	CreateAt    int64  `json:"create_at"`
 }
 
 type DutyScheduleCreate struct {
+	TenantId   string  `json:"tenantId"`
 	DutyId     string  `json:"dutyId"`
 	DutyPeriod int     `json:"dutyPeriod"`
 	Month      string  `json:"month"`
@@ -47,7 +50,8 @@ type Users struct {
 }
 
 type DutySchedule struct {
-	DutyId string `json:"dutyId"`
-	Time   string `json:"time"`
+	TenantId string `json:"tenantId"`
+	DutyId   string `json:"dutyId"`
+	Time     string `json:"time"`
 	Users
 }

@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	middleware "watchAlert/middleware/jwt"
 	"watchAlert/middleware/permission"
+	"watchAlert/middleware/tenant"
 )
 
 func AlertEventMsg(gin *gin.Engine) {
@@ -16,6 +17,9 @@ func AlertEventMsg(gin *gin.Engine) {
 			/api/system
 		*/
 		system := apiV1.Group("system")
+		system.Use(
+			tenant.ParseTenantInfo(),
+		)
 		{
 			system.POST("register", Auth.Register)
 			system.POST("login", Auth.Login)
@@ -35,6 +39,7 @@ func AlertEventMsg(gin *gin.Engine) {
 		w8t.Use(
 			middleware.JwtAuth(),
 			permission.Permission(),
+			tenant.ParseTenantInfo(),
 		)
 		{
 			/*
@@ -176,16 +181,17 @@ func AlertEventMsg(gin *gin.Engine) {
 			}
 
 			/*
-				通知对象
+				数据源
 				/api/w8t/datasource
 			*/
-			alert := w8t.Group("datasource")
+			datasource := w8t.Group("datasource")
 			{
-				alert.POST("dataSourceCreate", AlertDatasource.Create)
-				alert.POST("dataSourceUpdate", AlertDatasource.Update)
-				alert.POST("dataSourceDelete", AlertDatasource.Delete)
-				alert.GET("dataSourceList", AlertDatasource.List)
-				alert.GET("dataSourceSearch", AlertDatasource.Search)
+				datasource.POST("dataSourceCreate", AlertDatasource.Create)
+				datasource.POST("dataSourceUpdate", AlertDatasource.Update)
+				datasource.POST("dataSourceDelete", AlertDatasource.Delete)
+				datasource.GET("dataSourceList", AlertDatasource.List)
+				datasource.GET("dataSourceGet", AlertDatasource.Get)
+				datasource.GET("dataSourceSearch", AlertDatasource.Search)
 			}
 
 			/*
@@ -196,6 +202,28 @@ func AlertEventMsg(gin *gin.Engine) {
 			{
 				event.GET("curEvent", AlertCurEvent.List)
 				event.GET("hisEvent", AlertHisEvent.List)
+			}
+
+			/*
+				租户
+				/api/w8t/tenant
+			*/
+			tenant := w8t.Group("tenant")
+			{
+				tenant.POST("createTenant", Tenant.CreateTenant)
+				tenant.POST("updateTenant", Tenant.UpdateTenant)
+				tenant.POST("deleteTenant", Tenant.DeleteTenant)
+				tenant.GET("getTenantList", Tenant.GetTenantList)
+			}
+
+			dashboard := w8t.Group("dashboard")
+			{
+				dashboard.POST("createDashboard", Dashboard.CreateDashboard)
+				dashboard.POST("updateDashboard", Dashboard.UpdateDashboard)
+				dashboard.POST("deleteDashboard", Dashboard.DeleteDashboard)
+				dashboard.GET("getDashboard", Dashboard.GetDashboard)
+				dashboard.GET("listDashboard", Dashboard.ListDashboard)
+				dashboard.GET("searchDashboard", Dashboard.SearchDashboard)
 			}
 
 		}

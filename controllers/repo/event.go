@@ -8,11 +8,12 @@ import (
 
 type Event struct{}
 
-func (e Event) GetHistoryEvent(datasourceType, severity string, startAt, endAt, pageIndex, pageSize int64) (response.HistoryEvent, error) {
+func (e Event) GetHistoryEvent(tid, datasourceType, severity string, startAt, endAt, pageIndex, pageSize int64) (response.HistoryEvent, error) {
 	var data []models.AlertHisEvent
 	var count int64
 
 	db := globals.DBCli.Model(&models.AlertHisEvent{})
+	db.Where("tenant_id = ?", tid)
 
 	if datasourceType != "" {
 		db = db.Where("datasource_type = ?", datasourceType)

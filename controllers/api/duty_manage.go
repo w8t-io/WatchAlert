@@ -11,7 +11,7 @@ type DutyManageController struct{}
 
 func (dmc *DutyManageController) List(ctx *gin.Context) {
 
-	data := dutyManageService.ListDutyManage()
+	data := dutyManageService.ListDutyManage(ctx)
 	response.Success(ctx, data, "success")
 
 }
@@ -24,6 +24,8 @@ func (dmc *DutyManageController) Create(ctx *gin.Context) {
 	userName := jwtUtils.GetUser(ctx.Request.Header.Get("Authorization"))
 	dutyManage.CreateBy = userName
 
+	tid, _ := ctx.Get("TenantID")
+	dutyManage.TenantId = tid.(string)
 	data, err := dutyManageService.CreateDutyManage(dutyManage)
 	if err != nil {
 		response.Fail(ctx, err.Error(), "failed")
@@ -38,6 +40,8 @@ func (dmc *DutyManageController) Update(ctx *gin.Context) {
 	var dutyManage models.DutyManagement
 	_ = ctx.ShouldBindJSON(&dutyManage)
 
+	tid, _ := ctx.Get("TenantID")
+	dutyManage.TenantId = tid.(string)
 	data, err := dutyManageService.UpdateDutyManage(dutyManage)
 	if err != nil {
 		response.Fail(ctx, err.Error(), "failed")
@@ -50,8 +54,9 @@ func (dmc *DutyManageController) Update(ctx *gin.Context) {
 
 func (dmc *DutyManageController) Delete(ctx *gin.Context) {
 
+	tid, _ := ctx.Get("TenantID")
 	id := ctx.Query("id")
-	err := dutyManageService.DeleteDutyManage(id)
+	err := dutyManageService.DeleteDutyManage(tid.(string), id)
 	if err != nil {
 		response.Fail(ctx, err.Error(), "failed")
 		return
@@ -63,8 +68,9 @@ func (dmc *DutyManageController) Delete(ctx *gin.Context) {
 
 func (dmc *DutyManageController) Get(ctx *gin.Context) {
 
+	tid, _ := ctx.Get("TenantID")
 	id := ctx.Query("id")
-	data := dutyManageService.GetDutyManage(id)
+	data := dutyManageService.GetDutyManage(tid.(string), id)
 	response.Success(ctx, data, "success")
 
 }

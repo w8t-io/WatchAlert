@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"watchAlert/controllers/repo"
 	"watchAlert/globals"
 	"watchAlert/models"
@@ -13,8 +14,8 @@ type RuleGroupService struct{}
 type InterRuleGroupService interface {
 	Create(group models.RuleGroups) error
 	Update(group models.RuleGroups) error
-	Delete(id string) error
-	List() []models.RuleGroups
+	Delete(tid, id string) error
+	List(ctx *gin.Context) []models.RuleGroups
 }
 
 func NewInterRuleGroupService() InterRuleGroupService {
@@ -44,7 +45,7 @@ func (rgs *RuleGroupService) Update(group models.RuleGroups) error {
 	err := repo.DBCli.Updates(
 		repo.Updates{
 			Table:   &models.RuleGroups{},
-			Where:   []string{"id = ?", group.ID},
+			Where:   []interface{}{"tenant_id = ? AND id = ?", group.TenantId, group.ID},
 			Updates: group,
 		})
 	if err != nil {
@@ -55,17 +56,17 @@ func (rgs *RuleGroupService) Update(group models.RuleGroups) error {
 
 }
 
-func (rgs *RuleGroupService) Delete(id string) error {
+func (rgs *RuleGroupService) Delete(tid, id string) error {
 
 	var ruleNum int64
-	globals.DBCli.Model(&models.AlertRule{}).Where("rule_group_id = ?", id).Count(&ruleNum)
+	globals.DBCli.Model(&models.AlertRule{}).Where("tenant_id = ? AND rule_group_id = ?", tid, id).Count(&ruleNum)
 	if ruleNum != 0 {
 		return fmt.Errorf("无法删除规则组 %s, 因为规则组不为空", id)
 	}
 
 	err := repo.DBCli.Delete(repo.Delete{
 		Table: &models.RuleGroups{},
-		Where: []string{"id = ?", id},
+		Where: []interface{}{"tenant_id = ? AND id = ?", tid, id},
 	})
 	if err != nil {
 		return err
@@ -75,14 +76,16 @@ func (rgs *RuleGroupService) Delete(id string) error {
 
 }
 
-func (rgs *RuleGroupService) List() []models.RuleGroups {
+func (rgs *RuleGroupService) List(ctx *gin.Context) []models.RuleGroups {
 
 	var resGroup []models.RuleGroups
+	db := globals.DBCli.Model(&models.RuleGroups{})
+	tid, _ := ctx.Get("TenantID")
 
-	globals.DBCli.Model(&models.RuleGroups{}).Find(&resGroup)
+	db.Where("tenant_id = ?", tid.(string)).Find(&resGroup)
 	for k, v := range resGroup {
 		var resRules []models.AlertRule
-		globals.DBCli.Model(&models.AlertRule{}).Where("rule_group_id = ?", v.ID).Find(&resRules)
+		db.Where("tenant_id = ? AND id = ?", tid.(string), v.ID).Find(&resRules)
 		resGroup[k].Number = len(resRules)
 	}
 	return resGroup
