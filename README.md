@@ -8,6 +8,7 @@ WatchAlert 是基于Go+React开发的监控告警管理平台。可以完全替�
 ## 2. Instructions
 ### 部署方式
 - [DockerCompose](deploy/docker-compose/README.md)
+- [Kubernetes] (deploy/kubernetes)
 
 
 ## 3. Features
