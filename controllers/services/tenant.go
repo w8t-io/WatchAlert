@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 	"watchAlert/controllers/repo"
-	"watchAlert/globals"
 	"watchAlert/models"
-	"watchAlert/utils/cmd"
+	"watchAlert/public/globals"
+	"watchAlert/public/utils/cmd"
 )
 
 type TenantService struct {

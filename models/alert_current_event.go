@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"time"
-	"watchAlert/globals"
+	"watchAlert/public/globals"
 )
 
 const FiringAlertCachePrefix = "firing-alert-"

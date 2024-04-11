@@ -2,7 +2,7 @@ package repo
 
 import (
 	"fmt"
-	"watchAlert/globals"
+	"watchAlert/public/globals"
 )
 
 type GormDBCli struct{}

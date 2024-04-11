@@ -8,9 +8,9 @@ import (
 	sls20201230 "github.com/alibabacloud-go/sls-20201230/v6/client"
 	util "github.com/alibabacloud-go/tea-utils/v2/service"
 	"github.com/alibabacloud-go/tea/tea"
-	"watchAlert/globals"
 	"watchAlert/models"
-	"watchAlert/utils/cmd"
+	"watchAlert/public/globals"
+	"watchAlert/public/utils/cmd"
 )
 
 type AliCloudSlsClientApi struct {

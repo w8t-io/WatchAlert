@@ -4,8 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"watchAlert/controllers/repo"
 	"watchAlert/controllers/response"
-	"watchAlert/globals"
 	"watchAlert/models"
+	"watchAlert/public/globals"
 )
 
 type RuleTmplGroupController struct {

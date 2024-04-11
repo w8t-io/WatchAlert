@@ -8,7 +8,7 @@ import (
 	"math"
 	"time"
 	"watchAlert/controllers/services"
-	"watchAlert/globals"
+	"watchAlert/public/globals"
 )
 
 type API struct {

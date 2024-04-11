@@ -3,10 +3,10 @@ package query
 import (
 	"time"
 	"watchAlert/alert/queue"
-	"watchAlert/globals"
 	"watchAlert/models"
-	"watchAlert/utils/client"
-	"watchAlert/utils/cmd"
+	client2 "watchAlert/public/client"
+	"watchAlert/public/globals"
+	"watchAlert/public/utils/cmd"
 )
 
 type RuleQuery struct {
@@ -74,7 +74,7 @@ func (rq *RuleQuery) prometheus(datasourceId string, rule models.AlertRule) {
 		go gcRecoverWaitCache(rule, curFiringKeys)
 	}()
 
-	resQuery, _, err := client.NewPromClient(rule.TenantId, datasourceId).Query(rule.PrometheusConfig.PromQL)
+	resQuery, _, err := client2.NewPromClient(rule.TenantId, datasourceId).Query(rule.PrometheusConfig.PromQL)
 	if err != nil {
 		return
 	}
@@ -110,7 +110,7 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) {
 
 	curAt := time.Now()
 	startsAt := parserDuration(curAt, rule.AliCloudSLSConfig.LogScope, "m")
-	args := client.AliCloudSlsQueryArgs{
+	args := client2.AliCloudSlsQueryArgs{
 		Project:  rule.AliCloudSLSConfig.Project,
 		Logstore: rule.AliCloudSLSConfig.Logstore,
 		StartsAt: int32(startsAt.Unix()),
@@ -118,7 +118,7 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) {
 		Query:    rule.AliCloudSLSConfig.LogQL,
 	}
 
-	res, err := client.NewAliCloudSlsClient(rule.TenantId, datasourceId).Query(args)
+	res, err := client2.NewAliCloudSlsClient(rule.TenantId, datasourceId).Query(args)
 	if err != nil {
 		globals.Logger.Sugar().Error("查询 AliCloudSls 日志失败 ->", err.Error())
 		return
@@ -129,7 +129,7 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) {
 		return
 	}
 
-	bodyList := client.GetSLSBodyData(res)
+	bodyList := client2.GetSLSBodyData(res)
 
 	for _, body := range bodyList.MetricList {
 
@@ -172,13 +172,13 @@ func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) {
 
 	curAt := time.Now().UTC()
 	startsAt := parserDuration(curAt, rule.LokiConfig.LogScope, "m")
-	args := client.QueryOptions{
+	args := client2.QueryOptions{
 		Query:   rule.LokiConfig.LogQL,
 		StartAt: startsAt.Format(time.RFC3339Nano),
 		EndAt:   curAt.Format(time.RFC3339Nano),
 	}
 
-	res, err := client.NewLokiClient(rule.TenantId, datasourceId).QueryRange(args)
+	res, err := client2.NewLokiClient(rule.TenantId, datasourceId).QueryRange(args)
 	if err != nil {
 		globals.Logger.Sugar().Errorf("查询 Loki 日志失败 %s", err.Error())
 		return

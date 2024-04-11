@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 	"watchAlert/alert/queue"
-	"watchAlert/globals"
 	"watchAlert/models"
+	"watchAlert/public/globals"
 )
 
 // 获取差异key. 当slice1中存在, slice2不存在则标记为可恢复告警

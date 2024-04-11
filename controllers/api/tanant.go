@@ -3,7 +3,7 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"watchAlert/models"
-	jwtUtils "watchAlert/utils/jwt"
+	jwtUtils "watchAlert/public/utils/jwt"
 )
 
 type TenantController struct{}

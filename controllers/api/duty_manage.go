@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"watchAlert/controllers/response"
 	"watchAlert/models"
-	jwtUtils "watchAlert/utils/jwt"
+	jwtUtils "watchAlert/public/utils/jwt"
 )
 
 type DutyManageController struct{}

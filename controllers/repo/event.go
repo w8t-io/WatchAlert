@@ -2,8 +2,8 @@ package repo
 
 import (
 	"watchAlert/controllers/response"
-	"watchAlert/globals"
 	"watchAlert/models"
+	"watchAlert/public/globals"
 )
 
 type Event struct{}

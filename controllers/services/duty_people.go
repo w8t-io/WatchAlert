@@ -1,9 +1,9 @@
 package services
 
 import (
-	"watchAlert/globals"
 	"watchAlert/models"
-	"watchAlert/utils/cmd"
+	"watchAlert/public/globals"
+	"watchAlert/public/utils/cmd"
 )
 
 type DutyPeopleService struct{}

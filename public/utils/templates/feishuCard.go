@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 	"watchAlert/models"
-	"watchAlert/utils/cmd"
+	"watchAlert/public/utils/cmd"
 )
 
 type FeiShu struct{}

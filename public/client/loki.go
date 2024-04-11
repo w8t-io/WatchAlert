@@ -6,14 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"watchAlert/globals"
-	"watchAlert/models"
-	"watchAlert/utils/cmd"
-	"watchAlert/utils/http"
-
 	"strconv"
 	"strings"
 	"time"
+	"watchAlert/models"
+	"watchAlert/public/globals"
+	"watchAlert/public/utils/cmd"
+	"watchAlert/public/utils/http"
 )
 
 type LokiClient struct {

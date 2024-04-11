@@ -5,14 +5,14 @@ import (
 	"time"
 	"watchAlert/controllers/repo"
 	"watchAlert/models"
-	"watchAlert/utils/templates"
+	templates2 "watchAlert/public/utils/templates"
 )
 
 type Template struct {
 	CardContentMsg string
 	repo.DutyScheduleRepo
-	f templates.FeiShu
-	d templates.DingDing
+	f templates2.FeiShu
+	d templates2.DingDing
 }
 
 func (p *Template) NewTemplate(alert models.AlertCurEvent, notice models.AlertNotice) Template {

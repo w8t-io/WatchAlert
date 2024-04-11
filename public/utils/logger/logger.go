@@ -1,15 +1,14 @@
-package initialize
+package logger
 
 import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"os"
-	"watchAlert/globals"
 	"time"
 )
 
-// GetEncoderConfig 自定义日志输出字段
-func GetEncoderConfig() zapcore.EncoderConfig {
+// 自定义日志输出字段
+func getEncoderConfig() zapcore.EncoderConfig {
 
 	config := zapcore.EncoderConfig{
 		MessageKey:          "msg",
@@ -39,11 +38,11 @@ func getEncodeTime(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 
 }
 
-func InitLogger() {
+func InitLogger() *zap.Logger {
 
-	encoder := zapcore.NewJSONEncoder(GetEncoderConfig())
+	encoder := zapcore.NewJSONEncoder(getEncoderConfig())
 	zapCore := zapcore.NewCore(encoder, zapcore.Lock(os.Stdout), zapcore.InfoLevel)
 	logger := zap.New(zapCore)
-	globals.Logger = logger
+	return logger
 
 }

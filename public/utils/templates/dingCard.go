@@ -3,7 +3,7 @@ package templates
 import (
 	"fmt"
 	"watchAlert/models"
-	"watchAlert/utils/cmd"
+	"watchAlert/public/utils/cmd"
 )
 
 type DingDing struct{}

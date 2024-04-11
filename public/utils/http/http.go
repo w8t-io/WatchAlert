@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 	"time"
-	"watchAlert/globals"
+	"watchAlert/public/globals"
 )
 
 func Get(url string) (*http.Response, error) {

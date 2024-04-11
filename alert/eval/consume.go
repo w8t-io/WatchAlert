@@ -7,9 +7,9 @@ import (
 	"watchAlert/alert/notice"
 	"watchAlert/controllers/repo"
 	"watchAlert/controllers/services"
-	"watchAlert/globals"
 	"watchAlert/models"
-	"watchAlert/utils/hash"
+	"watchAlert/public/globals"
+	"watchAlert/public/utils/hash"
 )
 
 type EvalConsume struct {

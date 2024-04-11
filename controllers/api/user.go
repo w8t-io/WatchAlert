@@ -9,10 +9,10 @@ import (
 	"time"
 	"watchAlert/controllers/repo"
 	"watchAlert/controllers/response"
-	"watchAlert/globals"
 	"watchAlert/models"
-	"watchAlert/utils/cmd"
-	jwtUtils "watchAlert/utils/jwt"
+	"watchAlert/public/globals"
+	"watchAlert/public/utils/cmd"
+	jwtUtils "watchAlert/public/utils/jwt"
 )
 
 type UserController struct{}

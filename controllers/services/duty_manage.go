@@ -5,9 +5,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"time"
 	"watchAlert/controllers/repo"
-	"watchAlert/globals"
 	"watchAlert/models"
-	"watchAlert/utils/cmd"
+	"watchAlert/public/globals"
+	"watchAlert/public/utils/cmd"
 )
 
 type DutyManageService struct {

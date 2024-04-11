@@ -5,10 +5,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"watchAlert/controllers/repo"
-	"watchAlert/globals"
 	"watchAlert/models"
-	"watchAlert/utils/cmd"
-	"watchAlert/utils/http"
+	"watchAlert/public/globals"
+	"watchAlert/public/utils/cmd"
+	"watchAlert/public/utils/http"
 )
 
 type AlertDataSourceService struct {
