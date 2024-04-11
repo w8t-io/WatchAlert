@@ -15,9 +15,7 @@ func AlertEventMsg(gin *gin.Engine) {
 			/api/system
 		*/
 		system := apiV1.Group("system")
-		system.Use(
-			middleware.ParseTenant(),
-		)
+
 		{
 			system.POST("register", Auth.Register)
 			system.POST("login", Auth.Login)
@@ -26,7 +24,27 @@ func AlertEventMsg(gin *gin.Engine) {
 			system.POST("feiShuEvent", Event.FeiShuEvent)
 			system.GET("checkNoticeStatus", AlertNoticeObject.CheckNoticeStatus)
 			system.GET("userInfo", Auth.GetUserInfo)
-			system.GET("getDashboardInfo", DashboardInfo.GetDashboardInfo)
+		}
+		systemWare := apiV1.Group("system")
+		systemWare.Use(
+			middleware.ParseTenant(),
+		)
+		{
+			systemWare.GET("getDashboardInfo", DashboardInfo.GetDashboardInfo)
+
+		}
+
+		w8tTenant := apiV1.Group("w8t")
+		/*
+			租户
+			/api/w8t/tenant
+		*/
+		tenant := w8tTenant.Group("tenant")
+		{
+			tenant.POST("createTenant", Tenant.CreateTenant)
+			tenant.POST("updateTenant", Tenant.UpdateTenant)
+			tenant.POST("deleteTenant", Tenant.DeleteTenant)
+			tenant.GET("getTenantList", Tenant.GetTenantList)
 		}
 
 		/*
@@ -200,18 +218,6 @@ func AlertEventMsg(gin *gin.Engine) {
 			{
 				event.GET("curEvent", AlertCurEvent.List)
 				event.GET("hisEvent", AlertHisEvent.List)
-			}
-
-			/*
-				租户
-				/api/w8t/tenant
-			*/
-			tenant := w8t.Group("tenant")
-			{
-				tenant.POST("createTenant", Tenant.CreateTenant)
-				tenant.POST("updateTenant", Tenant.UpdateTenant)
-				tenant.POST("deleteTenant", Tenant.DeleteTenant)
-				tenant.GET("getTenantList", Tenant.GetTenantList)
 			}
 
 			dashboard := w8t.Group("dashboard")
