@@ -35,7 +35,10 @@ WatchAlert 是基于Go+React开发的监控告警管理平台。可以完全替�
 
 ### 数据源
 - 提供告警指标的入口，支持多数据源的基本操作。
-- 支持Prometheus、阿里云SLS、Loki作为数据源。
+- 支持Prometheus、阿里云SLS、Loki、Jaeger作为数据源。
 
 ### 仪表盘
 - 支持对接 Grafana 面板。
+
+### 日志审计
+- 记录重要的操作行为，便于后续审计。
