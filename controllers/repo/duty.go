@@ -19,7 +19,7 @@ func (nr DutyRepo) GetQuota(id string) bool {
 
 	globals.DBCli.Model(&models.DutyManagement{}).Where("tenant_id = ?", id).Count(&Number)
 
-	if Number < data.NoticeNumber {
+	if Number < data.DutyNumber {
 		return true
 	}
 
