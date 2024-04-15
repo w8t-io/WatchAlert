@@ -3,7 +3,6 @@ module watchAlert
 go 1.18
 
 require (
-	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/alibabacloud-go/darabonba-openapi/v2 v2.0.5
 	github.com/alibabacloud-go/sls-20201230/v6 v6.0.0
 	github.com/alibabacloud-go/tea v1.2.2
@@ -12,7 +11,6 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/google/uuid v1.6.0
-	github.com/larksuite/oapi-sdk-go/v3 v3.1.4
 	github.com/prometheus/client_golang v1.14.0
 	github.com/prometheus/common v0.40.0
 	github.com/rs/xid v1.5.0
@@ -23,7 +21,6 @@ require (
 )
 
 require (
-	github.com/ChimeraCoder/gojson v1.1.0 // indirect
 	github.com/alibabacloud-go/alibabacloud-gateway-sls v0.0.6 // indirect
 	github.com/alibabacloud-go/alibabacloud-gateway-sls-util v0.0.1 // indirect
 	github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.4 // indirect
@@ -77,13 +74,12 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/arch v0.7.0 // indirect
-	golang.org/x/crypto v0.19.0 // indirect
-	golang.org/x/net v0.21.0 // indirect
+	golang.org/x/crypto v0.22.0 // indirect
+	golang.org/x/net v0.24.0 // indirect
 	golang.org/x/oauth2 v0.16.0 // indirect
-	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/sys v0.19.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/protobuf v1.32.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

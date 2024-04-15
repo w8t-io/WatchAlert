@@ -10,6 +10,7 @@ type App struct {
 	MySQL  MySQL  `json:"MySQL"`
 	Redis  Redis  `json:"Redis"`
 	Jwt    Jwt    `json:"Jwt"`
+	Jaeger Jaeger `json:"Jaeger"`
 }
 
 type Server struct {
@@ -37,6 +38,10 @@ type Redis struct {
 
 type Jwt struct {
 	Expire int64 `json:"expire"`
+}
+
+type Jaeger struct {
+	URL string `json:"url"`
 }
 
 var (
