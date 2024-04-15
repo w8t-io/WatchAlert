@@ -43,20 +43,16 @@ func AuditingLog() gin.HandlerFunc {
 			reqTypeKey = splitAPI[len(splitAPI)-1]
 		}
 
-		var tenantInfo models.Tenant
-		tid, _ := context.Get("TenantID")
-		if tid == nil {
-			globals.DBCli.Model(&models.Tenant{}).Where("id = ?", tid.(string)).First(&tenantInfo)
-			if tenantInfo.ID == "" {
-				response.Fail(context, "租户不存在", "failed")
-				context.Abort()
-				return
-			}
+		tid := context.Request.Header.Get(TenantIDHeaderKey)
+		if tid == "" {
+			response.Fail(context, "租户ID不能为空", "failed")
+			context.Abort()
+			return
 		}
 
 		ps := models.PermissionsInfo()
 		auditLog := models.AuditLog{
-			TenantId:   tid.(string),
+			TenantId:   tid,
 			ID:         "Trace" + cmd.RandId(),
 			Username:   username,
 			IPAddress:  context.ClientIP(),
