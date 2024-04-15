@@ -43,8 +43,8 @@ func AuditingLog() gin.HandlerFunc {
 			reqTypeKey = splitAPI[len(splitAPI)-1]
 		}
 
-		tid, _ := context.Get("TenantID")
-		if tid == nil {
+		tid := context.Request.Header.Get(TenantIDHeaderKey)
+		if tid == "" {
 			response.Fail(context, "租户ID不能为空", "failed")
 			context.Abort()
 			return
@@ -52,7 +52,7 @@ func AuditingLog() gin.HandlerFunc {
 
 		ps := models.PermissionsInfo()
 		auditLog := models.AuditLog{
-			TenantId:   tid.(string),
+			TenantId:   tid,
 			ID:         "Trace" + cmd.RandId(),
 			Username:   username,
 			IPAddress:  context.ClientIP(),
