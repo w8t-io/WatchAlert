@@ -19,16 +19,32 @@ func NewInterAuditLogService() InterAuditLogService {
 }
 
 func (as AuditLogService) ListAuditLog(req interface{}) (interface{}, interface{}) {
-	r := req.(*models.AuditLog)
+	r := req.(*models.AuditLogQuery)
 	var db = globals.DBCli.Model(&models.AuditLog{})
 	var data []models.AuditLog
+	var count int64
+
+	pageIndexInt, _ := strconv.Atoi(r.PageIndex)
+	pageSizeInt, _ := strconv.Atoi(r.PageSize)
 
 	db.Where("tenant_id = ?", r.TenantId)
+
+	db.Count(&count)
+
+	db.Limit(pageSizeInt).Offset((pageIndexInt - 1) * pageSizeInt).Order("created_at desc")
 	err := db.Find(&data).Error
 	if err != nil {
 		return nil, err
 	}
-	return data, nil
+
+	d := models.AuditLogResponse{
+		List:       data,
+		PageIndex:  int64(pageIndexInt),
+		PageSize:   int64(pageSizeInt),
+		TotalCount: count,
+	}
+
+	return d, nil
 }
 
 func (as AuditLogService) SearchAuditLog(req interface{}) (interface{}, interface{}) {

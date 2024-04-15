@@ -22,7 +22,7 @@ func (ac AuditLogController) API(gin *gin.RouterGroup) {
 }
 
 func (ac AuditLogController) List(ctx *gin.Context) {
-	r := new(models.AuditLog)
+	r := new(models.AuditLogQuery)
 	BindQuery(ctx, r)
 	tid, _ := ctx.Get("TenantID")
 	r.TenantId = tid.(string)
