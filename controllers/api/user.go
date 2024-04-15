@@ -9,6 +9,7 @@ import (
 	"time"
 	"watchAlert/controllers/repo"
 	"watchAlert/controllers/response"
+	"watchAlert/middleware"
 	"watchAlert/models"
 	"watchAlert/public/globals"
 	"watchAlert/public/utils/cmd"
@@ -17,7 +18,39 @@ import (
 
 type UserController struct{}
 
-func (u *UserController) Login(ctx *gin.Context) {
+/*
+	用户 API
+	/api/w8t/user
+*/
+func (uc UserController) API(gin *gin.RouterGroup) {
+
+	userA := gin.Group("user")
+	userA.Use(
+		middleware.Auth(),
+		middleware.Permission(),
+		middleware.ParseTenant(),
+		middleware.AuditingLog(),
+	)
+	{
+		userA.POST("userUpdate", uc.Update)
+		userA.POST("userDelete", uc.Delete)
+		userA.POST("userChangePass", uc.ChangePass)
+	}
+
+	userB := gin.Group("user")
+	userB.Use(
+		middleware.Auth(),
+		middleware.Permission(),
+		middleware.ParseTenant(),
+	)
+	{
+		userB.GET("userList", uc.List)
+		userB.GET("searchDutyUser", uc.SearchDutyUser)
+	}
+
+}
+
+func (uc UserController) Login(ctx *gin.Context) {
 
 	var (
 		use models.Member
@@ -51,7 +84,7 @@ func (u *UserController) Login(ctx *gin.Context) {
 
 }
 
-func (u *UserController) Register(ctx *gin.Context) {
+func (uc UserController) Register(ctx *gin.Context) {
 
 	var (
 		dataUser  models.Member
@@ -85,7 +118,7 @@ func (u *UserController) Register(ctx *gin.Context) {
 	response.Success(ctx, nil, "success")
 }
 
-func (u *UserController) Update(ctx *gin.Context) {
+func (uc UserController) Update(ctx *gin.Context) {
 
 	var (
 		user   models.Member
@@ -106,13 +139,13 @@ func (u *UserController) Update(ctx *gin.Context) {
 		return
 	}
 
-	u.changeCache(ctx, user.UserId)
+	uc.changeCache(ctx, user.UserId)
 
 	response.Success(ctx, nil, "success")
 
 }
 
-func (u *UserController) CheckUser(ctx *gin.Context) {
+func (uc UserController) CheckUser(ctx *gin.Context) {
 
 	var member models.Member
 
@@ -128,7 +161,7 @@ func (u *UserController) CheckUser(ctx *gin.Context) {
 
 }
 
-func (u *UserController) List(ctx *gin.Context) {
+func (uc UserController) List(ctx *gin.Context) {
 
 	var userList []models.Member
 	err := globals.DBCli.Find(&userList).Error
@@ -141,7 +174,7 @@ func (u *UserController) List(ctx *gin.Context) {
 
 }
 
-func (u *UserController) ChangePass(ctx *gin.Context) {
+func (uc UserController) ChangePass(ctx *gin.Context) {
 
 	id := ctx.Query("userid")
 	var data struct {
@@ -161,13 +194,13 @@ func (u *UserController) ChangePass(ctx *gin.Context) {
 		return
 	}
 
-	u.changeCache(ctx, id)
+	uc.changeCache(ctx, id)
 
 	response.Success(ctx, "", "success")
 
 }
 
-func (u *UserController) Delete(ctx *gin.Context) {
+func (uc UserController) Delete(ctx *gin.Context) {
 
 	id := ctx.Query("userid")
 
@@ -183,7 +216,7 @@ func (u *UserController) Delete(ctx *gin.Context) {
 
 }
 
-func (u *UserController) SearchDutyUser(ctx *gin.Context) {
+func (uc UserController) SearchDutyUser(ctx *gin.Context) {
 
 	var data []models.Member
 	err := globals.DBCli.Where("join_duty = ?", "true").Find(&data).Error
@@ -195,7 +228,7 @@ func (u *UserController) SearchDutyUser(ctx *gin.Context) {
 
 }
 
-func (u *UserController) GetUserInfo(ctx *gin.Context) {
+func (uc UserController) GetUserInfo(ctx *gin.Context) {
 
 	token := ctx.Request.Header.Get("Authorization")
 	code, ok := jwtUtils.IsTokenValid(token)
@@ -214,7 +247,7 @@ func (u *UserController) GetUserInfo(ctx *gin.Context) {
 
 }
 
-func (u *UserController) changeCache(ctx *gin.Context, userId string) {
+func (uc UserController) changeCache(ctx *gin.Context, userId string) {
 
 	var dbUser models.Member
 	globals.DBCli.Model(&models.Member{}).Where("user_id = ?", userId).First(&dbUser)

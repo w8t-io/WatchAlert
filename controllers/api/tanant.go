@@ -2,11 +2,39 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"watchAlert/middleware"
 	"watchAlert/models"
 	jwtUtils "watchAlert/public/utils/jwt"
 )
 
 type TenantController struct{}
+
+/*
+	租户 API
+	/api/w8t/tenant
+*/
+func (tc TenantController) API(gin *gin.RouterGroup) {
+	tenantA := gin.Group("tenant")
+	tenantA.Use(
+		middleware.Auth(),
+		middleware.Permission(),
+		middleware.AuditingLog(),
+	)
+	{
+		tenantA.POST("createTenant", tc.CreateTenant)
+		tenantA.POST("updateTenant", tc.UpdateTenant)
+		tenantA.POST("deleteTenant", tc.DeleteTenant)
+	}
+
+	tenantB := gin.Group("tenant")
+	tenantB.Use(
+		middleware.Auth(),
+		middleware.Permission(),
+	)
+	{
+		tenantB.GET("getTenantList", tc.GetTenantList)
+	}
+}
 
 func (tc TenantController) CreateTenant(ctx *gin.Context) {
 	r := new(models.Tenant)

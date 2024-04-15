@@ -5,27 +5,267 @@ type UserPermissions struct {
 	API string `json:"api"`
 }
 
-/*
-[
-    {
-        "name":"UserRegister",
-        "api":"/api/v1/auth/register"
-    },
-    {
-        "name":"UserUpdate",
-        "api":"/api/v1/auth/updateUser"
-    },
-    {
-        "name":"UserList",
-        "api":"/api/v1/auth/listUser"
-    },
-    {
-        "name":"UserDelete",
-        "api":"/api/v1/auth/deleteUser"
-    },
-    {
-        "name":"UserChangePass",
-        "api":"/api/v1/auth/changePass"
-    }
-]
-*/
+func PermissionsInfo() map[string]UserPermissions {
+	return map[string]UserPermissions{
+		"ruleSearch": {
+			Key: "搜索告警规则",
+			API: "/api/w8t/rule/ruleSearch",
+		},
+		"calendarCreate": {
+			Key: "发布日历表",
+			API: "/api/w8t/calendar/calendarCreate",
+		},
+		"calendarSearch": {
+			Key: "搜索日历表",
+			API: "/api/w8t/calendar/calendarSearch",
+		},
+		"calendarUpdate": {
+			Key: "更新日历表",
+			API: "/api/w8t/calendar/calendarUpdate",
+		},
+		"createDashboard": {
+			Key: "创建仪表盘",
+			API: "/api/w8t/dashboard/createDashboard",
+		},
+		"createTenant": {
+			Key: "创建租户",
+			API: "/api/w8t/tenant/createTenant",
+		},
+		"curEvent": {
+			Key: "查看当前告警事件",
+			API: "/api/w8t/event/curEvent",
+		},
+		"dataSourceCreate": {
+			Key: "创建数据源",
+			API: "/api/w8t/datasource/dataSourceCreate",
+		},
+		"dataSourceDelete": {
+			Key: "删除数据源",
+			API: "/api/w8t/datasource/dataSourceDelete",
+		},
+		"dataSourceGet": {
+			Key: "获取数据源",
+			API: "/api/w8t/datasource/dataSourceGet",
+		},
+		"dataSourceList": {
+			Key: "查看数据源",
+			API: "/api/w8t/datasource/dataSourceList",
+		},
+		"dataSourceSearch": {
+			Key: "搜索数据源",
+			API: "/api/w8t/datasource/dataSourceSearch",
+		},
+		"dataSourceUpdate": {
+			Key: "更新数据源",
+			API: "/api/w8t/datasource/dataSourceUpdate",
+		},
+		"deleteDashboard": {
+			Key: "删除仪表盘",
+			API: "/api/w8t/dashboard/deleteDashboard",
+		},
+		"deleteTenant": {
+			Key: "删除租户",
+			API: "/api/w8t/tenant/deleteTenant",
+		},
+		"dutyManageCreate": {
+			Key: "创建值班表",
+			API: "/api/w8t/dutyManage/dutyManageCreate",
+		},
+		"dutyManageDelete": {
+			Key: "更新值班表",
+			API: "/api/w8t/dutyManage/dutyManageDelete",
+		},
+		"dutyManageList": {
+			Key: "查看值班表",
+			API: "/api/w8t/dutyManage/dutyManageList",
+		},
+		"dutyManageSearch": {
+			Key: "搜索值班表",
+			API: "/api/w8t/dutyManage/dutyManageSearch",
+		},
+		"dutyManageUpdate": {
+			Key: "更新值班表",
+			API: "/api/w8t/dutyManage/dutyManageUpdate",
+		},
+		"getDashboard": {
+			Key: "获取仪表盘",
+			API: "/api/w8t/dashboard/getDashboard",
+		},
+		"getTenantList": {
+			Key: "查看租户",
+			API: "/api/w8t/tenant/getTenantList",
+		},
+		"hisEvent": {
+			Key: "查看历史告警",
+			API: "/api/w8t/event/hisEvent",
+		},
+		"listDashboard": {
+			Key: "查看仪表盘",
+			API: "/api/w8t/dashboard/listDashboard",
+		},
+		"noticeCreate": {
+			Key: "创建通知对象",
+			API: "/api/w8t/notice/noticeCreate",
+		},
+		"noticeDelete": {
+			Key: "删除通知对象",
+			API: "/api/w8t/notice/noticeDelete",
+		},
+		"noticeList": {
+			Key: "查看通知对象",
+			API: "/api/w8t/notice/noticeList",
+		},
+		"noticeSearch": {
+			Key: "搜索通知对象",
+			API: "/api/w8t/notice/noticeSearch",
+		},
+		"noticeTemplateCreate": {
+			Key: "创建通知模版",
+			API: "/api/w8t/noticeTemplate/noticeTemplateCreate",
+		},
+		"noticeTemplateDelete": {
+			Key: "删除通知模版",
+			API: "/api/w8t/noticeTemplate/noticeTemplateDelete",
+		},
+		"noticeTemplateList": {
+			Key: "查看通知模版",
+			API: "/api/w8t/noticeTemplate/noticeTemplateList",
+		},
+		"noticeTemplateUpdate": {
+			Key: "更新通知模版",
+			API: "/api/w8t/noticeTemplate/noticeTemplateUpdate",
+		},
+		"noticeUpdate": {
+			Key: "更新通知对象",
+			API: "/api/w8t/notice/noticeUpdate",
+		},
+		"permsList": {
+			Key: "查看用户权限",
+			API: "/api/w8t/permissions/permsList",
+		},
+		"register": {
+			Key: "用户注册",
+			API: "/api/system/register",
+		},
+		"roleCreate": {
+			Key: "创建用户角色",
+			API: "/api/w8t/role/roleCreate",
+		},
+		"roleDelete": {
+			Key: "删除用户角色",
+			API: "/api/w8t/role/roleDelete",
+		},
+		"roleList": {
+			Key: "查看用户角色",
+			API: "/api/w8t/role/roleList",
+		},
+		"roleUpdate": {
+			Key: "更新用户角色",
+			API: "/api/w8t/role/roleUpdate",
+		},
+		"ruleCreate": {
+			Key: "创建告警规则",
+			API: "/api/w8t/rule/ruleCreate",
+		},
+		"ruleDelete": {
+			Key: "删除告警规则",
+			API: "/api/w8t/rule/ruleDelete",
+		},
+		"ruleGroupCreate": {
+			Key: "创建告警规则组",
+			API: "/api/w8t/ruleGroup/ruleGroupCreate",
+		},
+		"ruleGroupDelete": {
+			Key: "删除告警规则组",
+			API: "/api/w8t/ruleGroup/ruleGroupDelete",
+		},
+		"ruleGroupList": {
+			Key: "查看告警规则组",
+			API: "/api/w8t/ruleGroup/ruleGroupList",
+		},
+		"ruleGroupUpdate": {
+			Key: "更新告警规则组",
+			API: "/api/w8t/ruleGroup/ruleGroupUpdate",
+		},
+		"ruleList": {
+			Key: "查看告警规则",
+			API: "/api/w8t/rule/ruleList",
+		},
+		"ruleTmplCreate": {
+			Key: "创建规则模版",
+			API: "/api/w8t/ruleTmpl/ruleTmplCreate",
+		},
+		"ruleTmplDelete": {
+			Key: "删除规则模版",
+			API: "/api/w8t/ruleTmpl/ruleTmplDelete",
+		},
+		"ruleTmplGroupCreate": {
+			Key: "创建规则模版组",
+			API: "/api/w8t/ruleTmplGroup/ruleTmplGroupCreate",
+		},
+		"ruleTmplGroupDelete": {
+			Key: "删除规则模版组",
+			API: "/api/w8t/ruleTmplGroup/ruleTmplGroupDelete",
+		},
+		"ruleTmplGroupList": {
+			Key: "查看规则模版组",
+			API: "/api/w8t/ruleTmplGroup/ruleTmplGroupList",
+		},
+		"ruleTmplList": {
+			Key: "查看规则模版",
+			API: "/api/w8t/ruleTmpl/ruleTmplList",
+		},
+		"ruleUpdate": {
+			Key: "更新告警规则",
+			API: "/api/w8t/rule/ruleUpdate",
+		},
+		"searchDashboard": {
+			Key: "搜索仪表盘",
+			API: "/api/w8t/dashboard/searchDashboard",
+		},
+		"searchDutyUser": {
+			Key: "搜索值班用户",
+			API: "/api/w8t/user/searchDutyUser",
+		},
+		"silenceCreate": {
+			Key: "创建静默规则",
+			API: "/api/w8t/silence/silenceCreate",
+		},
+		"silenceDelete": {
+			Key: "删除静默规则",
+			API: "/api/w8t/silence/silenceDelete",
+		},
+		"silenceList": {
+			Key: "查看静默规则",
+			API: "/api/w8t/silence/silenceList",
+		},
+		"silenceUpdate": {
+			Key: "更新静默规则",
+			API: "/api/w8t/silence/silenceUpdate",
+		},
+		"updateDashboard": {
+			Key: "更新仪表盘",
+			API: "/api/w8t/dashboard/updateDashboard",
+		},
+		"updateTenant": {
+			Key: "更新租户信息",
+			API: "/api/w8t/tenant/updateTenant",
+		},
+		"userChangePass": {
+			Key: "修改用户密码",
+			API: "/api/w8t/user/userChangePass",
+		},
+		"userDelete": {
+			Key: "删除用户",
+			API: "/api/w8t/user/userDelete",
+		},
+		"userList": {
+			Key: "查看用户列表",
+			API: "/api/w8t/user/userList",
+		},
+		"userUpdate": {
+			Key: "更新用户信息",
+			API: "/api/w8t/user/userUpdate",
+		},
+	}
+}

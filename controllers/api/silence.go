@@ -3,14 +3,44 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"watchAlert/controllers/response"
+	"watchAlert/middleware"
 	"watchAlert/models"
 	jwtUtils "watchAlert/public/utils/jwt"
 )
 
-type AlertSilenceController struct {
+type SilenceController struct{}
+
+/*
+	告警静默 API
+	/api/w8t/silence
+*/
+func (sc SilenceController) API(gin *gin.RouterGroup) {
+	silenceA := gin.Group("silence")
+	silenceA.Use(
+		middleware.Auth(),
+		middleware.Permission(),
+		middleware.ParseTenant(),
+		middleware.AuditingLog(),
+	)
+	{
+		silenceA.POST("silenceCreate", sc.Create)
+		silenceA.POST("silenceUpdate", sc.Update)
+		silenceA.POST("silenceDelete", sc.Delete)
+	}
+
+	silenceB := gin.Group("silence")
+	silenceB.Use(
+		middleware.Auth(),
+		middleware.Permission(),
+		middleware.ParseTenant(),
+	)
+	{
+		silenceB.GET("silenceList", sc.List)
+
+	}
 }
 
-func (asc *AlertSilenceController) Create(ctx *gin.Context) {
+func (sc SilenceController) Create(ctx *gin.Context) {
 
 	var silence models.AlertSilences
 	_ = ctx.ShouldBindJSON(&silence)
@@ -30,7 +60,7 @@ func (asc *AlertSilenceController) Create(ctx *gin.Context) {
 
 }
 
-func (asc *AlertSilenceController) Update(ctx *gin.Context) {
+func (sc SilenceController) Update(ctx *gin.Context) {
 
 	var silence models.AlertSilences
 	_ = ctx.ShouldBindJSON(&silence)
@@ -50,7 +80,7 @@ func (asc *AlertSilenceController) Update(ctx *gin.Context) {
 
 }
 
-func (asc *AlertSilenceController) Delete(ctx *gin.Context) {
+func (sc SilenceController) Delete(ctx *gin.Context) {
 
 	id := ctx.Query("id")
 	tid, _ := ctx.Get("TenantID")
@@ -64,7 +94,7 @@ func (asc *AlertSilenceController) Delete(ctx *gin.Context) {
 
 }
 
-func (asc *AlertSilenceController) List(ctx *gin.Context) {
+func (sc SilenceController) List(ctx *gin.Context) {
 
 	data, err := alertSilenceService.ListAlertSilence(ctx)
 	if err != nil {

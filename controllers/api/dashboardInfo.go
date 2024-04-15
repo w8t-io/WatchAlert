@@ -3,12 +3,25 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"watchAlert/controllers/response"
+	"watchAlert/middleware"
 	"watchAlert/models"
 	"watchAlert/public/globals"
 )
 
 type DashboardInfoController struct {
 	models.AlertCurEvent
+}
+
+func (di DashboardInfoController) API(gin *gin.RouterGroup) {
+	system := gin.Group("system")
+	system.Use(
+		middleware.Auth(),
+		middleware.ParseTenant(),
+	)
+	{
+		system.GET("getDashboardInfo", di.GetDashboardInfo)
+
+	}
 }
 
 type ResponseDashboardInfo struct {

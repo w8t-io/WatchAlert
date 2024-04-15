@@ -3,13 +3,45 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"watchAlert/controllers/response"
+	"watchAlert/middleware"
 	"watchAlert/models"
 )
 
-type AlertDataSourceController struct {
+type DatasourceController struct{}
+
+/*
+	数据源 API
+	/api/w8t/datasource
+*/
+func (dc DatasourceController) API(gin *gin.RouterGroup) {
+	datasourceA := gin.Group("datasource")
+	datasourceA.Use(
+		middleware.Auth(),
+		middleware.Permission(),
+		middleware.ParseTenant(),
+		middleware.AuditingLog(),
+	)
+	{
+		datasourceA.POST("dataSourceCreate", dc.Create)
+		datasourceA.POST("dataSourceUpdate", dc.Update)
+		datasourceA.POST("dataSourceDelete", dc.Delete)
+	}
+
+	datasourceB := gin.Group("datasource")
+	datasourceB.Use(
+		middleware.Auth(),
+		middleware.Permission(),
+		middleware.ParseTenant(),
+	)
+	{
+		datasourceB.GET("dataSourceList", dc.List)
+		datasourceB.GET("dataSourceGet", dc.Get)
+		datasourceB.GET("dataSourceSearch", dc.Search)
+	}
+
 }
 
-func (adsc *AlertDataSourceController) Create(ctx *gin.Context) {
+func (dc DatasourceController) Create(ctx *gin.Context) {
 
 	var dataSource models.AlertDataSource
 	_ = ctx.ShouldBindJSON(&dataSource)
@@ -25,14 +57,14 @@ func (adsc *AlertDataSourceController) Create(ctx *gin.Context) {
 
 }
 
-func (adsc *AlertDataSourceController) List(ctx *gin.Context) {
+func (dc DatasourceController) List(ctx *gin.Context) {
 
 	data, _ := dataSourceService.List(ctx)
 
 	response.Success(ctx, data, "success")
 }
 
-func (adsc *AlertDataSourceController) Get(ctx *gin.Context) {
+func (dc DatasourceController) Get(ctx *gin.Context) {
 
 	tid, _ := ctx.Get("TenantID")
 	id := ctx.Query("id")
@@ -43,7 +75,7 @@ func (adsc *AlertDataSourceController) Get(ctx *gin.Context) {
 
 }
 
-func (adsc *AlertDataSourceController) Search(ctx *gin.Context) {
+func (dc DatasourceController) Search(ctx *gin.Context) {
 	r := new(models.DatasourceQuery)
 	BindQuery(ctx, r)
 	tid, _ := ctx.Get("TenantID")
@@ -53,7 +85,7 @@ func (adsc *AlertDataSourceController) Search(ctx *gin.Context) {
 	})
 }
 
-func (adsc *AlertDataSourceController) Update(ctx *gin.Context) {
+func (dc DatasourceController) Update(ctx *gin.Context) {
 
 	var datasource models.AlertDataSource
 	_ = ctx.ShouldBindJSON(&datasource)
@@ -69,7 +101,7 @@ func (adsc *AlertDataSourceController) Update(ctx *gin.Context) {
 
 }
 
-func (adsc *AlertDataSourceController) Delete(ctx *gin.Context) {
+func (dc DatasourceController) Delete(ctx *gin.Context) {
 
 	id := ctx.Query("id")
 	tid, _ := ctx.Get("TenantID")
