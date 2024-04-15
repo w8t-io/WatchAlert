@@ -6,15 +6,44 @@ import (
 	"time"
 	"watchAlert/controllers/repo"
 	"watchAlert/controllers/response"
+	"watchAlert/middleware"
 	"watchAlert/models"
 	"watchAlert/public/globals"
 	"watchAlert/public/utils/cmd"
 )
 
-type UserRoleController struct {
+type UserRoleController struct{}
+
+/*
+	用户角色 API
+	/api/w8t/role
+*/
+func (urc UserRoleController) API(gin *gin.RouterGroup) {
+	roleA := gin.Group("role")
+	roleA.Use(
+		middleware.Auth(),
+		middleware.Permission(),
+		middleware.ParseTenant(),
+		middleware.AuditingLog(),
+	)
+	{
+		roleA.POST("roleCreate", urc.Create)
+		roleA.POST("roleUpdate", urc.Update)
+		roleA.POST("roleDelete", urc.Delete)
+	}
+
+	roleB := gin.Group("role")
+	roleB.Use(
+		middleware.Auth(),
+		middleware.Permission(),
+		middleware.ParseTenant(),
+	)
+	{
+		roleB.GET("roleList", urc.List)
+	}
 }
 
-func (urc *UserRoleController) Create(ctx *gin.Context) {
+func (urc UserRoleController) Create(ctx *gin.Context) {
 
 	var userRole models.UserRole
 	_ = ctx.ShouldBindJSON(&userRole)
@@ -33,7 +62,7 @@ func (urc *UserRoleController) Create(ctx *gin.Context) {
 
 }
 
-func (urc *UserRoleController) Update(ctx *gin.Context) {
+func (urc UserRoleController) Update(ctx *gin.Context) {
 
 	var userRole models.UserRole
 	_ = ctx.ShouldBindJSON(&userRole)
@@ -54,7 +83,7 @@ func (urc *UserRoleController) Update(ctx *gin.Context) {
 
 }
 
-func (urc *UserRoleController) Delete(ctx *gin.Context) {
+func (urc UserRoleController) Delete(ctx *gin.Context) {
 
 	id := ctx.Query("id")
 	err := repo.DBCli.Delete(repo.Delete{
@@ -70,7 +99,7 @@ func (urc *UserRoleController) Delete(ctx *gin.Context) {
 
 }
 
-func (urc *UserRoleController) List(ctx *gin.Context) {
+func (urc UserRoleController) List(ctx *gin.Context) {
 
 	var data []models.UserRole
 

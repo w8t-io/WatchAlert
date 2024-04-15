@@ -10,10 +10,10 @@ import (
 	"watchAlert/public/utils/http"
 )
 
-type EventController struct{}
+type CallbackController struct{}
 
 // FeiShuEvent 飞书回调
-func (ec *EventController) FeiShuEvent(ctx *gin.Context) {
+func (cc *CallbackController) FeiShuEvent(ctx *gin.Context) {
 
 	var challengeInfo map[string]interface{}
 

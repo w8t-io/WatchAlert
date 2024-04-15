@@ -38,6 +38,6 @@ func InitRoute() {
 func allRouter(engine *gin.Engine) {
 
 	routers.HealthCheck(engine)
-	v1.AlertEventMsg(engine)
+	v1.Router(engine)
 
 }

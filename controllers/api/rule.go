@@ -3,13 +3,42 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"watchAlert/controllers/response"
+	"watchAlert/middleware"
 	"watchAlert/models"
 )
 
-type RuleController struct {
+type RuleController struct{}
+
+/*
+	告警规则 API
+	/api/w8t/rule
+*/
+func (rc RuleController) API(gin *gin.RouterGroup) {
+	ruleA := gin.Group("rule")
+	ruleA.Use(
+		middleware.Auth(),
+		middleware.Permission(),
+		middleware.ParseTenant(),
+		middleware.AuditingLog(),
+	)
+	{
+		ruleA.POST("ruleCreate", rc.Create)
+		ruleA.POST("ruleUpdate", rc.Update)
+		ruleA.POST("ruleDelete", rc.Delete)
+	}
+	ruleB := gin.Group("rule")
+	ruleB.Use(
+		middleware.Auth(),
+		middleware.Permission(),
+		middleware.ParseTenant(),
+	)
+	{
+		ruleB.GET("ruleList", rc.List)
+		ruleB.GET("ruleSearch", rc.Search)
+	}
 }
 
-func (rc *RuleController) Create(ctx *gin.Context) {
+func (rc RuleController) Create(ctx *gin.Context) {
 
 	var rule models.AlertRule
 	_ = ctx.ShouldBindJSON(&rule)
@@ -24,7 +53,7 @@ func (rc *RuleController) Create(ctx *gin.Context) {
 
 }
 
-func (rc *RuleController) Update(ctx *gin.Context) {
+func (rc RuleController) Update(ctx *gin.Context) {
 
 	var rule models.AlertRule
 	_ = ctx.ShouldBindJSON(&rule)
@@ -39,7 +68,7 @@ func (rc *RuleController) Update(ctx *gin.Context) {
 
 }
 
-func (rc *RuleController) List(ctx *gin.Context) {
+func (rc RuleController) List(ctx *gin.Context) {
 
 	var rule []models.AlertRule
 	_ = ctx.ShouldBindJSON(&rule)
@@ -56,7 +85,7 @@ func (rc *RuleController) List(ctx *gin.Context) {
 
 }
 
-func (rc *RuleController) Delete(ctx *gin.Context) {
+func (rc RuleController) Delete(ctx *gin.Context) {
 
 	id := ctx.Query("id")
 	tid, _ := ctx.Get("TenantID")
@@ -69,7 +98,7 @@ func (rc *RuleController) Delete(ctx *gin.Context) {
 
 }
 
-func (rc *RuleController) Search(ctx *gin.Context) {
+func (rc RuleController) Search(ctx *gin.Context) {
 
 	ruleId := ctx.Query("ruleId")
 	tid, _ := ctx.Get("TenantID")

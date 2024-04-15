@@ -7,26 +7,25 @@ import (
 )
 
 type ApiGroup struct {
-	AlertNoticeObjectController
-	DutyManageController
-	DutyPeopleController
-	DutyScheduleController
-	EventController
-	AlertDataSourceController
-	AlertSilenceController
+	NoticeController
+	DutyController
+	DutyCalendarController
+	CallbackController
+	DatasourceController
+	SilenceController
 	RuleController
 	UserController
-	AlertCurEventController
-	AlertHisEventController
+	AlertEventController
 	UserRoleController
 	UserPermissionsController
-	AlertNoticeTemplateController
+	NoticeTemplateController
 	RuleGroupController
 	RuleTmplGroupController
 	RuleTmplController
 	DashboardInfoController
 	TenantController
 	DashboardController
+	AuditLogController
 }
 
 var ApiGroupApp = new(ApiGroup)
@@ -44,6 +43,7 @@ var (
 	ruleGroupService     = services.NewInterRuleGroupService()
 	tenantService        = services.NewInterTenantService()
 	dashboardService     = services.NewInterDashboardService()
+	auditLogService      = services.NewInterAuditLogService()
 )
 
 func Service(ctx *gin.Context, fu func() (interface{}, interface{})) {

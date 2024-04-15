@@ -2,10 +2,41 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"watchAlert/middleware"
 	"watchAlert/models"
 )
 
 type DashboardController struct{}
+
+/*
+	仪表盘 API
+	/api/w8t/dashboard
+*/
+func (dc DashboardController) API(gin *gin.RouterGroup) {
+	dashboardA := gin.Group("dashboard")
+	dashboardA.Use(
+		middleware.Auth(),
+		middleware.Permission(),
+		middleware.ParseTenant(),
+		middleware.AuditingLog(),
+	)
+	{
+		dashboardA.POST("createDashboard", dc.CreateDashboard)
+		dashboardA.POST("updateDashboard", dc.UpdateDashboard)
+		dashboardA.POST("deleteDashboard", dc.DeleteDashboard)
+	}
+	dashboardB := gin.Group("dashboard")
+	dashboardB.Use(
+		middleware.Auth(),
+		middleware.Permission(),
+		middleware.ParseTenant(),
+	)
+	{
+		dashboardB.GET("getDashboard", dc.GetDashboard)
+		dashboardB.GET("listDashboard", dc.ListDashboard)
+		dashboardB.GET("searchDashboard", dc.SearchDashboard)
+	}
+}
 
 func (dc DashboardController) ListDashboard(ctx *gin.Context) {
 	tid, _ := ctx.Get("TenantID")

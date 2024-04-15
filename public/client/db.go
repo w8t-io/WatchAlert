@@ -41,6 +41,7 @@ func InitDB() *gorm.DB {
 		&models.ServiceResource{},
 		&models.Tenant{},
 		&models.Dashboard{},
+		&models.AuditLog{},
 	)
 	if err != nil {
 		return nil

@@ -3,19 +3,50 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"watchAlert/controllers/response"
+	"watchAlert/middleware"
 	"watchAlert/models"
 )
 
-type AlertNoticeObjectController struct{}
+type NoticeController struct{}
 
-func (ano *AlertNoticeObjectController) List(ctx *gin.Context) {
+/*
+	通知对象 API
+	/api/w8t/notice
+*/
+func (nc NoticeController) API(gin *gin.RouterGroup) {
+	noticeA := gin.Group("notice")
+	noticeA.Use(
+		middleware.Auth(),
+		middleware.Permission(),
+		middleware.ParseTenant(),
+		middleware.AuditingLog(),
+	)
+	{
+		noticeA.POST("noticeCreate", nc.Create)
+		noticeA.POST("noticeUpdate", nc.Update)
+		noticeA.POST("noticeDelete", nc.Delete)
+	}
+
+	noticeB := gin.Group("notice")
+	noticeB.Use(
+		middleware.Auth(),
+		middleware.Permission(),
+		middleware.ParseTenant(),
+	)
+	{
+		noticeB.GET("noticeList", nc.List)
+		noticeB.GET("noticeSearch", nc.Get)
+	}
+}
+
+func (nc NoticeController) List(ctx *gin.Context) {
 
 	object := alertNoticeService.SearchNoticeObject(ctx)
 	response.Success(ctx, object, "success")
 
 }
 
-func (ano *AlertNoticeObjectController) Create(ctx *gin.Context) {
+func (nc NoticeController) Create(ctx *gin.Context) {
 
 	var alertNotice models.AlertNotice
 	_ = ctx.ShouldBindJSON(&alertNotice)
@@ -30,7 +61,7 @@ func (ano *AlertNoticeObjectController) Create(ctx *gin.Context) {
 
 }
 
-func (ano *AlertNoticeObjectController) Update(ctx *gin.Context) {
+func (nc NoticeController) Update(ctx *gin.Context) {
 
 	var alertNotice models.AlertNotice
 	_ = ctx.ShouldBindJSON(&alertNotice)
@@ -45,7 +76,7 @@ func (ano *AlertNoticeObjectController) Update(ctx *gin.Context) {
 
 }
 
-func (ano *AlertNoticeObjectController) Delete(ctx *gin.Context) {
+func (nc NoticeController) Delete(ctx *gin.Context) {
 
 	uuid := ctx.Query("uuid")
 	tid, _ := ctx.Get("TenantID")
@@ -58,7 +89,7 @@ func (ano *AlertNoticeObjectController) Delete(ctx *gin.Context) {
 
 }
 
-func (ano *AlertNoticeObjectController) Get(ctx *gin.Context) {
+func (nc NoticeController) Get(ctx *gin.Context) {
 
 	uuid := ctx.Query("uuid")
 	tid, _ := ctx.Get("TenantID")
@@ -67,7 +98,7 @@ func (ano *AlertNoticeObjectController) Get(ctx *gin.Context) {
 
 }
 
-func (ano *AlertNoticeObjectController) CheckNoticeStatus(ctx *gin.Context) {
+func (nc NoticeController) CheckNoticeStatus(ctx *gin.Context) {
 
 	uuid := ctx.Query("uuid")
 	tid, _ := ctx.Get("TenantID")

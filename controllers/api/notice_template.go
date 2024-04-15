@@ -4,14 +4,43 @@ import (
 	"github.com/gin-gonic/gin"
 	"watchAlert/controllers/repo"
 	"watchAlert/controllers/response"
+	"watchAlert/middleware"
 	"watchAlert/models"
 	"watchAlert/public/globals"
 	"watchAlert/public/utils/cmd"
 )
 
-type AlertNoticeTemplateController struct{}
+type NoticeTemplateController struct{}
 
-func (ant *AlertNoticeTemplateController) Create(ctx *gin.Context) {
+/*
+	通知模版 API
+	/api/w8t/noticeTemplate
+*/
+func (ntc NoticeTemplateController) API(gin *gin.RouterGroup) {
+	noticeTemplateA := gin.Group("noticeTemplate")
+	noticeTemplateA.Use(
+		middleware.Auth(),
+		middleware.Permission(),
+		middleware.ParseTenant(),
+		middleware.AuditingLog(),
+	)
+	{
+		noticeTemplateA.POST("noticeTemplateCreate", ntc.Create)
+		noticeTemplateA.POST("noticeTemplateUpdate", ntc.Update)
+		noticeTemplateA.POST("noticeTemplateDelete", ntc.Delete)
+	}
+	noticeTemplateB := gin.Group("noticeTemplate")
+	noticeTemplateB.Use(
+		middleware.Auth(),
+		middleware.Permission(),
+		middleware.ParseTenant(),
+	)
+	{
+		noticeTemplateB.GET("noticeTemplateList", ntc.List)
+	}
+}
+
+func (ntc NoticeTemplateController) Create(ctx *gin.Context) {
 
 	var tmpl models.NoticeTemplateExample
 	_ = ctx.ShouldBindJSON(&tmpl)
@@ -26,7 +55,7 @@ func (ant *AlertNoticeTemplateController) Create(ctx *gin.Context) {
 
 }
 
-func (ant *AlertNoticeTemplateController) Update(ctx *gin.Context) {
+func (ntc NoticeTemplateController) Update(ctx *gin.Context) {
 
 	var tmpl models.NoticeTemplateExample
 	_ = ctx.ShouldBindJSON(&tmpl)
@@ -44,7 +73,7 @@ func (ant *AlertNoticeTemplateController) Update(ctx *gin.Context) {
 
 }
 
-func (ant *AlertNoticeTemplateController) Delete(ctx *gin.Context) {
+func (ntc NoticeTemplateController) Delete(ctx *gin.Context) {
 
 	id := ctx.Query("id")
 
@@ -60,7 +89,7 @@ func (ant *AlertNoticeTemplateController) Delete(ctx *gin.Context) {
 
 }
 
-func (ant *AlertNoticeTemplateController) List(ctx *gin.Context) {
+func (ntc NoticeTemplateController) List(ctx *gin.Context) {
 
 	var templates []models.NoticeTemplateExample
 	globals.DBCli.Model(&models.NoticeTemplateExample{}).Find(&templates)

@@ -4,14 +4,42 @@ import (
 	"github.com/gin-gonic/gin"
 	"watchAlert/controllers/repo"
 	"watchAlert/controllers/response"
+	"watchAlert/middleware"
 	"watchAlert/models"
 	"watchAlert/public/globals"
 )
 
-type RuleTmplGroupController struct {
+type RuleTmplGroupController struct{}
+
+/*
+	规则模版组 API
+	/api/w8t/ruleTmplGroup
+*/
+func (rtgc RuleTmplGroupController) API(gin *gin.RouterGroup) {
+	ruleTmplGroupA := gin.Group("ruleTmplGroup")
+	ruleTmplGroupA.Use(
+		middleware.Auth(),
+		middleware.Permission(),
+		middleware.ParseTenant(),
+		middleware.AuditingLog(),
+	)
+	{
+		ruleTmplGroupA.POST("ruleTmplGroupCreate", rtgc.Create)
+		ruleTmplGroupA.POST("ruleTmplGroupDelete", rtgc.Delete)
+	}
+
+	ruleTmplGroupB := gin.Group("ruleTmplGroup")
+	ruleTmplGroupB.Use(
+		middleware.Auth(),
+		middleware.Permission(),
+		middleware.ParseTenant(),
+	)
+	{
+		ruleTmplGroupB.GET("ruleTmplGroupList", rtgc.List)
+	}
 }
 
-func (rtg *RuleTmplGroupController) Create(ctx *gin.Context) {
+func (rtgc RuleTmplGroupController) Create(ctx *gin.Context) {
 
 	var resRT models.RuleTemplateGroup
 	_ = ctx.ShouldBindJSON(&resRT)
@@ -24,7 +52,7 @@ func (rtg *RuleTmplGroupController) Create(ctx *gin.Context) {
 
 }
 
-func (rtg *RuleTmplGroupController) Delete(ctx *gin.Context) {
+func (rtgc RuleTmplGroupController) Delete(ctx *gin.Context) {
 
 	tmplGroupName := ctx.Query("tmplGroupName")
 	err := repo.DBCli.Delete(repo.Delete{
@@ -39,7 +67,7 @@ func (rtg *RuleTmplGroupController) Delete(ctx *gin.Context) {
 
 }
 
-func (rtg *RuleTmplGroupController) List(ctx *gin.Context) {
+func (rtgc RuleTmplGroupController) List(ctx *gin.Context) {
 
 	var resRTG []models.RuleTemplateGroup
 	globals.DBCli.Model(&models.RuleTemplateGroup{}).Find(&resRTG)
@@ -52,10 +80,37 @@ func (rtg *RuleTmplGroupController) List(ctx *gin.Context) {
 
 }
 
-type RuleTmplController struct {
+type RuleTmplController struct{}
+
+/*
+	规则模版 API
+	/api/w8t/ruleTmpl
+*/
+func (rtc RuleTmplController) API(gin *gin.RouterGroup) {
+	ruleTmplA := gin.Group("ruleTmpl")
+	ruleTmplA.Use(
+		middleware.Auth(),
+		middleware.Permission(),
+		middleware.ParseTenant(),
+		middleware.AuditingLog(),
+	)
+	{
+		ruleTmplA.POST("ruleTmplCreate", rtc.Create)
+		ruleTmplA.POST("ruleTmplDelete", rtc.Delete)
+	}
+
+	ruleTmplB := gin.Group("ruleTmpl")
+	ruleTmplB.Use(
+		middleware.Auth(),
+		middleware.Permission(),
+		middleware.ParseTenant(),
+	)
+	{
+		ruleTmplB.GET("ruleTmplList", rtc.List)
+	}
 }
 
-func (rtg *RuleTmplController) Create(ctx *gin.Context) {
+func (rtc RuleTmplController) Create(ctx *gin.Context) {
 
 	var resRT models.RuleTemplate
 	_ = ctx.ShouldBindJSON(&resRT)
@@ -69,7 +124,7 @@ func (rtg *RuleTmplController) Create(ctx *gin.Context) {
 
 }
 
-func (rtg *RuleTmplController) Delete(ctx *gin.Context) {
+func (rtc RuleTmplController) Delete(ctx *gin.Context) {
 
 	ruleName := ctx.Query("ruleName")
 	err := repo.DBCli.Delete(repo.Delete{
@@ -84,7 +139,7 @@ func (rtg *RuleTmplController) Delete(ctx *gin.Context) {
 
 }
 
-func (rtg *RuleTmplController) List(ctx *gin.Context) {
+func (rtc RuleTmplController) List(ctx *gin.Context) {
 
 	ruleGroupName := ctx.Query("ruleGroupName")
 
