@@ -23,4 +23,5 @@ var (
 	Tenant         = api.ApiGroupApp.TenantController
 	Dashboard      = api.ApiGroupApp.DashboardController
 	AuditLog       = api.ApiGroupApp.AuditLogController
+	ClientApi      = api.ApiGroupApp.ClientController
 )

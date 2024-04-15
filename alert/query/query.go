@@ -4,7 +4,7 @@ import (
 	"time"
 	"watchAlert/alert/queue"
 	"watchAlert/models"
-	client2 "watchAlert/public/client"
+	"watchAlert/public/client"
 	"watchAlert/public/globals"
 	"watchAlert/public/utils/cmd"
 )
@@ -23,6 +23,8 @@ func (rq *RuleQuery) Query(rule models.AlertRule) {
 			rq.aliCloudSLS(dsId, rule)
 		case "Loki":
 			rq.loki(dsId, rule)
+		case "Jaeger":
+			rq.jaeger(dsId, rule)
 		}
 	}
 
@@ -74,7 +76,7 @@ func (rq *RuleQuery) prometheus(datasourceId string, rule models.AlertRule) {
 		go gcRecoverWaitCache(rule, curFiringKeys)
 	}()
 
-	resQuery, _, err := client2.NewPromClient(rule.TenantId, datasourceId).Query(rule.PrometheusConfig.PromQL)
+	resQuery, _, err := client.NewPromClient(rule.TenantId, datasourceId).Query(rule.PrometheusConfig.PromQL)
 	if err != nil {
 		return
 	}
@@ -110,7 +112,7 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) {
 
 	curAt := time.Now()
 	startsAt := parserDuration(curAt, rule.AliCloudSLSConfig.LogScope, "m")
-	args := client2.AliCloudSlsQueryArgs{
+	args := client.AliCloudSlsQueryArgs{
 		Project:  rule.AliCloudSLSConfig.Project,
 		Logstore: rule.AliCloudSLSConfig.Logstore,
 		StartsAt: int32(startsAt.Unix()),
@@ -118,7 +120,7 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) {
 		Query:    rule.AliCloudSLSConfig.LogQL,
 	}
 
-	res, err := client2.NewAliCloudSlsClient(rule.TenantId, datasourceId).Query(args)
+	res, err := client.NewAliCloudSlsClient(rule.TenantId, datasourceId).Query(args)
 	if err != nil {
 		globals.Logger.Sugar().Error("查询 AliCloudSls 日志失败 ->", err.Error())
 		return
@@ -129,7 +131,7 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) {
 		return
 	}
 
-	bodyList := client2.GetSLSBodyData(res)
+	bodyList := client.GetSLSBodyData(res)
 
 	for _, body := range bodyList.MetricList {
 
@@ -172,13 +174,13 @@ func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) {
 
 	curAt := time.Now().UTC()
 	startsAt := parserDuration(curAt, rule.LokiConfig.LogScope, "m")
-	args := client2.QueryOptions{
+	args := client.QueryOptions{
 		Query:   rule.LokiConfig.LogQL,
 		StartAt: startsAt.Format(time.RFC3339Nano),
 		EndAt:   curAt.Format(time.RFC3339Nano),
 	}
 
-	res, err := client2.NewLokiClient(rule.TenantId, datasourceId).QueryRange(args)
+	res, err := client.NewLokiClient(rule.TenantId, datasourceId).QueryRange(args)
 	if err != nil {
 		globals.Logger.Sugar().Errorf("查询 Loki 日志失败 %s", err.Error())
 		return
@@ -213,6 +215,47 @@ func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) {
 		// 评估告警条件
 		evalCondition(event, count, options)
 
+	}
+
+}
+
+// Jaeger 数据源
+func (rq *RuleQuery) jaeger(datasourceId string, rule models.AlertRule) {
+	var curKeys []string
+	defer func() {
+		rq.alertRecover(rule, datasourceId, curKeys)
+		go gcRecoverWaitCache(rule, curKeys)
+	}()
+
+	curAt := time.Now().UTC()
+	startsAt := parserDuration(curAt, rule.JaegerConfig.Scope, "m")
+
+	rule.DatasourceType = "Jaeger"
+	rule.DatasourceIdList = []string{"jaeger"}
+
+	opt := client.JaegerQueryOptions{
+		Tags:    rule.JaegerConfig.Tags,
+		Service: rule.JaegerConfig.Service,
+		StartAt: startsAt.UnixMicro(),
+		EndAt:   curAt.UnixMicro(),
+	}
+
+	res := client.NewJaegerClient(datasourceId).JaegerQuery(opt)
+	if res.Data == nil {
+		return
+	}
+
+	for _, v := range res.Data {
+		event := parserDefaultEvent(rule)
+		event.DatasourceId = datasourceId
+		event.Fingerprint = v.GetFingerprint()
+		event.Metric = v.GetMetric(rule)
+		event.Annotations = v.GetAnnotations(rule)
+
+		key := rq.alertEvent.GetFiringAlertCacheKey()
+		curKeys = append(curKeys, key)
+
+		saveEventCache(event)
 	}
 
 }

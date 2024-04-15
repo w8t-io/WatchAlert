@@ -2,7 +2,6 @@ package http
 
 import (
 	"bytes"
-	"log"
 	"net/http"
 	"time"
 	"watchAlert/public/globals"
@@ -15,9 +14,6 @@ func Get(url string) (*http.Response, error) {
 	}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		log.Println("err 1")
-	}
 	if err != nil {
 		globals.Logger.Sugar().Error("请求建立失败", err)
 		return nil, err

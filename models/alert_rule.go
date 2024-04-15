@@ -40,11 +40,20 @@ type AlertRule struct {
 	// Loki
 	LokiConfig LokiConfig `json:"lokiConfig" gorm:"lokiConfig;serializer:json"`
 
+	// Jaeger
+	JaegerConfig JaegerConfig `json:"jaegerConfig" gorm:"JaegerConfig;serializer:json"`
+
 	NoticeId        string      `json:"noticeId"`
 	NoticeGroupList NoticeGroup `json:"noticeGroup" gorm:"-"`
 	NoticeGroup     string      `json:"-" gorm:"noticeGroup"`
 	EnabledBool     bool        `json:"enabled" gorm:"-"`
 	Enabled         string      `json:"-" gorm:"enabled"`
+}
+
+type JaegerConfig struct {
+	Service string `json:"service"`
+	Scope   int    `json:"scope"`
+	Tags    string `json:"tags"`
 }
 
 type PrometheusConfig struct {

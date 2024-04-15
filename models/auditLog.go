@@ -23,6 +23,20 @@ type AuditLogQuery struct {
 	TenantId string `json:"tenantId" form:"tenantId"`
 	Query    string `json:"query" form:"query"`
 	Scope    string `json:"scope" form:"scope"`
+	Page
+}
+
+type Page struct {
+	Total     string `json:"total" form:"total"`
+	PageIndex string `json:"pageIndex" form:"pageIndex"`
+	PageSize  string `json:"pageSize" form:"pageSize"`
+}
+
+type AuditLogResponse struct {
+	List       []AuditLog
+	PageIndex  int64
+	PageSize   int64
+	TotalCount int64
 }
 
 func (a AuditLog) String() string {

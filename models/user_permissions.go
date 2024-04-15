@@ -267,5 +267,9 @@ func PermissionsInfo() map[string]UserPermissions {
 			Key: "更新用户信息",
 			API: "/api/w8t/user/userUpdate",
 		},
+		"getJaegerService": {
+			Key: "获取Jaeger服务列表",
+			API: "/api/w8t/c/getJaegerService",
+		},
 	}
 }

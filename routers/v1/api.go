@@ -37,6 +37,7 @@ func Router(engine *gin.Engine) {
 			Duty.API(w8t)
 			DutyCalendar.API(w8t)
 			AuditLog.API(w8t)
+			ClientApi.API(w8t)
 		}
 
 	}

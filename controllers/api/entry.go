@@ -26,6 +26,7 @@ type ApiGroup struct {
 	TenantController
 	DashboardController
 	AuditLogController
+	ClientController
 }
 
 var ApiGroupApp = new(ApiGroup)
@@ -44,6 +45,7 @@ var (
 	tenantService        = services.NewInterTenantService()
 	dashboardService     = services.NewInterDashboardService()
 	auditLogService      = services.NewInterAuditLogService()
+	clientService        = services.NewInterClientService()
 )
 
 func Service(ctx *gin.Context, fu func() (interface{}, interface{})) {
