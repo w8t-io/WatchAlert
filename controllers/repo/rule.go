@@ -19,7 +19,7 @@ func (rr RuleRepo) GetQuota(id string) bool {
 
 	globals.DBCli.Model(&models.AlertRule{}).Where("tenant_id = ?", id).Count(&Number)
 
-	if Number < data.NoticeNumber {
+	if Number < data.RuleNumber {
 		return true
 	}
 
