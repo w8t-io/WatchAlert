@@ -13,3 +13,7 @@ type Member struct {
 	DutyUserId string   `json:"dutyUserId"`
 	Tenants    []string `json:"tenants" gorm:"tenants;serializer:json"`
 }
+
+type MemberQuery struct {
+	Query string `json:"query" form:"query"`
+}

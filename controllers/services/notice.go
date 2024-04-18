@@ -14,19 +14,20 @@ type AlertNoticeService struct {
 }
 
 type InterAlertNoticeService interface {
-	SearchNoticeObject(ctx *gin.Context) []models.AlertNotice
+	ListNoticeObject(ctx *gin.Context) []models.AlertNotice
 	CreateNoticeObject(alertNotice models.AlertNotice) (models.AlertNotice, error)
 	UpdateNoticeObject(alertNotice models.AlertNotice) (models.AlertNotice, error)
 	DeleteNoticeObject(tid, uuid string) error
 	GetNoticeObject(tid, uuid string) models.AlertNotice
 	CheckNoticeObjectStatus(tid, uuid string) string
+	Search(req interface{}) (interface{}, interface{})
 }
 
 func NewInterAlertNoticeService() InterAlertNoticeService {
 	return &AlertNoticeService{}
 }
 
-func (ans *AlertNoticeService) SearchNoticeObject(ctx *gin.Context) []models.AlertNotice {
+func (ans *AlertNoticeService) ListNoticeObject(ctx *gin.Context) []models.AlertNotice {
 	db := globals.DBCli.Model(&models.AlertNotice{})
 	tid, _ := ctx.Get("TenantID")
 
@@ -111,6 +112,15 @@ func (ans *AlertNoticeService) GetNoticeObject(tid, uuid string) models.AlertNot
 	globals.DBCli.Where("tenant_id = ? AND uuid = ?", tid, uuid).Find(&alertNoticeObject)
 	return alertNoticeObject
 
+}
+
+func (ans *AlertNoticeService) Search(req interface{}) (interface{}, interface{}) {
+	r := req.(*models.NoticeQuery)
+	data, err := ans.NoticeRepo.Search(*r)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
 func (ans *AlertNoticeService) CheckNoticeObjectStatus(tid, uuid string) string {

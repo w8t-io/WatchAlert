@@ -36,12 +36,13 @@ func (nc NoticeController) API(gin *gin.RouterGroup) {
 	{
 		noticeB.GET("noticeList", nc.List)
 		noticeB.GET("noticeSearch", nc.Get)
+		noticeB.GET("searchNotice", nc.Search)
 	}
 }
 
 func (nc NoticeController) List(ctx *gin.Context) {
 
-	object := alertNoticeService.SearchNoticeObject(ctx)
+	object := alertNoticeService.ListNoticeObject(ctx)
 	response.Success(ctx, object, "success")
 
 }
@@ -105,4 +106,12 @@ func (nc NoticeController) CheckNoticeStatus(ctx *gin.Context) {
 	status := alertNoticeService.CheckNoticeObjectStatus(tid.(string), uuid)
 	response.Success(ctx, status, "success")
 
+}
+
+func (nc NoticeController) Search(ctx *gin.Context) {
+	r := new(models.NoticeQuery)
+	BindQuery(ctx, r)
+	Service(ctx, func() (interface{}, interface{}) {
+		return noticeService.Search(r)
+	})
 }

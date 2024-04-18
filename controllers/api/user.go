@@ -46,6 +46,7 @@ func (uc UserController) API(gin *gin.RouterGroup) {
 	{
 		userB.GET("userList", uc.List)
 		userB.GET("searchDutyUser", uc.SearchDutyUser)
+		userB.GET("searchUser", uc.Search)
 	}
 
 }
@@ -139,7 +140,7 @@ func (uc UserController) Update(ctx *gin.Context) {
 		return
 	}
 
-	uc.changeCache(ctx, user.UserId)
+	uc.changeCache(user.UserId)
 
 	response.Success(ctx, nil, "success")
 
@@ -194,7 +195,7 @@ func (uc UserController) ChangePass(ctx *gin.Context) {
 		return
 	}
 
-	uc.changeCache(ctx, id)
+	uc.changeCache(id)
 
 	response.Success(ctx, "", "success")
 
@@ -247,7 +248,7 @@ func (uc UserController) GetUserInfo(ctx *gin.Context) {
 
 }
 
-func (uc UserController) changeCache(ctx *gin.Context, userId string) {
+func (uc UserController) changeCache(userId string) {
 
 	var dbUser models.Member
 	globals.DBCli.Model(&models.Member{}).Where("user_id = ?", userId).First(&dbUser)
@@ -262,4 +263,12 @@ func (uc UserController) changeCache(ctx *gin.Context, userId string) {
 	duration, _ := globals.RedisCli.TTL("uid-" + userId).Result()
 	globals.RedisCli.Set("uid-"+userId, cmd.JsonMarshal(dbUser), duration)
 
+}
+
+func (uc UserController) Search(ctx *gin.Context) {
+	r := new(models.MemberQuery)
+	BindQuery(ctx, r)
+	Service(ctx, func() (interface{}, interface{}) {
+		return userService.Search(r)
+	})
 }
