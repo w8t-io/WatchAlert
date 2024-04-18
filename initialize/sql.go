@@ -279,6 +279,18 @@ func InitPermissionsSQL() {
 			Key: "GetJaegerService",
 			API: "/api/w8t/c/getJaegerService",
 		},
+		{
+			Key: "SearchUser",
+			API: "/api/w8t/user/searchUser",
+		},
+		{
+			Key: "SearchNoticeTmpl",
+			API: "/api/w8t/noticeTemplate/searchNoticeTmpl",
+		},
+		{
+			Key: "SearchNotice",
+			API: "/api/w8t/notice/searchNotice",
+		},
 	}
 
 	perms = permissions

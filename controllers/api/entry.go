@@ -46,6 +46,9 @@ var (
 	dashboardService     = services.NewInterDashboardService()
 	auditLogService      = services.NewInterAuditLogService()
 	clientService        = services.NewInterClientService()
+	userService          = services.NewInterUserService()
+	noticeService        = services.NewInterAlertNoticeService()
+	noticeTmplService    = services.NewInterNoticeTmplService()
 )
 
 func Service(ctx *gin.Context, fu func() (interface{}, interface{})) {

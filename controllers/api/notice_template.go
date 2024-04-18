@@ -37,6 +37,7 @@ func (ntc NoticeTemplateController) API(gin *gin.RouterGroup) {
 	)
 	{
 		noticeTemplateB.GET("noticeTemplateList", ntc.List)
+		noticeTemplateB.GET("searchNoticeTmpl", ntc.Search)
 	}
 }
 
@@ -95,4 +96,12 @@ func (ntc NoticeTemplateController) List(ctx *gin.Context) {
 	globals.DBCli.Model(&models.NoticeTemplateExample{}).Find(&templates)
 	response.Success(ctx, templates, "success")
 
+}
+
+func (ntc NoticeTemplateController) Search(ctx *gin.Context) {
+	r := new(models.NoticeTemplateExampleQuery)
+	BindQuery(ctx, r)
+	Service(ctx, func() (interface{}, interface{}) {
+		return noticeTmplService.Search(r)
+	})
 }

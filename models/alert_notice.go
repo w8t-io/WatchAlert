@@ -33,3 +33,11 @@ type NoticeTemplateExample struct {
 	Description string `json:"description"`
 	Template    string `json:"template"`
 }
+
+type NoticeQuery struct {
+	Query string `json:"query" form:"query"`
+}
+
+type NoticeTemplateExampleQuery struct {
+	Query string `json:"query" form:"query"`
+}

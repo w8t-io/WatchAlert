@@ -33,3 +33,14 @@ func (nr NoticeRepo) GetQuota(id string) bool {
 
 	return false
 }
+
+func (nr NoticeRepo) Search(req models.NoticeQuery) ([]models.AlertNotice, error) {
+	var data []models.AlertNotice
+	var db = globals.DBCli.Model(&models.AlertNotice{})
+	db.Where("name LIKE ? OR env LIKE ? OR notice_type LIKE ?", "%"+req.Query+"%", "%"+req.Query+"%", "%"+req.Query+"%")
+	err := db.Find(&data).Error
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}

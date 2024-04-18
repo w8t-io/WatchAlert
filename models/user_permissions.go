@@ -271,5 +271,17 @@ func PermissionsInfo() map[string]UserPermissions {
 			Key: "获取Jaeger服务列表",
 			API: "/api/w8t/c/getJaegerService",
 		},
+		"searchUser": {
+			Key: "搜索用户",
+			API: "/api/w8t/user/searchUser",
+		},
+		"searchNoticeTmpl": {
+			Key: "搜索通知模版",
+			API: "/api/w8t/noticeTemplate/searchNoticeTmpl",
+		},
+		"searchNotice": {
+			Key: "SearchNotice",
+			API: "/api/w8t/notice/searchNotice",
+		},
 	}
 }
