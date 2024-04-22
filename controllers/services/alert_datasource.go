@@ -8,7 +8,6 @@ import (
 	"watchAlert/models"
 	"watchAlert/public/globals"
 	"watchAlert/public/utils/cmd"
-	"watchAlert/public/utils/http"
 )
 
 type AlertDataSourceService struct {
@@ -30,8 +29,8 @@ func NewInterAlertDataSourceService() InterAlertDataSourceService {
 
 func (adss *AlertDataSourceService) Create(dataSource models.AlertDataSource) error {
 
-	err := adss.Check(dataSource)
-	if err != nil {
+	ok, err := dataSource.CheckHealth()
+	if !ok {
 		return err
 	}
 
@@ -165,23 +164,4 @@ func (adss *AlertDataSourceService) Search(req interface{}) (interface{}, interf
 	}
 
 	return newData, nil
-}
-
-func (adss *AlertDataSourceService) Check(dataSource models.AlertDataSource) error {
-
-	switch dataSource.Type {
-	case "Prometheus":
-		path := "/api/v1/format_query?query=foo/bar"
-		fullPath := dataSource.HTTP.URL + path
-		res, err := http.Get(fullPath)
-		if err != nil {
-			return err
-		}
-		if res.StatusCode != 200 {
-			return fmt.Errorf("StatusCode 非预期 -> %d", res.StatusCode)
-		}
-	}
-
-	return nil
-
 }
