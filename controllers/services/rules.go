@@ -88,18 +88,14 @@ func (rs *RuleService) Update(rule models.AlertRule) error {
 	}
 
 	// 更新数据
-	data := repo.Updates{
-		Table:   models.AlertRule{},
-		Where:   []interface{}{"tenant_id = ? AND rule_id = ?", rule.TenantId, newRule.RuleId},
-		Updates: &newRule,
-	}
-	err := repo.DBCli.Updates(data)
+	db := globals.DBCli.Model(&models.AlertRule{})
+	db.Where("tenant_id = ? AND rule_id = ?", rule.TenantId, rule.RuleId)
+	err := db.Updates(newRule).Error
 	if err != nil {
 		return err
 	}
 
 	return nil
-
 }
 
 func (rs *RuleService) Delete(tid, id string) error {
