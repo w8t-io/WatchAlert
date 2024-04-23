@@ -126,11 +126,12 @@ func (rtc RuleTmplController) Create(ctx *gin.Context) {
 
 func (rtc RuleTmplController) Delete(ctx *gin.Context) {
 
-	ruleName := ctx.Query("ruleName")
-	err := repo.DBCli.Delete(repo.Delete{
-		Table: &models.RuleTemplate{},
-		Where: []interface{}{"rule_name = ?", ruleName},
-	})
+	var r models.RuleTemplate
+	_ = ctx.ShouldBindJSON(&r)
+
+	db := globals.DBCli.Model(&models.RuleTemplate{})
+	db.Where("rule_group_name = ? AND rule_name = ?", r.RuleGroupName, r.RuleName)
+	err := db.Delete(models.RuleTemplate{}).Error
 	if err != nil {
 		response.Fail(ctx, err.Error(), "failed")
 		return
