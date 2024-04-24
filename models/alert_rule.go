@@ -160,16 +160,26 @@ func (a *AlertRule) ParserRuleToGorm() *AlertRule {
 
 // GetFiringAlertCacheKeys 获取当前规则组中所有的 Firing 告警数据
 func (a *AlertRule) GetFiringAlertCacheKeys() []string {
-	keyPrefix := a.TenantId + ":" + FiringAlertCachePrefix + alertCacheTailKeys(a.RuleId, a.DatasourceId)
-	keys, _ := globals.RedisCli.Keys(keyPrefix).Result()
-	return keys
+	var keyList []string
+	for _, v := range a.DatasourceIdList {
+		keyPrefix := a.TenantId + ":" + FiringAlertCachePrefix + alertCacheTailKeys(a.RuleId, v)
+		keys, _ := globals.RedisCli.Keys(keyPrefix).Result()
+		keyList = append(keyList, keys...)
+	}
+
+	return keyList
 }
 
 // GetPendingAlertCacheKeys 获取当前规则组中所有的 Pending 告警数据
 func (a *AlertRule) GetPendingAlertCacheKeys() []string {
-	keyPrefix := a.TenantId + ":" + PendingAlertCachePrefix + alertCacheTailKeys(a.RuleId, a.DatasourceId)
-	keys, _ := globals.RedisCli.Keys(keyPrefix).Result()
-	return keys
+	var keyList []string
+	for _, v := range a.DatasourceIdList {
+		keyPrefix := a.TenantId + ":" + PendingAlertCachePrefix + alertCacheTailKeys(a.RuleId, v)
+		keys, _ := globals.RedisCli.Keys(keyPrefix).Result()
+		keyList = append(keyList, keys...)
+	}
+
+	return keyList
 }
 
 func alertCacheTailKeys(ruleId, dsId string) string {
