@@ -30,7 +30,7 @@ func (rq *RuleQuery) Query(rule models.AlertRule) {
 
 }
 
-func (rq *RuleQuery) alertRecover(rule models.AlertRule, dsId string, curKeys []string) {
+func (rq *RuleQuery) alertRecover(rule models.AlertRule, curKeys []string) {
 	firingKeys := rule.GetFiringAlertCacheKeys()
 	// 获取已恢复告警的keys
 	recoverKeys := getSliceDifference(firingKeys, curKeys)
@@ -72,7 +72,7 @@ func (rq *RuleQuery) prometheus(datasourceId string, rule models.AlertRule) {
 	var curFiringKeys, curPendingKeys []string
 	defer func() {
 		go gcPendingCache(rule, datasourceId, curPendingKeys)
-		rq.alertRecover(rule, datasourceId, curFiringKeys)
+		rq.alertRecover(rule, curFiringKeys)
 		go gcRecoverWaitCache(rule, curFiringKeys)
 	}()
 
@@ -106,7 +106,7 @@ func (rq *RuleQuery) prometheus(datasourceId string, rule models.AlertRule) {
 func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) {
 	var curKeys []string
 	defer func() {
-		rq.alertRecover(rule, datasourceId, curKeys)
+		rq.alertRecover(rule, curKeys)
 		go gcRecoverWaitCache(rule, curKeys)
 	}()
 
@@ -168,7 +168,7 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) {
 func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) {
 	var curKeys []string
 	defer func() {
-		rq.alertRecover(rule, datasourceId, curKeys)
+		rq.alertRecover(rule, curKeys)
 		go gcRecoverWaitCache(rule, curKeys)
 	}()
 
@@ -223,7 +223,7 @@ func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) {
 func (rq *RuleQuery) jaeger(datasourceId string, rule models.AlertRule) {
 	var curKeys []string
 	defer func() {
-		rq.alertRecover(rule, datasourceId, curKeys)
+		rq.alertRecover(rule, curKeys)
 		go gcRecoverWaitCache(rule, curKeys)
 	}()
 
