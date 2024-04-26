@@ -2,18 +2,22 @@ package query
 
 import (
 	"time"
+	"watchAlert/alert/process"
 	"watchAlert/alert/queue"
-	"watchAlert/models"
-	"watchAlert/public/client"
-	"watchAlert/public/globals"
-	"watchAlert/public/utils/cmd"
+	"watchAlert/internal/global"
+	models "watchAlert/internal/models"
+	"watchAlert/pkg/client"
+	"watchAlert/pkg/ctx"
+	"watchAlert/pkg/utils/cmd"
 )
 
 type RuleQuery struct {
 	alertEvent models.AlertCurEvent
+	ctx        *ctx.Context
 }
 
-func (rq *RuleQuery) Query(rule models.AlertRule) {
+func (rq *RuleQuery) Query(ctx *ctx.Context, rule models.AlertRule) {
+	rq.ctx = ctx
 
 	for _, dsId := range rule.DatasourceIdList {
 		switch rule.DatasourceType {
@@ -30,17 +34,24 @@ func (rq *RuleQuery) Query(rule models.AlertRule) {
 
 }
 
-func (rq *RuleQuery) alertRecover(rule models.AlertRule, dsId string, curKeys []string) {
-	firingKeys := rule.GetFiringAlertCacheKeys()
+func (rq *RuleQuery) alertRecover(rule models.AlertRule, curKeys []string) {
+	firingKeys, err := rq.ctx.Redis.Rule().GetAlertFiringCacheKeys(models.AlertRuleQuery{
+		TenantId:         rule.TenantId,
+		RuleId:           rule.RuleId,
+		DatasourceIdList: rule.DatasourceIdList,
+	})
+	if err != nil {
+		return
+	}
 	// 获取已恢复告警的keys
-	recoverKeys := getSliceDifference(firingKeys, curKeys)
+	recoverKeys := process.GetSliceDifference(firingKeys, curKeys)
 	if recoverKeys == nil {
 		return
 	}
 
 	curTime := time.Now().Unix()
 	for _, key := range recoverKeys {
-		event := rq.alertEvent.GetCache(key)
+		event := rq.ctx.Redis.Event().GetCache(key)
 		if event.IsRecovered == true {
 			return
 		}
@@ -52,7 +63,7 @@ func (rq *RuleQuery) alertRecover(rule models.AlertRule, dsId string, curKeys []
 		}
 
 		// 判断是否在等待时间范围内
-		rt := time.Unix(queue.RecoverWaitMap[key], 0).Add(time.Minute * time.Duration(globals.Config.Server.RecoverWait)).Unix()
+		rt := time.Unix(queue.RecoverWaitMap[key], 0).Add(time.Minute * time.Duration(global.Config.Server.RecoverWait)).Unix()
 		if rt > curTime {
 			continue
 		}
@@ -60,7 +71,8 @@ func (rq *RuleQuery) alertRecover(rule models.AlertRule, dsId string, curKeys []
 		event.IsRecovered = true
 		event.RecoverTime = curTime
 		event.LastSendTime = 0
-		event.SetFiringCache(0)
+
+		rq.ctx.Redis.Event().SetCache("Firing", event, 0)
 
 		// 触发恢复删除带恢复中的 key
 		delete(queue.RecoverWaitMap, key)
@@ -71,12 +83,23 @@ func (rq *RuleQuery) alertRecover(rule models.AlertRule, dsId string, curKeys []
 func (rq *RuleQuery) prometheus(datasourceId string, rule models.AlertRule) {
 	var curFiringKeys, curPendingKeys []string
 	defer func() {
-		go gcPendingCache(rule, datasourceId, curPendingKeys)
-		rq.alertRecover(rule, datasourceId, curFiringKeys)
-		go gcRecoverWaitCache(rule, curFiringKeys)
+		go process.GcPendingCache(rq.ctx, rule, curPendingKeys)
+		rq.alertRecover(rule, curFiringKeys)
+		go process.GcRecoverWaitCache(rule, curFiringKeys)
 	}()
 
-	resQuery, _, err := client.NewPromClient(rule.TenantId, datasourceId).Query(rule.PrometheusConfig.PromQL)
+	r := models.DatasourceQuery{
+		TenantId: rule.TenantId,
+		Id:       datasourceId,
+		Type:     "Prometheus",
+	}
+	datasourceInfo, err := rq.ctx.DB.Datasource().Get(r)
+	if err != nil {
+		return
+	}
+
+	resQuery, _, err := client.NewPromClient(datasourceInfo).Query(rule.PrometheusConfig.PromQL)
+
 	if err != nil {
 		return
 	}
@@ -86,7 +109,7 @@ func (rq *RuleQuery) prometheus(datasourceId string, rule models.AlertRule) {
 	}
 
 	for _, v := range resQuery {
-		event := parserDefaultEvent(rule)
+		event := process.ParserDefaultEvent(rule)
 		event.DatasourceId = datasourceId
 		event.Fingerprint = v.GetFingerprint()
 		event.Metric = v.GetMetric()
@@ -97,7 +120,10 @@ func (rq *RuleQuery) prometheus(datasourceId string, rule models.AlertRule) {
 		curFiringKeys = append(curFiringKeys, firingKey)
 		curPendingKeys = append(curPendingKeys, pendingKey)
 
-		saveEventCache(event)
+		ok := rq.ctx.DB.Rule().GetRuleIsExist(event.RuleId)
+		if ok {
+			process.SaveEventCache(rq.ctx, event)
+		}
 	}
 
 }
@@ -106,12 +132,12 @@ func (rq *RuleQuery) prometheus(datasourceId string, rule models.AlertRule) {
 func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) {
 	var curKeys []string
 	defer func() {
-		rq.alertRecover(rule, datasourceId, curKeys)
-		go gcRecoverWaitCache(rule, curKeys)
+		rq.alertRecover(rule, curKeys)
+		go process.GcRecoverWaitCache(rule, curKeys)
 	}()
 
 	curAt := time.Now()
-	startsAt := parserDuration(curAt, rule.AliCloudSLSConfig.LogScope, "m")
+	startsAt := process.ParserDuration(curAt, rule.AliCloudSLSConfig.LogScope, "m")
 	args := client.AliCloudSlsQueryArgs{
 		Project:  rule.AliCloudSLSConfig.Project,
 		Logstore: rule.AliCloudSLSConfig.Logstore,
@@ -120,9 +146,17 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) {
 		Query:    rule.AliCloudSLSConfig.LogQL,
 	}
 
-	res, err := client.NewAliCloudSlsClient(rule.TenantId, datasourceId).Query(args)
+	datasourceInfo, err := rq.ctx.DB.Datasource().Get(models.DatasourceQuery{
+		TenantId: rule.TenantId,
+		Id:       datasourceId,
+	})
 	if err != nil {
-		globals.Logger.Sugar().Error("查询 AliCloudSls 日志失败 ->", err.Error())
+		return
+	}
+
+	res, err := client.NewAliCloudSlsClient(datasourceInfo).Query(args)
+	if err != nil {
+		global.Logger.Sugar().Error("查询 AliCloudSls 日志失败 ->", err.Error())
 		return
 	}
 
@@ -136,7 +170,7 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) {
 	for _, body := range bodyList.MetricList {
 
 		event := func() {
-			event := parserDefaultEvent(rule)
+			event := process.ParserDefaultEvent(rule)
 			event.DatasourceId = datasourceId
 			event.Fingerprint = body.GetFingerprint()
 			event.Annotations = body.GetAnnotations()
@@ -145,7 +179,10 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) {
 			key := event.GetFiringAlertCacheKey()
 			curKeys = append(curKeys, key)
 
-			saveEventCache(event)
+			ok := rq.ctx.DB.Rule().GetRuleIsExist(event.RuleId)
+			if ok {
+				process.SaveEventCache(rq.ctx, event)
+			}
 		}
 
 		options := models.EvalCondition{
@@ -159,7 +196,7 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) {
 		}
 
 		// 评估告警条件
-		evalCondition(event, count, options)
+		process.EvalCondition(event, count, options)
 	}
 
 }
@@ -168,21 +205,29 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) {
 func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) {
 	var curKeys []string
 	defer func() {
-		rq.alertRecover(rule, datasourceId, curKeys)
-		go gcRecoverWaitCache(rule, curKeys)
+		rq.alertRecover(rule, curKeys)
+		go process.GcRecoverWaitCache(rule, curKeys)
 	}()
 
 	curAt := time.Now().UTC()
-	startsAt := parserDuration(curAt, rule.LokiConfig.LogScope, "m")
+	startsAt := process.ParserDuration(curAt, rule.LokiConfig.LogScope, "m")
 	args := client.QueryOptions{
 		Query:   rule.LokiConfig.LogQL,
 		StartAt: startsAt.Format(time.RFC3339Nano),
 		EndAt:   curAt.Format(time.RFC3339Nano),
 	}
 
-	res, err := client.NewLokiClient(rule.TenantId, datasourceId).QueryRange(args)
+	datasourceInfo, err := rq.ctx.DB.Datasource().Get(models.DatasourceQuery{
+		TenantId: rule.TenantId,
+		Id:       datasourceId,
+	})
 	if err != nil {
-		globals.Logger.Sugar().Errorf("查询 Loki 日志失败 %s", err.Error())
+		return
+	}
+
+	res, err := client.NewLokiClient(datasourceInfo).QueryRange(args)
+	if err != nil {
+		global.Logger.Sugar().Errorf("查询 Loki 日志失败 %s", err.Error())
 		return
 	}
 
@@ -194,7 +239,7 @@ func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) {
 		}
 
 		event := func() {
-			event := parserDefaultEvent(rule)
+			event := process.ParserDefaultEvent(rule)
 			event.DatasourceId = datasourceId
 			event.Fingerprint = v.GetFingerprint()
 			event.Metric = v.GetMetric()
@@ -203,7 +248,10 @@ func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) {
 			key := event.GetPendingAlertCacheKey()
 			curKeys = append(curKeys, key)
 
-			saveEventCache(event)
+			ok := rq.ctx.DB.Rule().GetRuleIsExist(event.RuleId)
+			if ok {
+				process.SaveEventCache(rq.ctx, event)
+			}
 		}
 
 		options := models.EvalCondition{
@@ -213,7 +261,7 @@ func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) {
 		}
 
 		// 评估告警条件
-		evalCondition(event, count, options)
+		process.EvalCondition(event, count, options)
 
 	}
 
@@ -223,12 +271,12 @@ func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) {
 func (rq *RuleQuery) jaeger(datasourceId string, rule models.AlertRule) {
 	var curKeys []string
 	defer func() {
-		rq.alertRecover(rule, datasourceId, curKeys)
-		go gcRecoverWaitCache(rule, curKeys)
+		rq.alertRecover(rule, curKeys)
+		go process.GcRecoverWaitCache(rule, curKeys)
 	}()
 
 	curAt := time.Now().UTC()
-	startsAt := parserDuration(curAt, rule.JaegerConfig.Scope, "m")
+	startsAt := process.ParserDuration(curAt, rule.JaegerConfig.Scope, "m")
 
 	rule.DatasourceType = "Jaeger"
 	rule.DatasourceIdList = []string{"jaeger"}
@@ -240,13 +288,20 @@ func (rq *RuleQuery) jaeger(datasourceId string, rule models.AlertRule) {
 		EndAt:   curAt.UnixMicro(),
 	}
 
-	res := client.NewJaegerClient(datasourceId).JaegerQuery(opt)
+	datasourceInfo, err := rq.ctx.DB.Datasource().Get(models.DatasourceQuery{
+		Id: datasourceId,
+	})
+	if err != nil {
+		return
+	}
+
+	res := client.NewJaegerClient(datasourceInfo).JaegerQuery(opt)
 	if res.Data == nil {
 		return
 	}
 
 	for _, v := range res.Data {
-		event := parserDefaultEvent(rule)
+		event := process.ParserDefaultEvent(rule)
 		event.DatasourceId = datasourceId
 		event.Fingerprint = v.GetFingerprint()
 		event.Metric = v.GetMetric(rule)
@@ -255,7 +310,10 @@ func (rq *RuleQuery) jaeger(datasourceId string, rule models.AlertRule) {
 		key := rq.alertEvent.GetFiringAlertCacheKey()
 		curKeys = append(curKeys, key)
 
-		saveEventCache(event)
+		ok := rq.ctx.DB.Rule().GetRuleIsExist(event.RuleId)
+		if ok {
+			process.SaveEventCache(rq.ctx, event)
+		}
 	}
 
 }

@@ -1,0 +1,43 @@
+package initialization
+
+import (
+	"github.com/gin-gonic/gin"
+	"watchAlert/internal/global"
+	"watchAlert/internal/middleware"
+	"watchAlert/internal/routers"
+	"watchAlert/internal/routers/v1"
+)
+
+func InitRoute() {
+	global.Logger.Sugar().Info("服务启动")
+	ginEngine := gin.New()
+
+	var mode string
+	if global.Config.Server.Mode != "" {
+		mode = global.Config.Server.Mode
+	} else {
+		mode = "debug"
+	}
+
+	gin.SetMode(mode)
+	ginEngine.Use(
+		// 启用CORS中间件
+		middleware.Cors(),
+		// 自定义请求日志格式
+		gin.LoggerWithFormatter(middleware.RequestLoggerFormatter),
+	)
+	allRouter(ginEngine)
+
+	err := ginEngine.Run(":" + global.Config.Server.Port)
+	if err != nil {
+		global.Logger.Sugar().Error("服务启动失败:", err)
+		return
+	}
+}
+
+func allRouter(engine *gin.Engine) {
+
+	routers.HealthCheck(engine)
+	v1.Router(engine)
+
+}

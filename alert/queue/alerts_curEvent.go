@@ -5,7 +5,7 @@ import (
 	"errors"
 	"sync"
 	"time"
-	"watchAlert/models"
+	"watchAlert/internal/models"
 )
 
 // AlertsMQErrNotFound is returned if a Store cannot find the Alert.

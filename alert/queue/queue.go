@@ -2,7 +2,7 @@ package queue
 
 import (
 	"context"
-	"watchAlert/models"
+	"watchAlert/internal/models"
 )
 
 var (

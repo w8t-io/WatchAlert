@@ -1,0 +1,153 @@
+package repo
+
+import (
+	"fmt"
+	"gorm.io/gorm"
+	"watchAlert/internal/models"
+	"watchAlert/pkg/utils/cmd"
+)
+
+type (
+	DatasourceRepo struct {
+		entryRepo
+	}
+
+	InterDatasourceRepo interface {
+		List(r models.DatasourceQuery) ([]models.AlertDataSource, error)
+		Search(r models.DatasourceQuery) ([]models.AlertDataSource, error)
+		Get(r models.DatasourceQuery) (models.AlertDataSource, error)
+		Create(r models.AlertDataSource) error
+		Update(r models.AlertDataSource) error
+		Delete(r models.DatasourceQuery) error
+	}
+)
+
+func newDatasourceInterface(db *gorm.DB, g InterGormDBCli) InterDatasourceRepo {
+	return &DatasourceRepo{
+		entryRepo{
+			g:  g,
+			db: db,
+		},
+	}
+}
+
+func (ds DatasourceRepo) List(r models.DatasourceQuery) ([]models.AlertDataSource, error) {
+	var data []models.AlertDataSource
+
+	db := ds.db.Model(&models.AlertDataSource{})
+	db.Where("tenant_id = ?", r.TenantId)
+	err := db.Find(&data).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+func (ds DatasourceRepo) Search(r models.DatasourceQuery) ([]models.AlertDataSource, error) {
+	var db = ds.db.Model(&models.AlertDataSource{})
+	var data []models.AlertDataSource
+
+	db.Where("tenant_id = ?", r.TenantId)
+	if r.Id != "" {
+		db.Where("id = ?", r.Id)
+	}
+	if r.Type != "" {
+		db.Where("type = ?", r.Type)
+	}
+	if r.Query != "" {
+		db.Where("id = ? OR name = ? OR description = ?", "%"+r.Query+"%", "%"+r.Query+"%", "%"+r.Query+"%")
+	}
+	if r.Id == "" && r.Type == "" && r.Query == "" {
+		err := db.Find(&data).Error
+		if err != nil {
+			return nil, err
+		}
+	}
+	err := db.Find(&data).Error
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func (ds DatasourceRepo) Get(r models.DatasourceQuery) (models.AlertDataSource, error) {
+	db := ds.db.Model(&models.AlertDataSource{})
+	db.Where("id = ?", r.Id)
+
+	var data models.AlertDataSource
+	err := db.Find(&data).Error
+	if err != nil {
+		return data, err
+	}
+
+	return data, nil
+}
+
+func (ds DatasourceRepo) Create(r models.AlertDataSource) error {
+	id := "ds-" + cmd.RandId()
+	data := models.AlertDataSource{
+		TenantId:         r.TenantId,
+		Id:               id,
+		Name:             r.Name,
+		Type:             r.Type,
+		HTTP:             r.HTTP,
+		AliCloudEndpoint: r.AliCloudEndpoint,
+		AliCloudAk:       r.AliCloudAk,
+		AliCloudSk:       r.AliCloudSk,
+		Enabled:          r.Enabled,
+		Description:      r.Description,
+	}
+	err := ds.g.Create(models.AlertDataSource{}, data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (ds DatasourceRepo) Update(r models.AlertDataSource) error {
+	data := Updates{
+		Table: models.AlertDataSource{},
+		Where: map[string]interface{}{
+			"id = ?":        r.Id,
+			"tenant_id = ?": r.TenantId,
+		},
+		Updates: models.AlertDataSource{
+			Id:               r.Id,
+			Name:             r.Name,
+			Type:             r.Type,
+			HTTP:             r.HTTP,
+			AliCloudEndpoint: r.AliCloudEndpoint,
+			AliCloudAk:       r.AliCloudAk,
+			AliCloudSk:       r.AliCloudSk,
+			Enabled:          r.Enabled,
+			Description:      r.Description,
+		},
+	}
+	err := ds.g.Updates(data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (ds DatasourceRepo) Delete(r models.DatasourceQuery) error {
+	var ruleNum int64
+	ds.DB().Model(&models.AlertRule{}).Where("tenant_id = ? AND datasource_id LIKE ?", r.TenantId, "%"+r.Id+"%").Count(&ruleNum)
+	if ruleNum != 0 {
+		return fmt.Errorf("无法删除数据源 %s, 因为已有告警规则绑定", r.Id)
+	}
+
+	data := Delete{
+		Table: models.AlertDataSource{},
+		Where: map[string]interface{}{
+			"tenant_id = ?": r.TenantId,
+			"id = ?":        r.Id,
+		},
+	}
+	err := ds.g.Delete(data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
