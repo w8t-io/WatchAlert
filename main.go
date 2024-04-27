@@ -1,12 +1,12 @@
 package main
 
 import (
-	"watchAlert/initialize"
+	"watchAlert/initialization"
 )
 
 func main() {
 
-	initialize.InitBasic()
-	initialize.InitRoute()
+	initialization.InitBasic()
+	initialization.InitRoute()
 
 }
