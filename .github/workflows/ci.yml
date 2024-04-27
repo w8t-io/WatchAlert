@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: 1. Set env
+        run: |
+          echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+          echo "SHORT_SHA=$(echo ${GITHUB_SHA:0:4})" >> $GITHUB_ENV
+          echo "DATE=$(TZ=Asia/Shanghai date +%Y-%m-%d.%H-%M-%S)" >> $GITHUB_ENV
+
+      - name: 2. Build Docker image
+        run: |
+          docker build -t cairry/watchalert:$BRANCH_NAME.$DATE.$SHORT_SHA .
+          docker tag cairry/watchalert:$BRANCH_NAME.$DATE.$SHORT_SHA cairry/watchalert:latest
+
+      - name: 3. Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: 4. Push Docker image to Docker Hub
+        run: |
+          docker push cairry/watchalert:latest
+          docker push cairry/watchalert:$BRANCH_NAME.$DATE.$SHORT_SHA
