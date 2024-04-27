@@ -1,0 +1,60 @@
+version: "3"
+services:
+  w8t-service:
+    container_name: w8t-service
+    image: docker.io/cairry/watchalert:latest
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./config:/app/config
+    restart: always
+    privileged: true
+    ports:
+      - "9001:9001"
+    depends_on:
+      - w8t-mysql
+    networks:
+      - w8t
+
+  w8t-web:
+    container_name: w8t-web
+    image: docker.io/cairry/watchalert-web:latest
+    environment:
+      - TZ=Asia/Shanghai
+    restart: always
+    privileged: true
+    ports:
+      - "80:3000"
+    entrypoint: ["/bin/sh","-c"]
+    command:
+      - |
+        yarn start
+
+    networks:
+      - w8t
+
+  w8t-redis:
+    container_name: w8t-redis
+    image: redis:latest
+    environment:
+      - TZ=Asia/Shanghai
+    restart: always
+    networks:
+      - w8t
+
+  w8t-mysql:
+    container_name: w8t-mysql
+    image: mysql:latest
+    ports:
+      - "3306:3306"
+    environment:
+      - TZ=Asia/Shanghai
+      - MYSQL_ROOT_PASSWORD=w8t.123
+      - MYSQL_DATABASE=watchalert
+    restart: always
+    networks:
+      - w8t
+
+networks:
+  w8t:
+    driver: bridge
