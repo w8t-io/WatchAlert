@@ -11,7 +11,7 @@ Server:
   recoverWait: 1
 
 MySQL:
-  host: 127.0.0.1
+  host: w8t-mysql
   port: 3306
   user: root
   pass: w8t.123
@@ -19,7 +19,7 @@ MySQL:
   timeout: 10s
 
 Redis:
-  host: 127.0.0.1
+  host: w8t-redis
   port: 6379
   pass: ""
 
