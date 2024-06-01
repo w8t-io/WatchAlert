@@ -54,15 +54,15 @@ func ParserDefaultEvent(rule models.AlertRule) models.AlertCurEvent {
 		DatasourceType:       rule.DatasourceType,
 		RuleId:               rule.RuleId,
 		RuleName:             rule.RuleName,
-		Severity:             rule.Severity,
 		Labels:               rule.Labels,
 		EvalInterval:         rule.EvalInterval,
-		ForDuration:          rule.ForDuration,
+		ForDuration:          rule.PrometheusConfig.ForDuration,
 		NoticeId:             rule.NoticeId,
 		NoticeGroup:          rule.NoticeGroup,
 		IsRecovered:          false,
 		RepeatNoticeInterval: rule.RepeatNoticeInterval,
 		DutyUser:             "暂无", // 默认暂无值班人员, 渲染模版时会实际判断 Notice 是否存在值班人员
+		EffectiveTime:        rule.EffectiveTime,
 	}
 
 	return event
@@ -70,6 +70,8 @@ func ParserDefaultEvent(rule models.AlertRule) models.AlertCurEvent {
 }
 
 func SaveEventCache(ctx *ctx.Context, event models.AlertCurEvent) {
+	ctx.Lock()
+	defer ctx.Unlock()
 
 	firingKey := event.GetFiringAlertCacheKey()
 	pendingKey := event.GetPendingAlertCacheKey()

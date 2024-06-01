@@ -29,6 +29,7 @@ type AlertCurEvent struct {
 	RecoverTime            int64                  `json:"recover_time" gorm:"-"`   // 恢复时间
 	RecoverTimeFormat      string                 `json:"recover_time_format" gorm:"-"`
 	DutyUser               string                 `json:"duty_user" gorm:"-"`
+	EffectiveTime          EffectiveTime          `json:"effectiveTime" gorm:"effectiveTime;serializer:json"`
 }
 
 type AlertCurEventQuery struct {

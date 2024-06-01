@@ -2,6 +2,7 @@ package ctx
 
 import (
 	"context"
+	"sync"
 	"watchAlert/internal/cache"
 	"watchAlert/internal/repo"
 )
@@ -10,6 +11,7 @@ type Context struct {
 	DB    repo.InterEntryRepo
 	Redis cache.InterEntryCache
 	Ctx   context.Context
+	sync.RWMutex
 }
 
 var (

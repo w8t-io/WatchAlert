@@ -1,6 +1,8 @@
 package mute
 
 import (
+	"time"
+	"watchAlert/internal/global"
 	models "watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
 )
@@ -26,5 +28,55 @@ func IsMuted(ctx *ctx.Context, alert *models.AlertCurEvent) bool {
 		}
 	}
 
+	return InTheEffectiveTime(alert)
+}
+
+// InTheEffectiveTime 判断生效时间
+func InTheEffectiveTime(alert *models.AlertCurEvent) bool {
+	if len(alert.EffectiveTime.Week) <= 0 {
+		return false
+	}
+
+	var (
+		p           bool
+		currentTime = time.Now()
+	)
+
+	cwd := currentWeekday(currentTime)
+	for _, wd := range alert.EffectiveTime.Week {
+		if cwd != wd {
+			continue
+		}
+		p = true
+	}
+
+	if !p {
+		return true
+	}
+
+	cts := currentTimeSeconds(currentTime)
+	if cts < alert.EffectiveTime.StartTime || cts > alert.EffectiveTime.EndTime {
+		return true
+	}
+
 	return false
+}
+
+func currentWeekday(ct time.Time) string {
+	// 获取当前时间
+	currentDate := ct.Format("2006-01-02")
+
+	// 解析日期字符串为时间对象
+	date, err := time.Parse("2006-01-02", currentDate)
+	if err != nil {
+		global.Logger.Sugar().Error(err.Error())
+		return ""
+	}
+
+	return date.Weekday().String()
+}
+
+func currentTimeSeconds(ct time.Time) int {
+	cs := ct.Hour()*3600 + ct.Minute()*60
+	return cs
 }
