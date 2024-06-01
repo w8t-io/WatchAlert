@@ -13,19 +13,17 @@ type NoticeGroup []map[string]string
 
 type AlertRule struct {
 	//gorm.Model
-	TenantId             string    `json:"tenantId"`
-	RuleId               string    `json:"ruleId" gorm:"ruleId"`
-	RuleGroupId          string    `json:"ruleGroupId"`
-	DatasourceType       string    `json:"datasourceType"`
-	DatasourceIdList     []string  `json:"datasourceId" gorm:"datasourceId;serializer:json"`
-	RuleName             string    `json:"ruleName"`
-	EvalInterval         int64     `json:"evalInterval"`
-	ForDuration          int64     `json:"forDuration"`
-	RepeatNoticeInterval int64     `json:"repeatNoticeInterval"`
-	Description          string    `json:"description"`
-	Annotations          string    `json:"annotations"`
-	Labels               LabelsMap `json:"labels" gorm:"labels;serializer:json"`
-	Severity             string    `json:"severity"`
+	TenantId             string        `json:"tenantId"`
+	RuleId               string        `json:"ruleId" gorm:"ruleId"`
+	RuleGroupId          string        `json:"ruleGroupId"`
+	DatasourceType       string        `json:"datasourceType"`
+	DatasourceIdList     []string      `json:"datasourceId" gorm:"datasourceId;serializer:json"`
+	RuleName             string        `json:"ruleName"`
+	EvalInterval         int64         `json:"evalInterval"`
+	RepeatNoticeInterval int64         `json:"repeatNoticeInterval"`
+	Description          string        `json:"description"`
+	Labels               LabelsMap     `json:"labels" gorm:"labels;serializer:json"`
+	EffectiveTime        EffectiveTime `json:"effectiveTime" gorm:"effectiveTime;serializer:json"`
 
 	// Prometheus
 	PrometheusConfig PrometheusConfig `json:"prometheusConfig" gorm:"prometheusConfig;serializer:json"`
@@ -51,7 +49,21 @@ type JaegerConfig struct {
 }
 
 type PrometheusConfig struct {
-	PromQL string `json:"promQL"`
+	PromQL      string  `json:"promQL"`
+	Annotations string  `json:"annotations"`
+	ForDuration int64   `json:"forDuration"`
+	Rules       []Rules `json:"rules"`
+}
+
+type Rules struct {
+	Severity string `json:"severity"`
+	Expr     string `json:"expr"`
+}
+
+type EffectiveTime struct {
+	Week      []string `json:"week"`
+	StartTime int      `json:"startTime"`
+	EndTime   int      `json:"endTime"`
 }
 
 type AliCloudSLSConfig struct {
