@@ -19,6 +19,7 @@ type (
 		Create(r models.AlertDataSource) error
 		Update(r models.AlertDataSource) error
 		Delete(r models.DatasourceQuery) error
+		GetInstance(datasourceId string) (models.AlertDataSource, error)
 	}
 )
 
@@ -150,4 +151,16 @@ func (ds DatasourceRepo) Delete(r models.DatasourceQuery) error {
 		return err
 	}
 	return nil
+}
+
+func (ds DatasourceRepo) GetInstance(datasourceId string) (models.AlertDataSource, error) {
+	var data models.AlertDataSource
+	var db = ds.DB().Model(models.AlertDataSource{})
+	db.Where("id = ?", datasourceId)
+	err := db.First(&data).Error
+	if err != nil {
+		return data, err
+	}
+
+	return data, nil
 }

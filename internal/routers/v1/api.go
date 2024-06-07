@@ -38,6 +38,8 @@ func Router(engine *gin.Engine) {
 			DutyCalendar.API(w8t)
 			AuditLog.API(w8t)
 			ClientApi.API(w8t)
+			AWSCloudWatch.API(w8t)
+			AWSRds.API(w8t)
 		}
 
 	}

@@ -116,33 +116,33 @@ func ParserDuration(curTime time.Time, logScope int, timeType string) time.Time 
 }
 
 // EvalCondition 评估告警条件
-func EvalCondition(f func(), count int, ec models.EvalCondition) {
+func EvalCondition(f func(), value int, ec models.EvalCondition) {
 
 	switch ec.Type {
-	case "count":
+	case "count", "value":
 		switch ec.Operator {
 		case ">":
-			if count > ec.Value {
+			if value > ec.Value {
 				f()
 			}
 		case ">=":
-			if count >= ec.Value {
+			if value >= ec.Value {
 				f()
 			}
 		case "<":
-			if count < ec.Value {
+			if value < ec.Value {
 				f()
 			}
 		case "<=":
-			if count <= ec.Value {
+			if value <= ec.Value {
 				f()
 			}
 		case "==":
-			if count == ec.Value {
+			if value == ec.Value {
 				f()
 			}
 		case "!=":
-			if count != ec.Value {
+			if value != ec.Value {
 				f()
 			}
 		default:

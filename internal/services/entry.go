@@ -1,26 +1,33 @@
 package services
 
-import "watchAlert/pkg/ctx"
+import (
+	service2 "watchAlert/pkg/community/aws/cloudwatch/service"
+	"watchAlert/pkg/community/aws/service"
+	"watchAlert/pkg/ctx"
+)
 
 var (
-	DatasourceService     InterDatasourceService
-	AuditLogService       InterAuditLogService
-	DashboardService      InterDashboardService
-	DutyManageService     InterDutyManageService
-	DutyCalendarService   InterDutyCalendarService
-	EventService          InterEventService
-	NoticeService         InterNoticeService
-	NoticeTmplService     InterNoticeTmplService
-	RuleService           InterRuleService
-	RuleGroupService      InterRuleGroupService
-	RuleTmplService       InterRuleTmplService
-	SilenceService        InterSilenceService
-	TenantService         InterTenantService
-	UserService           InterUserService
-	UserRoleService       InterUserRoleService
-	AlertService          InterAlertService
-	RuleTmplGroupService  InterRuleTmplGroupService
-	UserPermissionService InterUserPermissionService
+	DatasourceService       InterDatasourceService
+	AuditLogService         InterAuditLogService
+	DashboardService        InterDashboardService
+	DutyManageService       InterDutyManageService
+	DutyCalendarService     InterDutyCalendarService
+	EventService            InterEventService
+	NoticeService           InterNoticeService
+	NoticeTmplService       InterNoticeTmplService
+	RuleService             InterRuleService
+	RuleGroupService        InterRuleGroupService
+	RuleTmplService         InterRuleTmplService
+	SilenceService          InterSilenceService
+	TenantService           InterTenantService
+	UserService             InterUserService
+	UserRoleService         InterUserRoleService
+	AlertService            InterAlertService
+	RuleTmplGroupService    InterRuleTmplGroupService
+	UserPermissionService   InterUserPermissionService
+	AWSRegionService        service.InterAwsRegionService
+	AWSCloudWatchService    service2.InterAwsCloudWatchService
+	AWSCloudWatchRdsService service2.InterAwsRdsService
 )
 
 func NewServices(ctx *ctx.Context) {
@@ -42,4 +49,7 @@ func NewServices(ctx *ctx.Context) {
 	UserRoleService = newInterUserRoleService(ctx)
 	AlertService = newInterAlertService(ctx)
 	UserPermissionService = newInterUserPermissionService(ctx)
+	AWSRegionService = service.NewInterAwsRegionService()
+	AWSCloudWatchService = service2.NewInterAwsCloudWatchService()
+	AWSCloudWatchRdsService = service2.NewInterAWSRdsService()
 }

@@ -24,4 +24,6 @@ var (
 	Dashboard      = api.ApiGroupApp.DashboardController
 	AuditLog       = api.ApiGroupApp.AuditLogController
 	ClientApi      = api.ApiGroupApp.ClientController
+	AWSCloudWatch  = api.ApiGroupApp.AWSCloudWatchController
+	AWSRds         = api.ApiGroupApp.AWSCloudWatchRDSController
 )

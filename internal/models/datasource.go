@@ -6,16 +6,17 @@ import (
 )
 
 type AlertDataSource struct {
-	TenantId         string `json:"tenantId"`
-	Id               string `json:"id"`
-	Name             string `json:"name"`
-	Type             string `json:"type"`
-	HTTP             HTTP   `json:"http" gorm:"http;serializer:json"`
-	AliCloudEndpoint string `json:"alicloudEndpoint"`
-	AliCloudAk       string `json:"alicloudAk"`
-	AliCloudSk       string `json:"alicloudSk"`
-	Description      string `json:"description"`
-	Enabled          *bool  `json:"enabled" `
+	TenantId         string        `json:"tenantId"`
+	Id               string        `json:"id"`
+	Name             string        `json:"name"`
+	Type             string        `json:"type"`
+	HTTP             HTTP          `json:"http" gorm:"http;serializer:json"`
+	AliCloudEndpoint string        `json:"alicloudEndpoint"`
+	AliCloudAk       string        `json:"alicloudAk"`
+	AliCloudSk       string        `json:"alicloudSk"`
+	AWSCloudWatch    AWSCloudWatch `json:"awsCloudwatch" gorm:"awsCloudwatch;serializer:json"`
+	Description      string        `json:"description"`
+	Enabled          *bool         `json:"enabled" `
 }
 
 type HTTP struct {
@@ -30,6 +31,13 @@ type DatasourceQuery struct {
 	Query    string `json:"query" form:"query"`
 }
 
+type AWSCloudWatch struct {
+	//Endpoint  string `json:"endpoint"`
+	Region    string `json:"region"`
+	AccessKey string `json:"accessKey"`
+	SecretKey string `json:"secretKey"`
+}
+
 func (ds AlertDataSource) CheckHealth() (bool, error) {
 	var (
 		url      = ds.HTTP.URL
@@ -39,10 +47,12 @@ func (ds AlertDataSource) CheckHealth() (bool, error) {
 	case "Prometheus":
 		fullPath = "/-/healthy"
 	case "Jaeger":
-		fullPath = "/"
+		return true, nil
 	case "Loki":
-		fullPath = "/"
+		return true, nil
 	case "AliCloud":
+		return true, nil
+	case "CloudWatch":
 		return true, nil
 	}
 

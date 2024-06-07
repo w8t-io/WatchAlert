@@ -26,6 +26,8 @@ type ApiGroup struct {
 	DashboardController
 	AuditLogController
 	ClientController
+	AWSCloudWatchController
+	AWSCloudWatchRDSController
 }
 
 var ApiGroupApp = new(ApiGroup)
