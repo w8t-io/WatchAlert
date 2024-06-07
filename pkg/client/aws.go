@@ -12,9 +12,10 @@ type AwsConfig struct {
 	cfg aws.Config
 }
 
-func NewAWSCredentialCfg(ak, sk string) (AwsConfig, error) {
+func NewAWSCredentialCfg(region, ak, sk string) (AwsConfig, error) {
 	cfg, err := config.LoadDefaultConfig(context.Background(),
 		func(options *config.LoadOptions) error {
+			options.Region = region
 			options.Credentials = aws.CredentialsProviderFunc(func(ctx context.Context) (aws.Credentials, error) {
 				return aws.Credentials{
 					AccessKeyID:     ak,

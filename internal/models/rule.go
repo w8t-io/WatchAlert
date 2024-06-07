@@ -24,6 +24,7 @@ type AlertRule struct {
 	Description          string        `json:"description"`
 	Labels               LabelsMap     `json:"labels" gorm:"labels;serializer:json"`
 	EffectiveTime        EffectiveTime `json:"effectiveTime" gorm:"effectiveTime;serializer:json"`
+	Severity             string        `json:"severity"`
 
 	// Prometheus
 	PrometheusConfig PrometheusConfig `json:"prometheusConfig" gorm:"prometheusConfig;serializer:json"`

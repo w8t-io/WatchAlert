@@ -9,7 +9,6 @@ import (
 	"watchAlert/alert/queue"
 	"watchAlert/internal/global"
 	models "watchAlert/internal/models"
-	"watchAlert/internal/repo"
 	"watchAlert/pkg/client"
 	"watchAlert/pkg/community/aws/cloudwatch"
 	"watchAlert/pkg/community/aws/cloudwatch/types"
@@ -327,13 +326,12 @@ func (rq *RuleQuery) cloudWatch(datasourceId string, rule models.AlertRule) {
 		go process.GcRecoverWaitCache(rule, curKeys)
 	}()
 
-	var dr repo.DatasourceRepo
-	datasourceObj, err := dr.GetInstance(datasourceId)
+	datasourceObj, err := rq.ctx.DB.Datasource().GetInstance(datasourceId)
 	if err != nil {
 		return
 	}
 
-	cfg, err := client.NewAWSCredentialCfg(datasourceObj.AWSCloudWatch.AccessKey, datasourceObj.AWSCloudWatch.SecretKey)
+	cfg, err := client.NewAWSCredentialCfg(datasourceObj.AWSCloudWatch.Region, datasourceObj.AWSCloudWatch.AccessKey, datasourceObj.AWSCloudWatch.SecretKey)
 	if err != nil {
 		fmt.Println(err.Error())
 		return

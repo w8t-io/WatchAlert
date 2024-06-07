@@ -62,6 +62,7 @@ func ParserDefaultEvent(rule models.AlertRule) models.AlertCurEvent {
 		IsRecovered:          false,
 		RepeatNoticeInterval: rule.RepeatNoticeInterval,
 		DutyUser:             "暂无", // 默认暂无值班人员, 渲染模版时会实际判断 Notice 是否存在值班人员
+		Severity:             rule.Severity,
 		EffectiveTime:        rule.EffectiveTime,
 	}
 

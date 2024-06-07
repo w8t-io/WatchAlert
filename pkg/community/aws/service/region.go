@@ -3,18 +3,23 @@ package service
 import (
 	"watchAlert/pkg/community/aws/cloudwatch/response"
 	"watchAlert/pkg/community/aws/types"
+	"watchAlert/pkg/ctx"
 )
 
 type (
-	awsRegionService struct{}
+	awsRegionService struct {
+		ctx *ctx.Context
+	}
 
 	InterAwsRegionService interface {
 		GetRegion() ([]response.Regions, error)
 	}
 )
 
-func NewInterAwsRegionService() InterAwsRegionService {
-	return awsRegionService{}
+func NewInterAwsRegionService(ctx *ctx.Context) InterAwsRegionService {
+	return awsRegionService{
+		ctx: ctx,
+	}
 }
 
 func (a awsRegionService) GetRegion() ([]response.Regions, error) {

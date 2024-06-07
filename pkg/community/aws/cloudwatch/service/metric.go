@@ -1,9 +1,14 @@
 package service
 
-import types2 "watchAlert/pkg/community/aws/cloudwatch/types"
+import (
+	types2 "watchAlert/pkg/community/aws/cloudwatch/types"
+	"watchAlert/pkg/ctx"
+)
 
 type (
-	awsCloudWatchService struct{}
+	awsCloudWatchService struct {
+		ctx *ctx.Context
+	}
 
 	InterAwsCloudWatchService interface {
 		GetMetricTypes() (interface{}, interface{})
@@ -13,8 +18,10 @@ type (
 	}
 )
 
-func NewInterAwsCloudWatchService() InterAwsCloudWatchService {
-	return awsCloudWatchService{}
+func NewInterAwsCloudWatchService(ctx *ctx.Context) InterAwsCloudWatchService {
+	return awsCloudWatchService{
+		ctx: ctx,
+	}
 }
 
 func (a awsCloudWatchService) GetMetricTypes() (interface{}, interface{}) {

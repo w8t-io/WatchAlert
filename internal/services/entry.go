@@ -49,7 +49,7 @@ func NewServices(ctx *ctx.Context) {
 	UserRoleService = newInterUserRoleService(ctx)
 	AlertService = newInterAlertService(ctx)
 	UserPermissionService = newInterUserPermissionService(ctx)
-	AWSRegionService = service.NewInterAwsRegionService()
-	AWSCloudWatchService = service2.NewInterAwsCloudWatchService()
-	AWSCloudWatchRdsService = service2.NewInterAWSRdsService()
+	AWSRegionService = service.NewInterAwsRegionService(ctx)
+	AWSCloudWatchService = service2.NewInterAwsCloudWatchService(ctx)
+	AWSCloudWatchRdsService = service2.NewInterAWSRdsService(ctx)
 }
