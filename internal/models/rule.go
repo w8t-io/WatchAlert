@@ -24,6 +24,7 @@ type AlertRule struct {
 	Description          string        `json:"description"`
 	Labels               LabelsMap     `json:"labels" gorm:"labels;serializer:json"`
 	EffectiveTime        EffectiveTime `json:"effectiveTime" gorm:"effectiveTime;serializer:json"`
+	Severity             string        `json:"severity"`
 
 	// Prometheus
 	PrometheusConfig PrometheusConfig `json:"prometheusConfig" gorm:"prometheusConfig;serializer:json"`
@@ -36,6 +37,9 @@ type AlertRule struct {
 
 	// Jaeger
 	JaegerConfig JaegerConfig `json:"jaegerConfig" gorm:"JaegerConfig;serializer:json"`
+
+	// AWS CloudWatch
+	CloudWatchConfig CloudWatchConfig `json:"cloudwatchConfig" gorm:"cloudwatchConfig;serializer:json"`
 
 	NoticeId    string      `json:"noticeId"`
 	NoticeGroup NoticeGroup `json:"noticeGroup" gorm:"noticeGroup;serializer:json"`
@@ -78,6 +82,17 @@ type LokiConfig struct {
 	LogQL         string        `json:"logQL"`
 	LogScope      int           `json:"logScope"`
 	EvalCondition EvalCondition `json:"evalCondition" gorm:"evalCondition;serializer:json"`
+}
+
+type CloudWatchConfig struct {
+	Namespace  string   `json:"namespace"`
+	MetricName string   `json:"metricName"`
+	Statistic  string   `json:"statistic"`
+	Period     int      `json:"period"`
+	Expr       string   `json:"expr"`
+	Threshold  int      `json:"threshold"`
+	Dimension  string   `json:"dimension"`
+	Endpoints  []string `json:"endpoints" gorm:"endpoints;serializer:json"`
 }
 
 // EvalCondition 日志评估条件

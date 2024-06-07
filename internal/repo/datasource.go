@@ -19,6 +19,7 @@ type (
 		Create(r models.AlertDataSource) error
 		Update(r models.AlertDataSource) error
 		Delete(r models.DatasourceQuery) error
+		GetInstance(datasourceId string) (models.AlertDataSource, error)
 	}
 )
 
@@ -86,18 +87,9 @@ func (ds DatasourceRepo) Get(r models.DatasourceQuery) (models.AlertDataSource, 
 
 func (ds DatasourceRepo) Create(r models.AlertDataSource) error {
 	id := "ds-" + cmd.RandId()
-	data := models.AlertDataSource{
-		TenantId:         r.TenantId,
-		Id:               id,
-		Name:             r.Name,
-		Type:             r.Type,
-		HTTP:             r.HTTP,
-		AliCloudEndpoint: r.AliCloudEndpoint,
-		AliCloudAk:       r.AliCloudAk,
-		AliCloudSk:       r.AliCloudSk,
-		Enabled:          r.Enabled,
-		Description:      r.Description,
-	}
+	data := r
+	data.Id = id
+
 	err := ds.g.Create(models.AlertDataSource{}, data)
 	if err != nil {
 		return err
@@ -112,17 +104,7 @@ func (ds DatasourceRepo) Update(r models.AlertDataSource) error {
 			"id = ?":        r.Id,
 			"tenant_id = ?": r.TenantId,
 		},
-		Updates: models.AlertDataSource{
-			Id:               r.Id,
-			Name:             r.Name,
-			Type:             r.Type,
-			HTTP:             r.HTTP,
-			AliCloudEndpoint: r.AliCloudEndpoint,
-			AliCloudAk:       r.AliCloudAk,
-			AliCloudSk:       r.AliCloudSk,
-			Enabled:          r.Enabled,
-			Description:      r.Description,
-		},
+		Updates: r,
 	}
 	err := ds.g.Updates(data)
 	if err != nil {
@@ -150,4 +132,16 @@ func (ds DatasourceRepo) Delete(r models.DatasourceQuery) error {
 		return err
 	}
 	return nil
+}
+
+func (ds DatasourceRepo) GetInstance(datasourceId string) (models.AlertDataSource, error) {
+	var data models.AlertDataSource
+	var db = ds.DB().Model(&models.AlertDataSource{})
+	db.Where("id = ?", datasourceId)
+	err := db.First(&data).Error
+	if err != nil {
+		return data, err
+	}
+
+	return data, nil
 }

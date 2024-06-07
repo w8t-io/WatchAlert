@@ -1,6 +1,7 @@
 package query
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"time"
@@ -9,6 +10,8 @@ import (
 	"watchAlert/internal/global"
 	models "watchAlert/internal/models"
 	"watchAlert/pkg/client"
+	"watchAlert/pkg/community/aws/cloudwatch"
+	"watchAlert/pkg/community/aws/cloudwatch/types"
 	"watchAlert/pkg/ctx"
 )
 
@@ -30,6 +33,8 @@ func (rq *RuleQuery) Query(ctx *ctx.Context, rule models.AlertRule) {
 			rq.loki(dsId, rule)
 		case "Jaeger":
 			rq.jaeger(dsId, rule)
+		case "CloudWatch":
+			rq.cloudWatch(dsId, rule)
 		}
 	}
 
@@ -312,4 +317,63 @@ func (rq *RuleQuery) jaeger(datasourceId string, rule models.AlertRule) {
 		}
 	}
 
+}
+
+func (rq *RuleQuery) cloudWatch(datasourceId string, rule models.AlertRule) {
+	var curKeys []string
+	defer func() {
+		rq.alertRecover(rule, curKeys)
+		go process.GcRecoverWaitCache(rule, curKeys)
+	}()
+
+	datasourceObj, err := rq.ctx.DB.Datasource().GetInstance(datasourceId)
+	if err != nil {
+		return
+	}
+
+	cfg, err := client.NewAWSCredentialCfg(datasourceObj.AWSCloudWatch.Region, datasourceObj.AWSCloudWatch.AccessKey, datasourceObj.AWSCloudWatch.SecretKey)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
+	cli := cfg.CloudWatchCli()
+
+	curAt := time.Now().UTC()
+	startsAt := process.ParserDuration(curAt, rule.CloudWatchConfig.Period, "m")
+
+	for _, endpoint := range rule.CloudWatchConfig.Endpoints {
+		query := types.CloudWatchQuery{
+			Endpoint:   endpoint,
+			Dimension:  rule.CloudWatchConfig.Dimension,
+			Period:     int32(rule.CloudWatchConfig.Period * 60),
+			Namespace:  rule.CloudWatchConfig.Namespace,
+			MetricName: rule.CloudWatchConfig.MetricName,
+			Statistic:  rule.CloudWatchConfig.Statistic,
+			Form:       startsAt,
+			To:         curAt,
+		}
+		_, values := cloudwatch.MetricDataQuery(cli, query)
+		if len(values) == 0 {
+			return
+		}
+
+		event := func() {
+			event := process.ParserDefaultEvent(rule)
+			event.DatasourceId = datasourceId
+			event.Fingerprint = query.GetFingerprint()
+			event.Metric = query.GetMetrics()
+			event.Annotations = fmt.Sprintf("%s %s %s %s %d", query.Namespace, query.MetricName, query.Statistic, rule.CloudWatchConfig.Expr, rule.CloudWatchConfig.Threshold)
+
+			process.SaveEventCache(rq.ctx, event)
+		}
+
+		options := models.EvalCondition{
+			Type:     "value",
+			Operator: rule.CloudWatchConfig.Expr,
+			Value:    rule.CloudWatchConfig.Threshold,
+		}
+
+		process.EvalCondition(event, int(values[0]), options)
+	}
 }

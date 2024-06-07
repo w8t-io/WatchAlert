@@ -62,6 +62,7 @@ func ParserDefaultEvent(rule models.AlertRule) models.AlertCurEvent {
 		IsRecovered:          false,
 		RepeatNoticeInterval: rule.RepeatNoticeInterval,
 		DutyUser:             "暂无", // 默认暂无值班人员, 渲染模版时会实际判断 Notice 是否存在值班人员
+		Severity:             rule.Severity,
 		EffectiveTime:        rule.EffectiveTime,
 	}
 
@@ -116,33 +117,33 @@ func ParserDuration(curTime time.Time, logScope int, timeType string) time.Time 
 }
 
 // EvalCondition 评估告警条件
-func EvalCondition(f func(), count int, ec models.EvalCondition) {
+func EvalCondition(f func(), value int, ec models.EvalCondition) {
 
 	switch ec.Type {
-	case "count":
+	case "count", "value":
 		switch ec.Operator {
 		case ">":
-			if count > ec.Value {
+			if value > ec.Value {
 				f()
 			}
 		case ">=":
-			if count >= ec.Value {
+			if value >= ec.Value {
 				f()
 			}
 		case "<":
-			if count < ec.Value {
+			if value < ec.Value {
 				f()
 			}
 		case "<=":
-			if count <= ec.Value {
+			if value <= ec.Value {
 				f()
 			}
 		case "==":
-			if count == ec.Value {
+			if value == ec.Value {
 				f()
 			}
 		case "!=":
-			if count != ec.Value {
+			if value != ec.Value {
 				f()
 			}
 		default:
