@@ -42,6 +42,7 @@ func (dms dutyCalendarService) CreateAndUpdate(req interface{}) (interface{}, in
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+
 		// 生产值班日期
 		for mon := int(curMonth); mon <= 12; mon++ {
 			for day := 1; day <= 31; day++ {
@@ -49,15 +50,21 @@ func (dms dutyCalendarService) CreateAndUpdate(req interface{}) (interface{}, in
 				timeC <- dutyTime
 			}
 		}
+		close(timeC)
+
 		// 产出值班表数据结构
-		for len(timeC) != 0 {
+		for {
+			if len(timeC) == 0 {
+				break
+			}
+
 			for _, value := range r.Users {
 				for t := 1; t <= r.DutyPeriod; t++ {
-					dutyTime := <-timeC
+					tc := <-timeC
 					ds := models.DutySchedule{
 						TenantId: r.TenantId,
 						DutyId:   r.DutyId,
-						Time:     dutyTime,
+						Time:     tc,
 						Users: models.Users{
 							UserId:   value.UserId,
 							Username: value.Username,
@@ -68,8 +75,8 @@ func (dms dutyCalendarService) CreateAndUpdate(req interface{}) (interface{}, in
 			}
 		}
 	}()
+
 	wg.Wait()
-	close(timeC)
 
 	go func(dutyScheduleList []models.DutySchedule) {
 		for _, v := range dutyScheduleList {
