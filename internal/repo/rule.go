@@ -14,7 +14,7 @@ type (
 	InterRuleRepo interface {
 		GetQuota(id string) bool
 		Search(r models.AlertRuleQuery) (models.AlertRule, error)
-		List(r models.AlertRuleQuery) ([]models.AlertRule, error)
+		List(r models.AlertRuleQuery) (models.RuleResponse, error)
 		Create(r models.AlertRule) error
 		Update(r models.AlertRule) error
 		Delete(r models.AlertRuleQuery) error
@@ -63,18 +63,50 @@ func (rr RuleRepo) Search(r models.AlertRuleQuery) (models.AlertRule, error) {
 	return data, nil
 }
 
-func (rr RuleRepo) List(r models.AlertRuleQuery) ([]models.AlertRule, error) {
-	var data []models.AlertRule
+func (rr RuleRepo) List(r models.AlertRuleQuery) (models.RuleResponse, error) {
+	var (
+		data  []models.AlertRule
+		count int64
+	)
 
 	db := rr.db.Model(&models.AlertRule{})
 	db.Where("tenant_id = ?", r.TenantId)
 	db.Where("rule_group_id = ?", r.RuleGroupId)
-	err := db.Find(&data).Error
-	if err != nil {
-		return data, err
+
+	if r.Query != "" {
+		db.Where("rule_id LIKE ? OR rule_name LIKE ? OR description LIKE ?",
+			"%"+r.Query+"%", "%"+r.Query+"%", "%"+r.Query+"%")
 	}
 
-	return data, nil
+	if r.Status != "all" {
+		var s bool
+		switch r.Status {
+		case "enabled":
+			s = true
+		case "disabled":
+			s = false
+		}
+		db.Where("enabled = ?", s)
+	}
+
+	db.Count(&count)
+
+	db.Limit(int(r.Page.Size)).Offset(int((r.Page.Index - 1) * r.Page.Size))
+
+	err := db.Find(&data).Error
+
+	if err != nil {
+		return models.RuleResponse{}, err
+	}
+
+	return models.RuleResponse{
+		List: data,
+		Page: models.Page{
+			Total: count,
+			Index: r.Page.Index,
+			Size:  r.Page.Size,
+		},
+	}, nil
 }
 
 func (rr RuleRepo) Create(r models.AlertRule) error {

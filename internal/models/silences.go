@@ -24,4 +24,11 @@ type AlertSilenceQuery struct {
 	Datasource     string `json:"datasource" form:"datasource"`
 	DatasourceType string `json:"datasourceType" form:"datasourceType"`
 	Comment        string `json:"comment" form:"comment"`
+	Query          string `json:"query" form:"query"`
+	Page
+}
+
+type SilenceResponse struct {
+	List []AlertSilences `json:"list"`
+	Page
 }

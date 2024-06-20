@@ -26,16 +26,14 @@ type AuditLogQuery struct {
 }
 
 type Page struct {
-	Total     string `json:"total" form:"total" gorm:"-"`
-	PageIndex string `json:"pageIndex" form:"pageIndex" gorm:"-"`
-	PageSize  string `json:"pageSize" form:"pageSize" gorm:"-"`
+	Total int64 `json:"total" form:"total" gorm:"-"`
+	Index int64 `json:"index" form:"index" gorm:"-"`
+	Size  int64 `json:"size" form:"size" gorm:"-"`
 }
 
 type AuditLogResponse struct {
-	List       []AuditLog
-	PageIndex  int64
-	PageSize   int64
-	TotalCount int64
+	List []AuditLog `json:"list"`
+	Page
 }
 
 func (a AuditLog) String() string {

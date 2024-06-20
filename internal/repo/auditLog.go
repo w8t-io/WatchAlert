@@ -1,7 +1,6 @@
 package repo
 
 import (
-	"fmt"
 	"gorm.io/gorm"
 	"strconv"
 	"time"
@@ -43,24 +42,26 @@ func (a AuditLogRepo) List(r models.AuditLogQuery) (models.AuditLogResponse, err
 	var data []models.AuditLog
 	var count int64
 
-	pageIndexInt, _ := strconv.Atoi(r.PageIndex)
-	pageSizeInt, _ := strconv.Atoi(r.PageSize)
+	pageIndexInt := r.Page.Index
+	pageSizeInt := r.Page.Size
 
 	db.Where("tenant_id = ?", r.TenantId)
 
 	db.Count(&count)
 
-	db.Limit(pageSizeInt).Offset((pageIndexInt - 1) * pageSizeInt).Order("created_at desc")
+	db.Limit(int(pageSizeInt)).Offset(int((pageIndexInt - 1) * pageSizeInt)).Order("created_at desc")
 	err := db.Find(&data).Error
 	if err != nil {
 		return models.AuditLogResponse{}, err
 	}
 
 	d := models.AuditLogResponse{
-		List:       data,
-		PageIndex:  int64(pageIndexInt),
-		PageSize:   int64(pageSizeInt),
-		TotalCount: count,
+		List: data,
+		Page: models.Page{
+			Index: pageIndexInt,
+			Size:  pageSizeInt,
+			Total: count,
+		},
 	}
 	return d, nil
 }
@@ -70,10 +71,8 @@ func (a AuditLogRepo) Search(r models.AuditLogQuery) (models.AuditLogResponse, e
 	var data []models.AuditLog
 	var count int64
 
-	pageIndexInt, _ := strconv.Atoi(r.PageIndex)
-	pageSizeInt, _ := strconv.Atoi(r.PageSize)
-
-	fmt.Println("-->", pageSizeInt)
+	pageIndexInt := r.Page.Index
+	pageSizeInt := r.Page.Size
 
 	db.Where("tenant_id = ?", r.TenantId)
 
@@ -91,17 +90,19 @@ func (a AuditLogRepo) Search(r models.AuditLogQuery) (models.AuditLogResponse, e
 
 	db.Count(&count)
 
-	db.Limit(pageSizeInt).Offset((pageIndexInt - 1) * pageSizeInt).Order("created_at desc")
+	db.Limit(int(pageSizeInt)).Offset(int((pageIndexInt - 1) * pageSizeInt)).Order("created_at desc")
 
 	err := db.Find(&data).Error
 	if err != nil {
 		return models.AuditLogResponse{}, err
 	}
 	d := models.AuditLogResponse{
-		List:       data,
-		PageIndex:  int64(pageIndexInt),
-		PageSize:   int64(pageSizeInt),
-		TotalCount: count,
+		List: data,
+		Page: models.Page{
+			Index: pageIndexInt,
+			Size:  pageSizeInt,
+			Total: count,
+		},
 	}
 
 	return d, nil

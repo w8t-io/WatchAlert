@@ -78,7 +78,7 @@ func (lc LokiClient) QueryRange(options QueryOptions) ([]Result, error) {
 
 	res, err := http.Get(requestURL)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 
 	body, _ := io.ReadAll(res.Body)

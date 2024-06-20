@@ -32,6 +32,10 @@ func (e EventRepo) GetHistoryEvent(r models.AlertHisEventQuery) (models.HistoryE
 	db := e.DB().Model(&models.AlertHisEvent{})
 	db.Where("tenant_id = ?", r.TenantId)
 
+	if r.Query != "" {
+		db.Where("rule_name LIKE ? OR severity LIKE ? OR annotations LIKE ?", "%"+r.Query+"%", "%"+r.Query+"%", "%"+r.Query+"%")
+	}
+
 	if r.DatasourceType != "" {
 		db = db.Where("datasource_type = ?", r.DatasourceType)
 	}
@@ -48,15 +52,17 @@ func (e EventRepo) GetHistoryEvent(r models.AlertHisEventQuery) (models.HistoryE
 		return models.HistoryEventResponse{}, err
 	}
 
-	if err := db.Limit(int(r.PageSize)).Offset(int((r.PageIndex - 1) * r.PageSize)).Order("recover_time desc").Find(&data).Error; err != nil {
+	if err := db.Limit(int(r.Page.Size)).Offset(int((r.Page.Index - 1) * r.Page.Size)).Order("recover_time desc").Find(&data).Error; err != nil {
 		return models.HistoryEventResponse{}, err
 	}
 
 	return models.HistoryEventResponse{
-		List:       data,
-		PageIndex:  r.PageIndex,
-		PageSize:   r.PageSize,
-		TotalCount: count,
+		List: data,
+		Page: models.Page{
+			Index: r.Page.Index,
+			Size:  r.Page.Size,
+			Total: count,
+		},
 	}, nil
 }
 
