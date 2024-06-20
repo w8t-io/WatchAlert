@@ -74,8 +74,6 @@ func (dms dutyCalendarService) CreateAndUpdate(req interface{}) (interface{}, in
 				}
 			}
 		}
-		fmt.Println("done")
-
 	}()
 
 	wg.Wait()
