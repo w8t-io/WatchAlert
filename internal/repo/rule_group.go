@@ -13,7 +13,7 @@ type (
 	}
 
 	InterRuleGroupRepo interface {
-		List(req models.RuleGroupQuery) ([]models.RuleGroups, error)
+		List(req models.RuleGroupQuery) (models.RuleGroupResponse, error)
 		Create(req models.RuleGroups) error
 		Update(req models.RuleGroups) error
 		Delete(req models.RuleGroupQuery) error
@@ -29,16 +29,30 @@ func newRuleGroupInterface(db *gorm.DB, g InterGormDBCli) InterRuleGroupRepo {
 	}
 }
 
-func (r RuleGroupRepo) List(req models.RuleGroupQuery) ([]models.RuleGroups, error) {
+func (r RuleGroupRepo) List(req models.RuleGroupQuery) (models.RuleGroupResponse, error) {
 	var (
-		data []models.RuleGroups
-		db   = r.db.Model(&models.RuleGroups{})
+		data  []models.RuleGroups
+		db    = r.db.Model(&models.RuleGroups{})
+		count int64
 	)
 
-	db.Model(&models.RuleGroups{}).Where("tenant_id = ?", req.TenantId)
+	pageIndexInt := req.Page.Index
+	pageSizeInt := req.Page.Size
+
+	db.Where("tenant_id = ?", req.TenantId)
+
+	if req.Query != "" {
+		db.Where("id LIKE ? OR name LIKE ? OR description LIKE ?",
+			"%"+req.Query+"%", "%"+req.Query+"%", "%"+req.Query+"%")
+	}
+
+	db.Count(&count)
+
+	db.Limit(int(pageSizeInt)).Offset(int((pageIndexInt - 1) * pageSizeInt))
+
 	err := db.Find(&data).Error
 	if err != nil {
-		return nil, err
+		return models.RuleGroupResponse{}, err
 	}
 
 	for k, v := range data {
@@ -46,7 +60,14 @@ func (r RuleGroupRepo) List(req models.RuleGroupQuery) ([]models.RuleGroups, err
 		r.db.Model(&models.AlertRule{}).Where("tenant_id = ? AND rule_group_id = ?", req.TenantId, v.ID).Find(&resRules)
 		data[k].Number = len(resRules)
 	}
-	return data, nil
+	return models.RuleGroupResponse{
+		List: data,
+		Page: models.Page{
+			Index: pageIndexInt,
+			Size:  pageSizeInt,
+			Total: count,
+		},
+	}, nil
 }
 
 func (r RuleGroupRepo) Create(req models.RuleGroups) error {

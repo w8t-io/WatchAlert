@@ -39,6 +39,15 @@ type AlertCurEventQuery struct {
 	DatasourceType string `json:"datasourceType" form:"datasourceType"`
 	DatasourceId   string `json:"datasourceId" form:"datasourceId"`
 	Fingerprint    string `json:"fingerprint" form:"fingerprint"`
+	Query          string `json:"query" form:"query"`
+	Scope          int64  `json:"scope" form:"scope"`
+	Severity       string `json:"severity" form:"severity"`
+	Page
+}
+
+type CurEventResponse struct {
+	List []AlertCurEvent `json:"list"`
+	Page
 }
 
 func (ace *AlertCurEvent) GetFiringAlertCacheKey() string {

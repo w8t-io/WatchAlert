@@ -11,7 +11,7 @@ type (
 	}
 
 	InterSilenceRepo interface {
-		List(r models.AlertSilenceQuery) ([]models.AlertSilences, error)
+		List(r models.AlertSilenceQuery) (models.SilenceResponse, error)
 		Create(r models.AlertSilences) error
 		Update(r models.AlertSilences) error
 		Delete(r models.AlertSilenceQuery) error
@@ -27,16 +27,33 @@ func newSilenceInterface(db *gorm.DB, g InterGormDBCli) InterSilenceRepo {
 	}
 }
 
-func (sr SilenceRepo) List(r models.AlertSilenceQuery) ([]models.AlertSilences, error) {
-	var silenceList []models.AlertSilences
+func (sr SilenceRepo) List(r models.AlertSilenceQuery) (models.SilenceResponse, error) {
+	var (
+		silenceList []models.AlertSilences
+		count       int64
+	)
 	db := sr.db.Model(models.AlertSilences{})
 	db.Where("tenant_id = ?", r.TenantId)
-	err := db.Find(&silenceList).Error
-	if err != nil {
-		return silenceList, err
+
+	if r.Query != "" {
+		db.Where("id LIKE ? OR comment LIKE ?", "%"+r.Query+"%", "%"+r.Query+"%")
 	}
 
-	return silenceList, nil
+	db.Count(&count)
+	db.Limit(int(r.Page.Size)).Offset(int((r.Page.Index - 1) * r.Page.Size))
+	err := db.Find(&silenceList).Error
+	if err != nil {
+		return models.SilenceResponse{}, err
+	}
+
+	return models.SilenceResponse{
+		List: silenceList,
+		Page: models.Page{
+			Total: count,
+			Index: r.Page.Index,
+			Size:  r.Page.Size,
+		},
+	}, nil
 }
 
 func (sr SilenceRepo) Create(r models.AlertSilences) error {

@@ -102,7 +102,7 @@ func (rs ruleService) Delete(req interface{}) (interface{}, interface{}) {
 
 	err = rs.ctx.DB.Rule().Delete(*rule)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 
 	// 退出该规则的协程
@@ -131,7 +131,7 @@ func (rs ruleService) List(req interface{}) (interface{}, interface{}) {
 	r := req.(*models.AlertRuleQuery)
 	data, err := rs.ctx.DB.Rule().List(*r)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 
 	return data, nil

@@ -63,7 +63,7 @@ func (ds datasourceService) List(req interface{}) (interface{}, interface{}) {
 	dataSource := req.(*models.DatasourceQuery)
 	data, err := ds.ctx.DB.Datasource().List(*dataSource)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 
 	return data, nil
@@ -84,7 +84,7 @@ func (ds datasourceService) Search(req interface{}) (interface{}, interface{}) {
 	r := req.(*models.DatasourceQuery)
 	data, err := ds.ctx.DB.Datasource().Search(*r)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 	newData = data
 

@@ -112,6 +112,14 @@ type AlertRuleQuery struct {
 	DatasourceIdList []string `json:"datasourceId" form:"datasourceId"`
 	RuleName         string   `json:"ruleName" form:"ruleName"`
 	Enabled          string   `json:"enabled" form:"enabled"`
+	Query            string   `json:"query" form:"query"`
+	Status           string   `json:"status" form:"status"` // 查询规则状态
+	Page
+}
+
+type RuleResponse struct {
+	List []AlertRule `json:"list"`
+	Page
 }
 
 var (

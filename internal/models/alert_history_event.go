@@ -28,13 +28,11 @@ type AlertHisEventQuery struct {
 	RuleName       string `json:"ruleName" form:"ruleName"`
 	StartAt        int64  `json:"startAt" form:"startAt"`
 	EndAt          int64  `json:"endAt" form:"endAt"`
-	PageIndex      int64  `json:"pageIndex" form:"pageIndex"`
-	PageSize       int64  `json:"pageSize" form:"pageSize"`
+	Query          string `json:"query" form:"query"`
+	Page
 }
 
 type HistoryEventResponse struct {
-	List       []AlertHisEvent
-	PageIndex  int64
-	PageSize   int64
-	TotalCount int64
+	List []AlertHisEvent `json:"list"`
+	Page
 }
