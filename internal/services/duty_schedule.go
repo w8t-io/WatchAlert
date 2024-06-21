@@ -52,6 +52,15 @@ func (dms dutyCalendarService) CreateAndUpdate(req interface{}) (interface{}, in
 		}
 		close(timeC)
 
+		var count int
+		var days int
+		switch r.DateType {
+		case "day":
+			days = 1 * r.DutyPeriod
+		case "week":
+			days = 7 * r.DutyPeriod
+		}
+
 		// 产出值班表数据结构
 		for {
 			if len(timeC) == 0 {
@@ -59,7 +68,7 @@ func (dms dutyCalendarService) CreateAndUpdate(req interface{}) (interface{}, in
 			}
 
 			for _, value := range r.Users {
-				for t := 1; t <= r.DutyPeriod; t++ {
+				for t := 1; t <= days; t++ {
 					tc := <-timeC
 					ds := models.DutySchedule{
 						TenantId: r.TenantId,
@@ -70,7 +79,26 @@ func (dms dutyCalendarService) CreateAndUpdate(req interface{}) (interface{}, in
 							Username: value.Username,
 						},
 					}
-					dutyScheduleList = append(dutyScheduleList, ds)
+
+					if tc != "" {
+						dutyScheduleList = append(dutyScheduleList, ds)
+					}
+
+					if r.DateType == "week" {
+						weekday, err := getWeekday(tc)
+						if err != nil {
+							continue
+						}
+
+						if weekday == 0 {
+							count++
+							if count == r.DutyPeriod {
+								count = 0
+								break
+							}
+						}
+					}
+
 				}
 			}
 		}
@@ -129,4 +157,14 @@ func parseTime(month string) (int, time.Month, int) {
 	}
 	curYear, curMonth, curDay := parsedTime.Date()
 	return curYear, curMonth, curDay
+}
+
+func getWeekday(date string) (time.Weekday, error) {
+	t, err := time.Parse("2006-1-2", date)
+	if err != nil {
+		return 0, err
+	}
+
+	weekday := t.Weekday()
+	return weekday, nil
 }

@@ -48,6 +48,7 @@ type DutyScheduleCreate struct {
 	DutyPeriod int     `json:"dutyPeriod"`
 	Month      string  `json:"month"`
 	Users      []Users `json:"users"`
+	DateType   string  `json:"dateType"`
 }
 
 type Users struct {
