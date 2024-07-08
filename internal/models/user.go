@@ -20,5 +20,5 @@ type MemberQuery struct {
 	Email    string `json:"email" form:"email"`
 	Phone    string `json:"phone" form:"phone"`
 	Query    string `json:"query" form:"query"`
-	Duty     string `json:"duty" form:"duty"`
+	JoinDuty string `json:"joinDuty" form:"joinDuty"`
 }

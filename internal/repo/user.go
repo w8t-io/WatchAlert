@@ -42,7 +42,7 @@ func (ur UserRepo) Search(r models.MemberQuery) ([]models.Member, error) {
 	if r.Query != "" {
 		db.Where("user_name LIKE ? OR email Like ? OR phone LIKE ?", "%"+r.Query+"%", "%"+r.Query+"%", "%"+r.Query+"%")
 	}
-	if r.Duty != "" {
+	if r.JoinDuty == "true" {
 		db.Where("join_duty = ?", "true")
 	}
 	err := db.Find(&data).Error
