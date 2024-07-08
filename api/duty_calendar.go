@@ -10,8 +10,8 @@ import (
 type DutyCalendarController struct{}
 
 /*
-	值班表 API
-	/api/w8t/calendar
+值班表 API
+/api/w8t/calendar
 */
 func (dc DutyCalendarController) API(gin *gin.RouterGroup) {
 	calendarA := gin.Group("calendar")
@@ -50,7 +50,7 @@ func (dc DutyCalendarController) Create(ctx *gin.Context) {
 }
 
 func (dc DutyCalendarController) Update(ctx *gin.Context) {
-	r := new(models.DutyScheduleCreate)
+	r := new(models.DutySchedule)
 	BindJson(ctx, r)
 
 	tid, _ := ctx.Get("TenantID")
