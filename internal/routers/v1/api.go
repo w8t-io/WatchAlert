@@ -40,6 +40,7 @@ func Router(engine *gin.Engine) {
 			ClientApi.API(w8t)
 			AWSCloudWatch.API(w8t)
 			AWSRds.API(w8t)
+			Setting.API(w8t)
 		}
 
 	}

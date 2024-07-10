@@ -6,7 +6,8 @@ import (
 )
 
 var (
-	Layout = "2006-01-02T15:04:05.000Z"
-	Config config.App
-	Logger *zap.Logger
+	Layout  = "2006-01-02T15:04:05.000Z"
+	Config  config.App
+	Logger  *zap.Logger
+	Version string
 )

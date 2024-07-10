@@ -28,6 +28,7 @@ var (
 	AWSRegionService        service.InterAwsRegionService
 	AWSCloudWatchService    service2.InterAwsCloudWatchService
 	AWSCloudWatchRdsService service2.InterAwsRdsService
+	SettingService          InterSettingService
 )
 
 func NewServices(ctx *ctx.Context) {
@@ -52,4 +53,5 @@ func NewServices(ctx *ctx.Context) {
 	AWSRegionService = service.NewInterAwsRegionService(ctx)
 	AWSCloudWatchService = service2.NewInterAwsCloudWatchService(ctx)
 	AWSCloudWatchRdsService = service2.NewInterAWSRdsService(ctx)
+	SettingService = newInterSettingService(ctx)
 }

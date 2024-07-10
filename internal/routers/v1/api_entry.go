@@ -26,4 +26,5 @@ var (
 	ClientApi      = api.ApiGroupApp.ClientController
 	AWSCloudWatch  = api.ApiGroupApp.AWSCloudWatchController
 	AWSRds         = api.ApiGroupApp.AWSCloudWatchRDSController
+	Setting        = api.ApiGroupApp.SettingsController
 )
