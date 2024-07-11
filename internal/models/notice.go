@@ -13,9 +13,16 @@ type AlertNotice struct {
 	NoticeType      string `json:"noticeType"`
 	EnableCard      string `json:"enableCard"`
 	Hook            string `json:"hook"`
+	Email           Email  `json:"email" gorm:"email;serializer:json"`
 	Template        string `json:"template"`
 	TemplateFiring  string `json:"templateFiring"`
 	TemplateRecover string `json:"templateRecover"`
+}
+
+type Email struct {
+	Subject string   `json:"subject"`
+	To      []string `json:"to" gorm:"to;serializer:json"`
+	CC      []string `json:"cc" gorm:"cc;serializer:json"`
 }
 
 type AlertRecord struct {

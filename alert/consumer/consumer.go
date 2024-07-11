@@ -62,10 +62,10 @@ func (ec *Consume) Run() {
 			alert := ec.ctx.Redis.Event().GetCache(key)
 			if alert.LastSendTime == 0 {
 				// 如果是初次告警, 那么等当前告警组时间到达 groupWait 的时间则推送告警
-				waitTime = global.Config.Server.GroupWait
+				waitTime = global.Config.Server.AlarmConfig.GroupWait
 			} else {
 				// 当前告警组时间到达 groupInterval 的时间则推送告警
-				waitTime = global.Config.Server.GroupInterval
+				waitTime = global.Config.Server.AlarmConfig.GroupInterval
 			}
 			if ec.Timing[key] >= waitTime {
 				curEvent := ec.filterAlerts(ec.alertsMap[key])

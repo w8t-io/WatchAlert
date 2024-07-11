@@ -28,6 +28,7 @@ type ApiGroup struct {
 	ClientController
 	AWSCloudWatchController
 	AWSCloudWatchRDSController
+	SettingsController
 }
 
 var ApiGroupApp = new(ApiGroup)
@@ -38,8 +39,9 @@ func Service(ctx *gin.Context, fu func() (interface{}, interface{})) {
 		response.Fail(ctx, err.(error).Error(), "failed")
 		ctx.Abort()
 		return
+	} else {
+		response.Success(ctx, data, "success")
 	}
-	response.Success(ctx, data, "success")
 }
 
 func BindJson(ctx *gin.Context, req interface{}) {

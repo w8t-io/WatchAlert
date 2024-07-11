@@ -69,7 +69,7 @@ func (rq *RuleQuery) alertRecover(rule models.AlertRule, curKeys []string) {
 		}
 
 		// 判断是否在等待时间范围内
-		rt := time.Unix(queue.RecoverWaitMap[key], 0).Add(time.Minute * time.Duration(global.Config.Server.RecoverWait)).Unix()
+		rt := time.Unix(queue.RecoverWaitMap[key], 0).Add(time.Minute * time.Duration(global.Config.Server.AlarmConfig.RecoverWait)).Unix()
 		if rt > curTime {
 			continue
 		}

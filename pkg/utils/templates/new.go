@@ -14,6 +14,8 @@ func NewTemplate(alert models.AlertCurEvent, notice models.AlertNotice) Template
 		return Template{CardContentMsg: feishuTemplate(alert, notice)}
 	case "DingDing":
 		return Template{CardContentMsg: dingdingTemplate(alert, notice)}
+	case "Email":
+		return Template{CardContentMsg: emailTemplate(alert, notice)}
 	}
 
 	return Template{}

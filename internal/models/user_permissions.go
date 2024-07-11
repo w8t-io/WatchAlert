@@ -279,5 +279,13 @@ func PermissionsInfo() map[string]UserPermissions {
 			Key: "搜索通知模版",
 			API: "/api/w8t/noticeTemplate/searchNoticeTmpl",
 		},
+		"settingSave": {
+			Key: "编辑系统配置",
+			API: "/api/w8t/setting/saveSystemSetting",
+		},
+		"settingGet": {
+			Key: "获取系统配置",
+			API: "/api/w8t/setting/getSystemSetting",
+		},
 	}
 }
