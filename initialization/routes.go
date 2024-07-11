@@ -10,16 +10,14 @@ import (
 
 func InitRoute() {
 	global.Logger.Sugar().Info("服务启动")
+
+	mode := global.Config.Server.Mode
+	if mode == "" {
+		mode = gin.DebugMode
+	}
+	gin.SetMode(mode)
 	ginEngine := gin.New()
 
-	var mode string
-	if global.Config.Server.Mode != "" {
-		mode = global.Config.Server.Mode
-	} else {
-		mode = "debug"
-	}
-
-	gin.SetMode(mode)
 	ginEngine.Use(
 		// 启用CORS中间件
 		middleware.Cors(),
