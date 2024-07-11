@@ -11,6 +11,7 @@ type Settings struct {
 
 type emailConfig struct {
 	ServerAddress string `json:"serverAddress"`
+	Port          int    `json:"port"`
 	Email         string `json:"email"`
 	Token         string `json:"token"`
 }
