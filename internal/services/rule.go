@@ -53,6 +53,17 @@ func (rs ruleService) Update(req interface{}) (interface{}, interface{}) {
 		Where("tenant_id = ? AND rule_id = ?", rule.TenantId, rule.RuleId).
 		First(&alertInfo)
 
+	delEvent := func() {
+		// 删除缓存
+		iter := rs.ctx.Redis.Redis().Scan(0, rule.TenantId+":"+models.FiringAlertCachePrefix+rule.RuleId+"*", 0).Iterator()
+		keys := make([]string, 0)
+		for iter.Next() {
+			key := iter.Val()
+			keys = append(keys, key)
+		}
+		rs.ctx.Redis.Redis().Del(keys...)
+	}
+
 	/*
 		重启协程
 		判断当前状态是否是false 并且 历史状态是否为true
@@ -68,19 +79,12 @@ func (rs ruleService) Update(req interface{}) (interface{}, interface{}) {
 		}
 	}
 
-	// 删除缓存
-	iter := rs.ctx.Redis.Redis().Scan(0, rule.TenantId+":"+models.FiringAlertCachePrefix+rule.RuleId+"*", 0).Iterator()
-	keys := make([]string, 0)
-	for iter.Next() {
-		key := iter.Val()
-		keys = append(keys, key)
-	}
-	rs.ctx.Redis.Redis().Del(keys...)
-
 	// 启动协程
 	if *rule.Enabled {
 		rs.rule <- rule
 		global.Logger.Sugar().Infof("重启 RuleId 为 %s 的 Worker 进程", rule.RuleId)
+	} else {
+		delEvent()
 	}
 
 	// 更新数据
