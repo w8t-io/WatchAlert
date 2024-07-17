@@ -97,9 +97,9 @@ type CloudWatchConfig struct {
 
 // EvalCondition 日志评估条件
 type EvalCondition struct {
-	Type     string `json:"type"`
-	Operator string `json:"operator"`
-	Value    int    `json:"value"`
+	Type     string  `json:"type"`
+	Operator string  `json:"operator"`
+	Value    float64 `json:"value"`
 }
 
 type Fingerprint uint64

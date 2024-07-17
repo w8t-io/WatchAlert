@@ -44,7 +44,7 @@ func (ds AlertDataSource) CheckHealth() (bool, error) {
 		fullPath string
 	)
 	switch ds.Type {
-	case "Prometheus":
+	case "Prometheus", "VictoriaMetrics":
 		fullPath = "/-/healthy"
 	case "Jaeger":
 		return true, nil
