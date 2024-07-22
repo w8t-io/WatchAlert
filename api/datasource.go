@@ -1,17 +1,21 @@
 package api
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"io"
 	middleware "watchAlert/internal/middleware"
 	"watchAlert/internal/models"
 	"watchAlert/internal/services"
+	"watchAlert/pkg/utils/http"
 )
 
 type DatasourceController struct{}
 
 /*
-	数据源 API
-	/api/w8t/datasource
+数据源 API
+/api/w8t/datasource
 */
 func (dc DatasourceController) API(gin *gin.RouterGroup) {
 	datasourceA := gin.Group("datasource")
@@ -37,6 +41,7 @@ func (dc DatasourceController) API(gin *gin.RouterGroup) {
 		datasourceB.GET("dataSourceList", dc.List)
 		datasourceB.GET("dataSourceGet", dc.Get)
 		datasourceB.GET("dataSourceSearch", dc.Search)
+		datasourceB.GET("promQuery", dc.PromQuery)
 	}
 
 }
@@ -110,5 +115,34 @@ func (dc DatasourceController) Delete(ctx *gin.Context) {
 
 	Service(ctx, func() (interface{}, interface{}) {
 		return services.DatasourceService.Delete(r)
+	})
+}
+
+func (dc DatasourceController) PromQuery(ctx *gin.Context) {
+	r := new(models.PromQueryReq)
+	BindQuery(ctx, r)
+
+	Service(ctx, func() (interface{}, interface{}) {
+		var res models.PromQueryRes
+		path := "/api/v1/query"
+		if r.DatasourceType == "VictoriaMetrics" {
+			path = "/prometheus" + path
+		}
+		get, err := http.Get(fmt.Sprintf("%s%s?query=%s", r.Addr, path, r.Query))
+		if err != nil {
+			return nil, err
+		}
+
+		all, err := io.ReadAll(get.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		err = json.Unmarshal(all, &res)
+		if err != nil {
+			return nil, err
+		}
+
+		return res, nil
 	})
 }

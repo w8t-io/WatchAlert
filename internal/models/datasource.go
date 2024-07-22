@@ -67,3 +67,23 @@ func (ds AlertDataSource) CheckHealth() (bool, error) {
 
 	return true, nil
 }
+
+type PromQueryReq struct {
+	DatasourceType string `json:"datasourceType"`
+	Addr           string `form:"addr"`
+	Query          string `form:"query"`
+}
+
+type PromQueryRes struct {
+	Data data `json:"data"`
+}
+
+type data struct {
+	Result     []result `json:"result"`
+	ResultType string   `json:"resultType"`
+}
+
+type result struct {
+	Metric map[string]interface{} `json:"metric"`
+	Value  []interface{}          `json:"value"`
+}

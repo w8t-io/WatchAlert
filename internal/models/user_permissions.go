@@ -287,5 +287,9 @@ func PermissionsInfo() map[string]UserPermissions {
 			Key: "获取系统配置",
 			API: "/api/w8t/setting/getSystemSetting",
 		},
+		"promQuery": {
+			Key: "Prometheus指标查询",
+			API: "/api/w8t/datasource/promQuery",
+		},
 	}
 }
