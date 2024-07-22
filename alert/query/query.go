@@ -13,6 +13,7 @@ import (
 	"watchAlert/pkg/community/aws/cloudwatch"
 	"watchAlert/pkg/community/aws/cloudwatch/types"
 	"watchAlert/pkg/ctx"
+	"watchAlert/pkg/utils/cmd"
 )
 
 type RuleQuery struct {
@@ -27,6 +28,8 @@ func (rq *RuleQuery) Query(ctx *ctx.Context, rule models.AlertRule) {
 		switch rule.DatasourceType {
 		case "Prometheus":
 			rq.prometheus(dsId, rule)
+		case "VictoriaMetrics":
+			rq.victoriametrics(dsId, rule)
 		case "AliCloudSLS":
 			rq.aliCloudSLS(dsId, rule)
 		case "Loki":
@@ -88,14 +91,14 @@ func (rq *RuleQuery) alertRecover(rule models.AlertRule, curKeys []string) {
 // Prometheus 数据源
 func (rq *RuleQuery) prometheus(datasourceId string, rule models.AlertRule) {
 	var (
-		curFiringKeys  = &[]string{}
-		curPendingKeys = &[]string{}
+		curFiringKeys  []string
+		curPendingKeys []string
 	)
 
 	defer func() {
-		go process.GcPendingCache(rq.ctx, rule, *curPendingKeys)
-		rq.alertRecover(rule, *curFiringKeys)
-		go process.GcRecoverWaitCache(rule, *curFiringKeys)
+		go process.GcPendingCache(rq.ctx, rule, curPendingKeys)
+		rq.alertRecover(rule, curFiringKeys)
+		go process.GcRecoverWaitCache(rule, curFiringKeys)
 	}()
 
 	r := models.DatasourceQuery{
@@ -123,7 +126,101 @@ func (rq *RuleQuery) prometheus(datasourceId string, rule models.AlertRule) {
 			re := regexp.MustCompile(`([^\d]+)(\d+)`)
 			matches := re.FindStringSubmatch(ruleExpr.Expr)
 			t, _ := strconv.ParseFloat(matches[2], 64)
-			process.CalIndicatorValue(rq.ctx, matches[1], t, rule, v, datasourceId, curFiringKeys, curPendingKeys, ruleExpr.Severity)
+
+			f := func() models.AlertCurEvent {
+				event := process.ParserDefaultEvent(rule)
+				event.DatasourceId = datasourceId
+				event.Fingerprint = v.GetFingerprint()
+				event.Metric = v.GetMetric()
+				event.Metric["severity"] = ruleExpr.Severity
+				event.Severity = ruleExpr.Severity
+				event.Annotations = cmd.ParserVariables(rule.PrometheusConfig.Annotations, event.Metric)
+
+				firingKey := event.GetFiringAlertCacheKey()
+				pendingKey := event.GetPendingAlertCacheKey()
+
+				curFiringKeys = append(curFiringKeys, firingKey)
+				curPendingKeys = append(curPendingKeys, pendingKey)
+
+				return event
+			}
+
+			option := models.EvalCondition{
+				Type:     "metric",
+				Operator: matches[1],
+				Value:    t,
+			}
+
+			process.EvalCondition(rq.ctx, f, v.Value, option)
+		}
+	}
+
+}
+
+// VictorMetrics 数据源
+func (rq *RuleQuery) victoriametrics(datasourceId string, rule models.AlertRule) {
+	var (
+		curFiringKeys  []string
+		curPendingKeys []string
+	)
+
+	defer func() {
+		go process.GcPendingCache(rq.ctx, rule, curPendingKeys)
+		rq.alertRecover(rule, curFiringKeys)
+		go process.GcRecoverWaitCache(rule, curFiringKeys)
+	}()
+
+	r := models.DatasourceQuery{
+		TenantId: rule.TenantId,
+		Id:       datasourceId,
+		Type:     "VictoriaMetrics",
+	}
+	datasourceInfo, err := rq.ctx.DB.Datasource().Get(r)
+	if err != nil {
+		return
+	}
+
+	cmCli := client.NewVictoriaMetricsClient(datasourceInfo)
+	resQuery, err := cmCli.Query(rule.PrometheusConfig.PromQL)
+	if err != nil {
+		return
+	}
+
+	if resQuery == nil {
+		return
+	}
+
+	for _, v := range resQuery {
+		for _, ruleExpr := range rule.PrometheusConfig.Rules {
+			re := regexp.MustCompile(`([^\d]+)(\d+)`)
+			matches := re.FindStringSubmatch(ruleExpr.Expr)
+			t, _ := strconv.ParseFloat(matches[2], 64)
+
+			f := func() models.AlertCurEvent {
+				event := process.ParserDefaultEvent(rule)
+				event.DatasourceId = datasourceId
+				event.Fingerprint = v.GetFingerprint()
+				event.Metric = v.GetMetric()
+				event.Metric["severity"] = ruleExpr.Severity
+				event.Severity = ruleExpr.Severity
+				event.Annotations = cmd.ParserVariables(rule.PrometheusConfig.Annotations, event.Metric)
+
+				firingKey := event.GetFiringAlertCacheKey()
+				pendingKey := event.GetPendingAlertCacheKey()
+
+				curFiringKeys = append(curFiringKeys, firingKey)
+				curPendingKeys = append(curPendingKeys, pendingKey)
+
+				return event
+			}
+
+			option := models.EvalCondition{
+				Type:     "metric",
+				Operator: matches[1],
+				Value:    t,
+			}
+
+			process.EvalCondition(rq.ctx, f, v.Value, option)
 		}
 	}
 
@@ -170,7 +267,7 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) {
 
 	for _, body := range bodyList.MetricList {
 
-		event := func() {
+		event := func() models.AlertCurEvent {
 			event := process.ParserDefaultEvent(rule)
 			event.DatasourceId = datasourceId
 			event.Fingerprint = body.GetFingerprint()
@@ -180,10 +277,7 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) {
 			key := event.GetFiringAlertCacheKey()
 			curKeys = append(curKeys, key)
 
-			ok := rq.ctx.DB.Rule().GetRuleIsExist(event.RuleId)
-			if ok {
-				process.SaveEventCache(rq.ctx, event)
-			}
+			return event
 		}
 
 		options := models.EvalCondition{
@@ -197,7 +291,7 @@ func (rq *RuleQuery) aliCloudSLS(datasourceId string, rule models.AlertRule) {
 		}
 
 		// 评估告警条件
-		process.EvalCondition(event, count, options)
+		process.EvalCondition(rq.ctx, event, float64(count), options)
 	}
 
 }
@@ -239,7 +333,7 @@ func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) {
 			continue
 		}
 
-		event := func() {
+		event := func() models.AlertCurEvent {
 			event := process.ParserDefaultEvent(rule)
 			event.DatasourceId = datasourceId
 			event.Fingerprint = v.GetFingerprint()
@@ -249,10 +343,7 @@ func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) {
 			key := event.GetPendingAlertCacheKey()
 			curKeys = append(curKeys, key)
 
-			ok := rq.ctx.DB.Rule().GetRuleIsExist(event.RuleId)
-			if ok {
-				process.SaveEventCache(rq.ctx, event)
-			}
+			return event
 		}
 
 		options := models.EvalCondition{
@@ -262,7 +353,7 @@ func (rq *RuleQuery) loki(datasourceId string, rule models.AlertRule) {
 		}
 
 		// 评估告警条件
-		process.EvalCondition(event, count, options)
+		process.EvalCondition(rq.ctx, event, float64(count), options)
 
 	}
 
@@ -358,22 +449,22 @@ func (rq *RuleQuery) cloudWatch(datasourceId string, rule models.AlertRule) {
 			return
 		}
 
-		event := func() {
+		event := func() models.AlertCurEvent {
 			event := process.ParserDefaultEvent(rule)
 			event.DatasourceId = datasourceId
 			event.Fingerprint = query.GetFingerprint()
 			event.Metric = query.GetMetrics()
 			event.Annotations = fmt.Sprintf("%s %s %s %s %d", query.Namespace, query.MetricName, query.Statistic, rule.CloudWatchConfig.Expr, rule.CloudWatchConfig.Threshold)
 
-			process.SaveEventCache(rq.ctx, event)
+			return event
 		}
 
 		options := models.EvalCondition{
-			Type:     "value",
+			Type:     "metric",
 			Operator: rule.CloudWatchConfig.Expr,
-			Value:    rule.CloudWatchConfig.Threshold,
+			Value:    float64(rule.CloudWatchConfig.Threshold),
 		}
 
-		process.EvalCondition(event, int(values[0]), options)
+		process.EvalCondition(rq.ctx, event, values[0], options)
 	}
 }

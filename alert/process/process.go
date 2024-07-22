@@ -116,50 +116,11 @@ func ParserDuration(curTime time.Time, logScope int, timeType string) time.Time 
 
 }
 
-// EvalCondition 评估告警条件
-func EvalCondition(f func(), value int, ec models.EvalCondition) {
-
-	switch ec.Type {
-	case "count", "value":
-		switch ec.Operator {
-		case ">":
-			if value > ec.Value {
-				f()
-			}
-		case ">=":
-			if value >= ec.Value {
-				f()
-			}
-		case "<":
-			if value < ec.Value {
-				f()
-			}
-		case "<=":
-			if value <= ec.Value {
-				f()
-			}
-		case "==":
-			if value == ec.Value {
-				f()
-			}
-		case "!=":
-			if value != ec.Value {
-				f()
-			}
-		default:
-			global.Logger.Sugar().Error("无效的评估条件", ec.Type, ec.Operator, ec.Value)
-		}
-	default:
-		global.Logger.Sugar().Error("无效的评估类型", ec.Type)
-	}
-
-}
-
 /*
-	GcPendingCache
-	清理 Pending 数据的缓存.
-	场景: 第一次查询到有异常的指标会写入 Pending 缓存, 当该指标持续 Pending 到达持续时间后才会写入 Firing 缓存,
-	那么未到达持续时间并且该指标恢复正常, 那么就需要清理该指标的 Pending 数据.
+GcPendingCache
+清理 Pending 数据的缓存.
+场景: 第一次查询到有异常的指标会写入 Pending 缓存, 当该指标持续 Pending 到达持续时间后才会写入 Firing 缓存,
+那么未到达持续时间并且该指标恢复正常, 那么就需要清理该指标的 Pending 数据.
 */
 func GcPendingCache(ctx *ctx.Context, rule models.AlertRule, curKeys []string) {
 	pendingKeys, err := ctx.Redis.Rule().GetAlertPendingCacheKeys(models.AlertRuleQuery{
