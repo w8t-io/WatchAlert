@@ -41,9 +41,10 @@ type AlertRule struct {
 	// AWS CloudWatch
 	CloudWatchConfig CloudWatchConfig `json:"cloudwatchConfig" gorm:"cloudwatchConfig;serializer:json"`
 
-	NoticeId    string      `json:"noticeId"`
-	NoticeGroup NoticeGroup `json:"noticeGroup" gorm:"noticeGroup;serializer:json"`
-	Enabled     *bool       `json:"enabled" gorm:"enabled"`
+	NoticeId      string      `json:"noticeId"`
+	NoticeGroup   NoticeGroup `json:"noticeGroup" gorm:"noticeGroup;serializer:json"`
+	RecoverNotify *bool       `json:"recoverNotify"`
+	Enabled       *bool       `json:"enabled" gorm:"enabled"`
 }
 
 type JaegerConfig struct {

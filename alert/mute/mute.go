@@ -8,7 +8,23 @@ import (
 )
 
 func IsMuted(ctx *ctx.Context, alert *models.AlertCurEvent) bool {
-	// 判断静默
+	if IsSilence(ctx, alert) {
+		return true
+	}
+
+	if InTheEffectiveTime(alert) {
+		return true
+	}
+
+	if RecoverNotify(alert) {
+		return true
+	}
+
+	return false
+}
+
+// IsSilence 判断是否创建静默规则
+func IsSilence(ctx *ctx.Context, alert *models.AlertCurEvent) bool {
 	var as models.AlertSilences
 	ctx.DB.DB().Model(models.AlertSilences{}).Where("fingerprint = ?", alert.Fingerprint).First(&as)
 
@@ -16,10 +32,11 @@ func IsMuted(ctx *ctx.Context, alert *models.AlertCurEvent) bool {
 		TenantId:    as.TenantId,
 		Fingerprint: as.Fingerprint,
 	})
+
 	if ok {
 		return true
 	} else {
-		ttl, _ := ctx.Redis.Redis().TTL(models.SilenceCachePrefix + alert.Fingerprint).Result()
+		ttl, _ := ctx.Redis.Redis().TTL(alert.TenantId + ":" + models.SilenceCachePrefix + alert.Fingerprint).Result()
 		// 如果剩余生存时间小于0，表示键已过期
 		if ttl < 0 {
 			ctx.DB.DB().Model(models.AlertSilences{}).
@@ -28,7 +45,7 @@ func IsMuted(ctx *ctx.Context, alert *models.AlertCurEvent) bool {
 		}
 	}
 
-	return InTheEffectiveTime(alert)
+	return false
 }
 
 // InTheEffectiveTime 判断生效时间
@@ -79,4 +96,14 @@ func currentWeekday(ct time.Time) string {
 func currentTimeSeconds(ct time.Time) int {
 	cs := ct.Hour()*3600 + ct.Minute()*60
 	return cs
+}
+
+// RecoverNotify 判断是否推送恢复通知
+func RecoverNotify(alert *models.AlertCurEvent) bool {
+	// 如果是恢复告警，并且 恢复通知 == 1，即关闭恢复通知
+	if alert.IsRecovered && !*alert.RecoverNotify {
+		return true
+	}
+
+	return false
 }
