@@ -5,18 +5,14 @@ import (
 )
 
 type AlertNotice struct {
-	TenantId        string `json:"tenantId"`
-	Uuid            string `json:"uuid"`
-	Name            string `json:"name"`
-	Env             string `json:"env"`
-	DutyId          string `json:"dutyId"`
-	NoticeType      string `json:"noticeType"`
-	EnableCard      string `json:"enableCard"`
-	Hook            string `json:"hook"`
-	Email           Email  `json:"email" gorm:"email;serializer:json"`
-	Template        string `json:"template"`
-	TemplateFiring  string `json:"templateFiring"`
-	TemplateRecover string `json:"templateRecover"`
+	TenantId     string `json:"tenantId"`
+	Uuid         string `json:"uuid"`
+	Name         string `json:"name"`
+	DutyId       string `json:"dutyId"`
+	NoticeType   string `json:"noticeType"`
+	NoticeTmplId string `json:"noticeTmplId"`
+	Hook         string `json:"hook"`
+	Email        Email  `json:"email" gorm:"email;serializer:json"`
 }
 
 type Email struct {
@@ -35,21 +31,27 @@ type AlertRecord struct {
 }
 
 type NoticeTemplateExample struct {
-	Id          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Template    string `json:"template"`
+	Id                   string `json:"id"`
+	Name                 string `json:"name"`
+	NoticeType           string `json:"noticeType"`
+	Description          string `json:"description"`
+	Template             string `json:"template"`
+	TemplateFiring       string `json:"templateFiring"`
+	TemplateRecover      string `json:"templateRecover"`
+	EnableFeiShuJsonCard *bool  `json:"enableFeiShuJsonCard"`
 }
 
 type NoticeQuery struct {
-	TenantId string `json:"tenantId" form:"tenantId"`
-	Uuid     string `json:"uuid" form:"uuid"`
-	Name     string `json:"name" form:"name"`
-	Query    string `json:"query" form:"query"`
+	TenantId     string `json:"tenantId" form:"tenantId"`
+	Uuid         string `json:"uuid" form:"uuid"`
+	Name         string `json:"name" form:"name"`
+	NoticeTmplId string `json:"noticeTmplId" form:"noticeTmplId"`
+	Query        string `json:"query" form:"query"`
 }
 
 type NoticeTemplateExampleQuery struct {
-	Id    string `json:"id" form:"id"`
-	Name  string `json:"name" form:"name"`
-	Query string `json:"query" form:"query"`
+	Id         string `json:"id" form:"id"`
+	Name       string `json:"name" form:"name"`
+	NoticeType string `json:"noticeType" form:"noticeType"`
+	Query      string `json:"query" form:"query"`
 }

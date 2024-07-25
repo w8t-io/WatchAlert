@@ -17,6 +17,7 @@ type (
 		Create(r models.NoticeTemplateExample) error
 		Update(r models.NoticeTemplateExample) error
 		Delete(r models.NoticeTemplateExampleQuery) error
+		Get(r models.NoticeTemplateExampleQuery) models.NoticeTemplateExample
 	}
 )
 
@@ -46,7 +47,17 @@ func (nr NoticeTmplRepo) Search(r models.NoticeTemplateExampleQuery) ([]models.N
 		data []models.NoticeTemplateExample
 		db   = nr.db.Model(&models.NoticeTemplateExample{})
 	)
-	db.Where("name LIKE ? OR description LIKE ?", "%"+r.Query+"%", "%"+r.Query+"%")
+	if r.Id != "" {
+		db.Where("id = ?", r.Id)
+	}
+
+	if r.NoticeType != "" {
+		db.Where("notice_type = ?", r.NoticeType)
+	}
+
+	if r.Query != "" {
+		db.Where("name LIKE ? OR description LIKE ?", "%"+r.Query+"%", "%"+r.Query+"%")
+	}
 	err := db.Find(&data).Error
 	if err != nil {
 		return nil, err
@@ -96,4 +107,20 @@ func (nr NoticeTmplRepo) Delete(r models.NoticeTemplateExampleQuery) error {
 	}
 
 	return nil
+}
+
+func (nr NoticeTmplRepo) Get(r models.NoticeTemplateExampleQuery) models.NoticeTemplateExample {
+	var (
+		data models.NoticeTemplateExample
+		db   = nr.db.Model(&models.NoticeTemplateExample{})
+	)
+	if r.Id != "" {
+		db.Where("id = ?", r.Id)
+	}
+
+	err := db.First(&data).Error
+	if err != nil {
+		return data
+	}
+	return data
 }

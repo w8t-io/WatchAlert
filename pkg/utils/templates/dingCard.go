@@ -6,10 +6,10 @@ import (
 	"watchAlert/pkg/utils/cmd"
 )
 
-func dingdingTemplate(alert models2.AlertCurEvent, notice models2.AlertNotice) string {
+func dingdingTemplate(alert models2.AlertCurEvent, noticeTmpl models2.NoticeTemplateExample) string {
 
-	Title := ParserTemplate("Title", alert, notice.Template)
-	Footer := ParserTemplate("Footer", alert, notice.Template)
+	Title := ParserTemplate("Title", alert, noticeTmpl.Template)
+	Footer := ParserTemplate("Footer", alert, noticeTmpl.Template)
 
 	userId := alert.DutyUser
 
@@ -23,7 +23,7 @@ func dingdingTemplate(alert models2.AlertCurEvent, notice models2.AlertNotice) s
 			Title: Title,
 			Text: "**" + Title + "**" +
 				"\n" + "\n" +
-				ParserTemplate("Event", alert, notice.Template) +
+				ParserTemplate("Event", alert, noticeTmpl.Template) +
 				"\n" +
 				Footer,
 		},

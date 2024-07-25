@@ -18,7 +18,7 @@ func Sender(ctx *ctx.Context, alert models.AlertCurEvent, notice models.AlertNot
 		return nil
 	}
 
-	n := templates.NewTemplate(alert, notice)
+	n := templates.NewTemplate(ctx, alert, notice)
 
 	switch notice.NoticeType {
 	case "Email":

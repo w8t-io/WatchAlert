@@ -1,6 +1,8 @@
 package services
 
 import (
+	"errors"
+	"fmt"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
 )
@@ -65,7 +67,20 @@ func (nts noticeTmplService) Update(req interface{}) (interface{}, interface{}) 
 
 func (nts noticeTmplService) Delete(req interface{}) (interface{}, interface{}) {
 	r := req.(*models.NoticeTemplateExampleQuery)
-	err := nts.ctx.DB.NoticeTmpl().Delete(*r)
+	nl, err := nts.ctx.DB.Notice().Search(models.NoticeQuery{NoticeTmplId: r.Id})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(nl) > 0 {
+		var ids []string
+		for _, n := range nl {
+			ids = append(ids, n.Uuid)
+		}
+		return nil, errors.New(fmt.Sprintf("删除失败, 已有通知对象绑定: %s", ids))
+	}
+
+	err = nts.ctx.DB.NoticeTmpl().Delete(*r)
 	if err != nil {
 		return nil, err
 	}
