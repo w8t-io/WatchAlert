@@ -64,7 +64,13 @@ func (nr NoticeRepo) Get(r models.NoticeQuery) (models.AlertNotice, error) {
 func (nr NoticeRepo) Search(req models.NoticeQuery) ([]models.AlertNotice, error) {
 	var data []models.AlertNotice
 	var db = nr.db.Model(&models.AlertNotice{})
-	db.Where("name LIKE ? OR env LIKE ? OR notice_type LIKE ?", "%"+req.Query+"%", "%"+req.Query+"%", "%"+req.Query+"%")
+	if req.NoticeTmplId != "" {
+		db.Where("notice_tmpl_id = ?", req.NoticeTmplId)
+	}
+
+	if req.Query != "" {
+		db.Where("uuid LIKE ? OR name LIKE ? OR env LIKE ? OR notice_type LIKE ?", "%"+req.Query+"%", "%"+req.Query+"%", "%"+req.Query+"%", "%"+req.Query+"%")
+	}
 	err := db.Find(&data).Error
 	if err != nil {
 		return nil, err
