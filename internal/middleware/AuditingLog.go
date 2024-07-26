@@ -51,6 +51,9 @@ func AuditingLog() gin.HandlerFunc {
 			return
 		}
 
+		// 当请求处理完成后才会执行 Next() 后面的代码
+		context.Next()
+
 		ps := models.PermissionsInfo()
 		auditLog := models.AuditLog{
 			TenantId:   tid,
