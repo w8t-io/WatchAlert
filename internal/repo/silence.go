@@ -34,6 +34,9 @@ func (sr SilenceRepo) List(r models.AlertSilenceQuery) (models.SilenceResponse, 
 	)
 	db := sr.db.Model(models.AlertSilences{})
 	db.Where("tenant_id = ?", r.TenantId)
+	if r.Status < 2 {
+		db.Where("status = ?", r.Status)
+	}
 
 	if r.Query != "" {
 		db.Where("id LIKE ? OR comment LIKE ?", "%"+r.Query+"%", "%"+r.Query+"%")

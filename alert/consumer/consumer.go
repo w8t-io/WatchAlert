@@ -256,20 +256,10 @@ func (ec *Consume) handleAlert(alerts []models.AlertCurEvent) {
 		return
 	}
 
-	var (
-		content  string
-		alertOne models.AlertCurEvent
-		curTime  = time.Now().Unix()
-	)
-
-	if len(alerts) > 1 {
-		content = fmt.Sprintf("聚合 %d 条告警\n", len(alerts))
+	alertOne := ec.groupAlert(alerts)
+	if alertOne.Fingerprint == "" {
+		return
 	}
-
-	// 聚合, 每组告警取第一位的告警数据
-	alertOne = alerts[0]
-	alertOne.Annotations += "\n" + content
-
 	noticeId := process.GetNoticeGroupId(alertOne)
 
 	r := models.NoticeQuery{
@@ -277,24 +267,62 @@ func (ec *Consume) handleAlert(alerts []models.AlertCurEvent) {
 		Uuid:     noticeId,
 	}
 	noticeData, _ := ec.ctx.DB.Notice().Get(r)
-
-	var wg sync.WaitGroup
-	for _, alert := range alerts {
-		alert.DutyUser = process.GetDutyUser(ec.ctx, noticeData)
-		if !alert.IsRecovered {
-			wg.Add(1)
-			go func(alert models.AlertCurEvent) {
-				defer wg.Done()
-				alert.LastSendTime = curTime
-				ec.ctx.Redis.Event().SetCache("Firing", alert, 0)
-			}(alert)
-		}
-	}
-	wg.Wait()
-
+	alertOne.DutyUser = process.GetDutyUser(ec.ctx, noticeData)
 	err := sender.Sender(ec.ctx, alertOne, noticeData)
 	if err != nil {
 		global.Logger.Sugar().Errorf(err.Error())
 		return
 	}
+}
+
+// 聚合告警
+func (ec *Consume) groupAlert(alerts []models.AlertCurEvent) models.AlertCurEvent {
+	var (
+		alertOne models.AlertCurEvent
+		curTime  = time.Now().Unix()
+		content  string
+	)
+
+	if len(alerts) > 1 {
+		content = fmt.Sprintf("聚合 %d 条告警\n", len(alerts))
+	}
+
+	for _, alert := range alerts {
+		if !alert.IsRecovered {
+			go func(alert models.AlertCurEvent) {
+				alert.LastSendTime = curTime
+				ec.ctx.Redis.Event().SetCache("Firing", alert, 0)
+			}(alert)
+		}
+
+		if !ec.isSilence(alert) {
+			alertOne = alert
+			alertOne.Annotations += "\n" + content
+		}
+	}
+
+	return alertOne
+}
+
+// 判断是否静默
+func (ec *Consume) isSilence(alert models.AlertCurEvent) bool {
+	_, ok := ctx.Redis.Silence().GetCache(models.AlertSilenceQuery{
+		TenantId:    alert.TenantId,
+		Fingerprint: alert.Fingerprint,
+	})
+
+	if ok {
+		return true
+	} else {
+		ttl, _ := ctx.Redis.Redis().TTL(alert.TenantId + ":" + models.SilenceCachePrefix + alert.Fingerprint).Result()
+		// 如果剩余生存时间小于0，表示键已过期
+		if ttl < 0 {
+			// 过期后标记为1
+			ctx.DB.DB().Model(models.AlertSilences{}).
+				Where("fingerprint = ? and status = ?", alert.Fingerprint, 0).
+				Update("status", 1)
+		}
+	}
+
+	return false
 }
