@@ -15,6 +15,7 @@ type AlertSilences struct {
 	CreateAt       int64  `json:"create_at"`
 	UpdateAt       int64  `json:"update_at"`
 	Comment        string `json:"comment"`
+	Status         int    `json:"status"` // 0 进行中, 1 已失效
 }
 
 type AlertSilenceQuery struct {
@@ -25,6 +26,7 @@ type AlertSilenceQuery struct {
 	DatasourceType string `json:"datasourceType" form:"datasourceType"`
 	Comment        string `json:"comment" form:"comment"`
 	Query          string `json:"query" form:"query"`
+	Status         int    `json:"status" form:"status"`
 	Page
 }
 
