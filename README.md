@@ -17,8 +17,6 @@
 <img alt="GitHub Repo issues closed" src="https://img.shields.io/github/issues-closed/w8t-io/WatchAlert">
 <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue"/>
 
-- - -
-
 ## 1. 概述
 > WatchAlert作为一款功能强大的开源监控告警管理系统，凭借其丰富的功能、灵活的配置和高效的性能，在云原生和DevOps领域具有广泛的应用前景。无论是对于初创企业还是大型企业，WatchAlert都能提供稳定可靠的监控告警解决方案，助力用户提升运维效率，降低维护成本。
 - 开发基础：WatchAlert采用Go语言和React框架开发，确保系统的稳定性和高效性。
