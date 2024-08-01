@@ -11,7 +11,7 @@ type Member struct {
 	CreateAt   int64     `json:"create_at"`
 	JoinDuty   string    `json:"joinDuty" `
 	DutyUserId string    `json:"dutyUserId"`
-	Tenants    *[]string `json:"tenants" gorm:"tenants;serializer:json"`
+	Tenants    []string `json:"tenants" gorm:"tenants;serializer:json"`
 }
 
 type MemberQuery struct {
