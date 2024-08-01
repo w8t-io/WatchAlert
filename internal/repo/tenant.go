@@ -284,8 +284,8 @@ func (tr TenantRepo) RemoveTenantLinkedUsers(t models.TenantQuery) error {
 		}
 		*newTenants = append(*newTenants, tid)
 	}
+  
 	userData.Tenants = *newTenants
-
 	err = tr.g.Updates(Updates{
 		Table: models.Member{},
 		Where: map[string]interface{}{
