@@ -12,9 +12,34 @@ type Tenant struct {
 	DutyNumber       int64  `json:"dutyNumber"`
 	NoticeNumber     int64  `json:"noticeNumber"`
 	RemoveProtection *bool  `json:"removeProtection" gorm:"type:BOOL"`
+	UserId           string `json:"userId" gorm:"-"`
 }
 
 type TenantQuery struct {
-	ID   string `json:"id" form:"id"`
-	Name string `json:"name" form:"name"`
+	ID     string `json:"id" form:"id"`
+	Name   string `json:"name" form:"name"`
+	UserID string `json:"userId" form:"userId"`
+}
+
+type TenantLinkedUsers struct {
+	ID       string       `json:"id"`
+	UserRole string       `json:"userRole" gorm:"-"` // 用于新增成员时统一的用户角色
+	Users    []TenantUser `json:"users" gorm:"users;serializer:json"`
+}
+
+type TenantUser struct {
+	UserID   string `json:"userId"`
+	UserName string `json:"userName"`
+	UserRole string `json:"userRole"`
+}
+
+type GetTenantLinkedUserInfo struct {
+	ID     string `json:"id" form:"id"`
+	UserID string `json:"userId" form:"userId"`
+}
+
+type ChangeTenantUserRole struct {
+	ID       string `json:"id"`
+	UserID   string `json:"userId"`
+	UserRole string `json:"userRole" `
 }

@@ -291,5 +291,25 @@ func PermissionsInfo() map[string]UserPermissions {
 			Key: "Prometheus指标查询",
 			API: "/api/w8t/datasource/promQuery",
 		},
+		"getTenant": {
+			Key: "获取租户详细信息",
+			API: "/api/w8t/tenant/getTenant",
+		},
+		"addUsersToTenant": {
+			Key: "向租户添加成员",
+			API: "/api/w8t/tenant/addUsersToTenant",
+		},
+		"delUsersOfTenant": {
+			Key: "删除租户成员",
+			API: "/api/w8t/tenant/delUsersOfTenant",
+		},
+		"getUsersForTenant": {
+			Key: "获取租户成员列表",
+			API: "/api/w8t/tenant/getUsersForTenant",
+		},
+		"changeTenantUserRole": {
+			Key: "修改租户成员角色",
+			API: "/api/w8t/tenant/changeTenantUserRole",
+		},
 	}
 }
