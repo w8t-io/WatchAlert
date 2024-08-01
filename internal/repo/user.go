@@ -86,8 +86,6 @@ func (ur UserRepo) Get(r models.MemberQuery) (models.Member, bool, error) {
 }
 
 func (ur UserRepo) Create(r models.Member) error {
-	var ts = &[]string{}
-	r.Tenants = ts
 	err := ur.g.Create(models.Member{}, r)
 	if err != nil {
 		return err
