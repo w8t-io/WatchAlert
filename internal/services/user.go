@@ -103,7 +103,10 @@ func (us userService) Register(req interface{}) (interface{}, interface{}) {
 
 	arr := md5.Sum([]byte(r.Password))
 	hashPassword := hex.EncodeToString(arr[:])
-	r.UserId = cmd.RandUid()
+	// 在初始化admin用户时会固定一个userid，所以这里需要做一下判断；
+	if r.UserId == "" {
+		r.UserId = cmd.RandUid()
+	}
 	r.Password = hashPassword
 	r.CreateAt = time.Now().Unix()
 

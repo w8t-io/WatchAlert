@@ -14,9 +14,11 @@ import (
 )
 
 func Permission() gin.HandlerFunc {
-
 	return func(context *gin.Context) {
-
+		tid := context.Request.Header.Get(TenantIDHeaderKey)
+		if tid == "null" || tid == "" {
+			return
+		}
 		// 获取 Token
 		tokenStr := context.Request.Header.Get("Authorization")
 		if tokenStr == "" {
@@ -31,7 +33,6 @@ func Permission() gin.HandlerFunc {
 		userId := utils.GetUserID(tokenStr)
 
 		c := ctx.DO()
-
 		// 获取当前用户
 		var user models.Member
 		err := c.DB.DB().Model(&models.Member{}).Where("user_id = ?", userId).First(&user).Error
@@ -44,15 +45,24 @@ func Permission() gin.HandlerFunc {
 			return
 		}
 
+		// 获取租户用户角色
+		tenantUserInfo, _ := c.DB.Tenant().GetTenantLinkedUserInfo(models.GetTenantLinkedUserInfo{ID: tid, UserID: userId})
+		if err != nil {
+			global.Logger.Sugar().Errorf("获取租户用户角色失败 %s", err.Error())
+			response.TokenFail(context)
+			context.Abort()
+			return
+		}
+
 		var (
 			role       models.UserRole
 			permission []models.UserPermissions
 		)
 		// 根据用户角色获取权限
-		err = c.DB.DB().Model(&models.UserRole{}).Where("name = ?", user.Role).First(&role).Error
+		err = c.DB.DB().Model(&models.UserRole{}).Where("id = ?", tenantUserInfo.UserRole).First(&role).Error
 		if err != nil {
-			response.Fail(context, fmt.Sprintf("获取用户 %s 的角色失败, 角色名称: %s", user.UserName, user.Role), "failed")
-			global.Logger.Sugar().Errorf("获取用户 %s 的角色失败 -> %s", user.UserName, err.Error())
+			response.Fail(context, fmt.Sprintf("获取用户 %s 的角色失败, %s %s", user.UserName, tenantUserInfo.UserRole, err.Error()), "failed")
+			global.Logger.Sugar().Errorf("获取用户 %s 的角色失败 %s %s", user.UserName, tenantUserInfo.UserRole, err.Error())
 			context.Abort()
 			return
 		}
@@ -72,7 +82,5 @@ func Permission() gin.HandlerFunc {
 			context.Abort()
 			return
 		}
-
 	}
-
 }
