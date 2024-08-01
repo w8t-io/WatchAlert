@@ -77,7 +77,7 @@ func (tr TenantRepo) Create(t models.Tenant) error {
 			return err
 		}
 
-		*userData.Tenants = append(*userData.Tenants, t.ID)
+		userData.Tenants = append(userData.Tenants, t.ID)
 		err = tr.g.Updates(Updates{
 			Table: models.Member{},
 			Where: map[string]interface{}{
@@ -147,7 +147,7 @@ func (tr TenantRepo) List(t models.TenantQuery) (data []models.Tenant, err error
 	}
 
 	var ts = &[]models.Tenant{}
-	for _, tid := range *getUser.Tenants {
+	for _, tid := range getUser.Tenants {
 		getT, err := tr.Tenant().Get(models.TenantQuery{ID: tid})
 		if err != nil {
 			return nil, err
@@ -221,14 +221,14 @@ func (tr TenantRepo) AddTenantLinkedUsers(t models.TenantLinkedUsers) error {
 		}
 
 		var exist bool
-		for _, tid := range *userData.Tenants {
+		for _, tid := range userData.Tenants {
 			if tid == t.ID {
 				exist = true
 			}
 		}
 
 		if !exist {
-			*userData.Tenants = append(*userData.Tenants, t.ID)
+			userData.Tenants = append(userData.Tenants, t.ID)
 		}
 		err = tr.g.Updates(Updates{
 			Table: models.Member{},
@@ -278,14 +278,14 @@ func (tr TenantRepo) RemoveTenantLinkedUsers(t models.TenantQuery) error {
 	}
 
 	var newTenants = &[]string{}
-	for _, tid := range *userData.Tenants {
+	for _, tid := range userData.Tenants {
 		if tid == t.ID {
 			continue
 		}
 		*newTenants = append(*newTenants, tid)
 	}
-	*userData.Tenants = *newTenants
-
+  
+	userData.Tenants = *newTenants
 	err = tr.g.Updates(Updates{
 		Table: models.Member{},
 		Where: map[string]interface{}{
