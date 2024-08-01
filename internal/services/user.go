@@ -107,6 +107,7 @@ func (us userService) Register(req interface{}) (interface{}, interface{}) {
 	if r.UserId == "" {
 		r.UserId = cmd.RandUid()
 	}
+
 	r.Password = hashPassword
 	r.CreateAt = time.Now().Unix()
 

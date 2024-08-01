@@ -86,11 +86,20 @@ func (ur UserRepo) Get(r models.MemberQuery) (models.Member, bool, error) {
 }
 
 func (ur UserRepo) Create(r models.Member) error {
-	var ts = &[]string{}
-	r.Tenants = ts
 	err := ur.g.Create(models.Member{}, r)
 	if err != nil {
 		return err
+	}
+
+	if r.UserId == "admin" {
+		r.Tenants = append(r.Tenants, "default")
+		err = ur.g.Updates(Updates{
+			Table: models.Member{},
+			Where: map[string]interface{}{
+				"user_id = ?": r.UserId,
+			},
+			Updates: r,
+		})
 	}
 
 	return nil
@@ -119,7 +128,7 @@ func (ur UserRepo) Delete(r models.MemberQuery) error {
 		return err
 	}
 
-	for _, tid := range *userInfo.Tenants {
+	for _, tid := range userInfo.Tenants {
 		err = ur.Tenant().RemoveTenantLinkedUsers(models.TenantQuery{ID: tid, UserID: r.UserId})
 		if err != nil {
 			return err
