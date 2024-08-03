@@ -16,6 +16,7 @@ type AlertDataSource struct {
 	AliCloudSk       string        `json:"alicloudSk"`
 	AWSCloudWatch    AWSCloudWatch `json:"awsCloudwatch" gorm:"awsCloudwatch;serializer:json"`
 	Description      string        `json:"description"`
+	KubeConfig       string        `json:"kubeConfig"`
 	Enabled          *bool         `json:"enabled" `
 }
 
@@ -53,6 +54,8 @@ func (ds AlertDataSource) CheckHealth() (bool, error) {
 	case "AliCloud":
 		return true, nil
 	case "CloudWatch":
+		return true, nil
+	case "Kubernetes":
 		return true, nil
 	}
 

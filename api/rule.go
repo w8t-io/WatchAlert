@@ -10,8 +10,8 @@ import (
 type RuleController struct{}
 
 /*
-	告警规则 API
-	/api/w8t/rule
+告警规则 API
+/api/w8t/rule
 */
 func (rc RuleController) API(gin *gin.RouterGroup) {
 	ruleA := gin.Group("rule")
@@ -87,8 +87,8 @@ func (rc RuleController) Delete(ctx *gin.Context) {
 }
 
 func (rc RuleController) Search(ctx *gin.Context) {
-	r := new(models.AlertRule)
-	BindJson(ctx, r)
+	r := new(models.AlertRuleQuery)
+	BindQuery(ctx, r)
 
 	tid, _ := ctx.Get("TenantID")
 	r.TenantId = tid.(string)

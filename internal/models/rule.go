@@ -41,10 +41,20 @@ type AlertRule struct {
 	// AWS CloudWatch
 	CloudWatchConfig CloudWatchConfig `json:"cloudwatchConfig" gorm:"cloudwatchConfig;serializer:json"`
 
+	KubernetesConfig KubernetesConfig `json:"kubernetesConfig" gorm:"kubernetesConfig;serializer:json"`
+
 	NoticeId      string      `json:"noticeId"`
 	NoticeGroup   NoticeGroup `json:"noticeGroup" gorm:"noticeGroup;serializer:json"`
 	RecoverNotify *bool       `json:"recoverNotify"`
 	Enabled       *bool       `json:"enabled" gorm:"enabled"`
+}
+
+type KubernetesConfig struct {
+	Resource string   `json:"resource"`
+	Reason   string   `json:"reason"`
+	Value    int      `json:"value"`
+	Filter   []string `json:"filter"`
+	Scope    int      `json:"scope"`
 }
 
 type JaegerConfig struct {
