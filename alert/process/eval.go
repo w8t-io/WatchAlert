@@ -14,27 +14,27 @@ func EvalCondition(ctx *ctx.Context, f func() models.AlertCurEvent, value float6
 		switch ec.Operator {
 		case ">":
 			if value > ec.Value {
-				processEvent(ctx, f())
+				SaveAlertEvent(ctx, f())
 			}
 		case ">=":
 			if value >= ec.Value {
-				processEvent(ctx, f())
+				SaveAlertEvent(ctx, f())
 			}
 		case "<":
 			if value < ec.Value {
-				processEvent(ctx, f())
+				SaveAlertEvent(ctx, f())
 			}
 		case "<=":
 			if value <= ec.Value {
-				processEvent(ctx, f())
+				SaveAlertEvent(ctx, f())
 			}
 		case "==":
 			if value == ec.Value {
-				processEvent(ctx, f())
+				SaveAlertEvent(ctx, f())
 			}
 		case "!=":
 			if value != ec.Value {
-				processEvent(ctx, f())
+				SaveAlertEvent(ctx, f())
 			}
 		default:
 			global.Logger.Sugar().Error("无效的评估条件", ec.Type, ec.Operator, ec.Value)
@@ -45,7 +45,7 @@ func EvalCondition(ctx *ctx.Context, f func() models.AlertCurEvent, value float6
 
 }
 
-func processEvent(ctx *ctx.Context, event models.AlertCurEvent) {
+func SaveAlertEvent(ctx *ctx.Context, event models.AlertCurEvent) {
 	ok := ctx.DB.Rule().GetRuleIsExist(event.RuleId)
 	if ok {
 		SaveEventCache(ctx, event)

@@ -311,5 +311,13 @@ func PermissionsInfo() map[string]UserPermissions {
 			Key: "修改租户成员角色",
 			API: "/api/w8t/tenant/changeTenantUserRole",
 		},
+		"getResourceList": {
+			Key: "获取Kubernetes资源列表",
+			API: "/api/w8t/kubernetes/getResourceList",
+		},
+		"getReasonList": {
+			Key: "获取Kubernetes事件类型列表",
+			API: "/api/w8t/kubernetes/getReasonList",
+		},
 	}
 }
