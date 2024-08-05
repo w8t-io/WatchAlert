@@ -399,7 +399,7 @@ func (rq *RuleQuery) jaeger(datasourceId string, rule models.AlertRule) {
 		event.DatasourceId = datasourceId
 		event.Fingerprint = v.GetFingerprint()
 		event.Metric = v.GetMetric(rule)
-		event.Annotations = v.GetAnnotations(rule)
+		event.Annotations = v.GetAnnotations(rule, datasourceInfo)
 
 		key := rq.alertEvent.GetFiringAlertCacheKey()
 		curKeys = append(curKeys, key)
