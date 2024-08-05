@@ -88,8 +88,8 @@ func (j JaegerData) GetMetric(rule models.AlertRule) map[string]interface{} {
 	}
 }
 
-func (j JaegerData) GetAnnotations(rule models.AlertRule) string {
-	return fmt.Sprintf("\n服务: %s 链路中存在异常状态码接口\nJaeger URL: %s/trace/%s\n\n详情查看 Jaeger Trace ⬆️", rule.JaegerConfig.Service, global.Config.Jaeger.URL, j.TraceID)
+func (j JaegerData) GetAnnotations(rule models.AlertRule, ds models.AlertDataSource) string {
+	return fmt.Sprintf("\n服务: %s 链路中存在异常状态码接口\nJaeger URL: %s/trace/%s\n\n详情查看 Jaeger Trace ⬆️", rule.JaegerConfig.Service, ds.HTTP.URL, j.TraceID)
 }
 
 type JaegerServiceData struct {
