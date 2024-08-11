@@ -42,6 +42,7 @@ func Router(engine *gin.Engine) {
 			AWSRds.API(w8t)
 			Setting.API(w8t)
 			KubeEvent.API(w8t)
+			Monitor.API(w8t)
 		}
 
 	}

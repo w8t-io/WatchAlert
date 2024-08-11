@@ -2,21 +2,20 @@ package eval
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 	"watchAlert/alert/query"
 	"watchAlert/alert/queue"
 	"watchAlert/internal/global"
 	models "watchAlert/internal/models"
-	"watchAlert/internal/services"
 	"watchAlert/pkg/ctx"
 )
 
 type AlertRuleWork struct {
 	sync.RWMutex
 	query.RuleQuery
-	ctx *ctx.Context
-	services.InterAlertService
+	ctx        *ctx.Context
 	rule       chan *models.AlertRule
 	alertEvent models.AlertCurEvent
 }
@@ -49,9 +48,7 @@ func (arw *AlertRuleWork) Run() {
 		}
 	}()
 
-	// 重启服务后将历史 Rule 重新推到队列中
-	services.AlertService.RePushRule(arw.ctx, arw.rule)
-
+	rePushRule(arw.ctx, arw.rule)
 }
 
 func (arw *AlertRuleWork) worker(rule models.AlertRule, ctx context.Context) {
@@ -72,6 +69,44 @@ func (arw *AlertRuleWork) worker(rule models.AlertRule, ctx context.Context) {
 
 		timer.Reset(time.Second * time.Duration(rule.EvalInterval))
 
+	}
+
+}
+
+func rePushRule(ctx *ctx.Context, alertRule chan *models.AlertRule) {
+
+	var (
+		ruleList []models.AlertRule
+		// 创建一个通道用于接收处理结果
+		resultCh = make(chan error)
+		// 使用 WaitGroup 来等待所有规则的处理完成
+		wg sync.WaitGroup
+	)
+	ctx.DB.DB().Where("enabled = ?", "1").Find(&ruleList)
+
+	// 并发处理规则
+	for _, rule := range ruleList {
+		wg.Add(1)
+		go func(rule models.AlertRule) {
+			defer wg.Done()
+
+			alertRule <- &rule
+
+			resultCh <- nil
+		}(rule)
+	}
+
+	// 等待所有规则的处理完成
+	go func() {
+		wg.Wait()
+		close(resultCh)
+	}()
+
+	// 处理结果
+	for result := range resultCh {
+		if result != nil {
+			fmt.Println("Error:", result)
+		}
 	}
 
 }

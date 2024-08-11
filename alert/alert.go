@@ -3,16 +3,23 @@ package alert
 import (
 	"watchAlert/alert/consumer"
 	"watchAlert/alert/eval"
+	"watchAlert/alert/task"
 	"watchAlert/internal/global"
 	"watchAlert/pkg/ctx"
 )
 
-func Initialize(ctx *ctx.Context) {
+var (
+	MonEvalTask     task.MonitorSSLEval
+	MonConsumerTask consumer.MonitorSslConsumer
+)
 
+func Initialize(ctx *ctx.Context) {
 	consumer.NewInterEvalConsumeWork(ctx).Run()
 	eval.NewInterAlertRuleWork(ctx).Run()
 	initAlarmConfig(ctx)
-
+	MonConsumerTask = consumer.NewMonitorSslConsumer(ctx)
+	MonEvalTask = task.NewMonitorSSLEval()
+	MonEvalTask.RePushTask(ctx, &MonConsumerTask)
 }
 
 func initAlarmConfig(ctx *ctx.Context) {
