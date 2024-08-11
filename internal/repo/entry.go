@@ -31,6 +31,7 @@ type (
 		UserRole() InterUserRoleRepo
 		UserPermissions() InterUserPermissionsRepo
 		Setting() InterSettingRepo
+		MonitorSSL() InterMonitorSSLRepo
 	}
 )
 
@@ -65,4 +66,5 @@ func (e *entryRepo) UserRole() InterUserRoleRepo { return newUserRoleInterface(e
 func (e *entryRepo) UserPermissions() InterUserPermissionsRepo {
 	return newInterUserPermissionsRepo(e.db, e.g)
 }
-func (e *entryRepo) Setting() InterSettingRepo { return newSettingRepoInterface(e.db, e.g) }
+func (e *entryRepo) Setting() InterSettingRepo       { return newSettingRepoInterface(e.db, e.g) }
+func (e *entryRepo) MonitorSSL() InterMonitorSSLRepo { return newMonitorSSLInterface(e.db, e.g) }

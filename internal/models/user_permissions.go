@@ -319,5 +319,25 @@ func PermissionsInfo() map[string]UserPermissions {
 			Key: "获取Kubernetes事件类型列表",
 			API: "/api/w8t/kubernetes/getReasonList",
 		},
+		"createMon": {
+			Key: "创建证书监控",
+			API: "/api/w8t/monitor/createMon",
+		},
+		"updateMon": {
+			Key: "更新证书监控",
+			API: "/api/w8t/monitor/updateMon",
+		},
+		"deleteMon": {
+			Key: "删除证书监控",
+			API: "/api/w8t/monitor/deleteMon",
+		},
+		"listMon": {
+			Key: "获取证书监控列表",
+			API: "/api/w8t/monitor/listMon",
+		},
+		"getMon": {
+			Key: "获取证书监控信息",
+			API: "/api/w8t/monitor/getMon",
+		},
 	}
 }
