@@ -24,11 +24,7 @@ services:
     restart: always
     privileged: true
     ports:
-      - "80:3000"
-    entrypoint: ["/bin/sh","-c"]
-    command:
-      - |
-        yarn start
+      - "80:80"
 
     networks:
       - w8t

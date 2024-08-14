@@ -29,3 +29,53 @@ data:
     Jwt:
       # 失效时间
       expire: 18000
+
+  nginx.conf: |-
+    server {
+        listen 80;
+
+        root /app;
+        index index.html index.htm;
+
+        location / {
+            add_header Access-Control-Allow-Origin *;
+            add_header Access-Control-Allow-Methods 'GET, POST, OPTIONS';
+            add_header Access-Control-Allow-Headers 'DNT,X-Mx-ReqToken,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization';
+
+            try_files $uri $uri/ /index.html;
+        }
+
+        location /api {
+            add_header Access-Control-Allow-Origin *;
+            add_header Access-Control-Allow-Methods 'GET, POST, OPTIONS';
+            add_header Access-Control-Allow-Headers 'DNT,X-Mx-ReqToken,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization';
+
+            resolver 8.8.8.8;
+            #error Connection timed out and 504 error
+            client_max_body_size 100m;
+            fastcgi_connect_timeout 300;
+            fastcgi_read_timeout 300;
+            fastcgi_send_timeout 300;
+            fastcgi_buffer_size 64k;
+            fastcgi_buffers   4 32k;
+            fastcgi_busy_buffers_size 64k;
+            fastcgi_temp_file_write_size 64k;
+
+            proxy_ssl_server_name on;
+            proxy_read_timeout 240s;
+            proxy_ssl_protocols TLSv1.2;
+            proxy_pass http://$host:30901;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header Content-Type "application/json";
+            proxy_set_body $request_body;
+            proxy_pass_request_headers on;
+            proxy_request_buffering off;
+        }
+
+        error_page 500 502 503 504 /500.html;
+        client_max_body_size 20M;
+        keepalive_timeout 10;
+    }
