@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"io"
+	"net/url"
 	middleware "watchAlert/internal/middleware"
 	"watchAlert/internal/models"
 	"watchAlert/internal/services"
@@ -128,7 +129,9 @@ func (dc DatasourceController) PromQuery(ctx *gin.Context) {
 		if r.DatasourceType == "VictoriaMetrics" {
 			path = "/prometheus" + path
 		}
-		get, err := http.Get(fmt.Sprintf("%s%s?query=%s", r.Addr, path, r.Query))
+
+		encodedQuery := url.QueryEscape(r.Query)
+		get, err := http.Get(fmt.Sprintf("%s%s?query=%s", r.Addr, path, encodedQuery))
 		if err != nil {
 			return nil, err
 		}
