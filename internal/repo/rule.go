@@ -3,7 +3,6 @@ package repo
 import (
 	"gorm.io/gorm"
 	"watchAlert/internal/models"
-	"watchAlert/pkg/utils/cmd"
 )
 
 type (
@@ -110,10 +109,7 @@ func (rr RuleRepo) List(r models.AlertRuleQuery) (models.RuleResponse, error) {
 }
 
 func (rr RuleRepo) Create(r models.AlertRule) error {
-	nr := r
-	nr.RuleId = "a-" + cmd.RandId()
-
-	err := rr.g.Create(models.AlertRule{}, nr)
+	err := rr.g.Create(models.AlertRule{}, r)
 	if err != nil {
 		return err
 	}
