@@ -40,6 +40,8 @@ func (rq *RuleQuery) Query(ctx *ctx.Context, rule models.AlertRule) {
 			rq.cloudWatch(dsId, rule)
 		case "KubernetesEvent":
 			rq.kubernetesEvent(dsId, rule)
+		case "ElasticSearch":
+			rq.elasticSearch(dsId, rule)
 		}
 	}
 
@@ -508,5 +510,62 @@ func (rq *RuleQuery) kubernetesEvent(datasourceId string, rule models.AlertRule)
 		)
 
 		process.SaveAlertEvent(rq.ctx, alertEvent)
+	}
+}
+
+func (rq *RuleQuery) elasticSearch(datasourceId string, rule models.AlertRule) {
+	var curKeys []string
+	defer func() {
+		rq.alertRecover(rule, curKeys)
+		go process.GcRecoverWaitCache(rule, curKeys)
+	}()
+
+	datasourceInfo, err := rq.ctx.DB.Datasource().Get(models.DatasourceQuery{
+		TenantId: rule.TenantId,
+		Id:       datasourceId,
+	})
+	if err != nil {
+		return
+	}
+
+	cli, err := client.NewElasticSearchClient(rq.ctx.Ctx, datasourceInfo)
+	if err != nil {
+		global.Logger.Sugar().Error(err.Error())
+		return
+	}
+
+	res, err := cli.Query(rq.ctx.Ctx, rule.ElasticSearchConfig.Index, rule.ElasticSearchConfig.Filter, rule.ElasticSearchConfig.Scope)
+	if err != nil {
+		global.Logger.Sugar().Error(err.Error())
+		return
+	}
+
+	count := len(res)
+	if count <= 0 {
+		return
+	}
+
+	for _, v := range res {
+		event := func() models.AlertCurEvent {
+			event := process.ParserDefaultEvent(rule)
+			event.DatasourceId = datasourceId
+			event.Fingerprint = v.GetFingerprint()
+			event.Metric = v.GetMetric()
+			event.Annotations = v.GetAnnotations()
+
+			key := event.GetPendingAlertCacheKey()
+			curKeys = append(curKeys, key)
+
+			return event
+		}
+
+		options := models.EvalCondition{
+			Type:     "count",
+			Operator: ">",
+			Value:    1,
+		}
+
+		// 评估告警条件
+		process.EvalCondition(rq.ctx, event, float64(count), options)
 	}
 }

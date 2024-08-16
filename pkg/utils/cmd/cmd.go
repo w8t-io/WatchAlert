@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/rs/xid"
+	"github.com/sirupsen/logrus"
 	"math/rand"
 	"regexp"
+	"strconv"
 	"time"
 	"watchAlert/internal/global"
 )
@@ -113,4 +115,20 @@ func FormatJson(s string) string {
 		ns = s
 	}
 	return ns
+}
+
+func FormatTimeToUTC(t int64) string {
+	utcTime := time.Unix(t, 0).UTC()
+	utcTimeString := utcTime.Format("2006-01-02T15:04:05.999Z")
+	return utcTimeString
+}
+
+func ParserDuration(curTime time.Time, logScope int, timeType string) time.Time {
+	duration, err := time.ParseDuration(strconv.Itoa(logScope) + timeType)
+	if err != nil {
+		logrus.Error(err.Error())
+		return time.Time{}
+	}
+	startsAt := curTime.Add(-duration)
+	return startsAt
 }
