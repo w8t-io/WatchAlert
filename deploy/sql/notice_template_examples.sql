@@ -1,6 +1,6 @@
 INSERT INTO `notice_template_examples` (`id`, `name`, `description`, `template`, `enable_fei_shu_json_card`,
                                         `template_firing`, `template_recover`, `notice_type`)
-VALUES (''nt-cqh3uppd6gvj2ctaqd60'', ''通用模版'', '''', ''{{- define "Title" -}}
+VALUES ('nt-cqh3uppd6gvj2ctaqd60', '通用模版', '', '{{- define "Title" -}}
 {{- if not .IsRecovered -}}
     【报警中】- 即时设计业务系统 🔥
 {{- else -}}
@@ -39,10 +39,10 @@ green
 
     {{- define "Footer" -}}
     🧑‍💻 即时设计 - 运维团队
-{{- end }}'', ''false'', '''', '''', ''FeiShu'');
+{{- end }}', false, '', '', 'FeiShu');
 INSERT INTO `notice_template_examples` (`id`, `name`, `description`, `template`, `enable_fei_shu_json_card`,
                                         `template_firing`, `template_recover`, `notice_type`)
-VALUES (''nt-cqh4361d6gvj80netqk0'', ''飞书高级消息卡片模版'', '''', '''', ''true'', ''{
+VALUES ('nt-cqh4361d6gvj80netqk0', '飞书高级消息卡片模版', '', '', true, '{
   "elements": [
     {
       "tag": "column_set",
@@ -56,13 +56,13 @@ VALUES (''nt-cqh4361d6gvj80netqk0'', ''飞书高级消息卡片模版'', '''', '
         "columns": [],
         "elements": null
     },
-           { "tag" : "column_set",
-        "flexMode": "none",
-        "background_style": "default",
-        "text": {
-        "content": "",
-        "tag": ""
-      },
+        { "tag" : "column_set",
+            "flexMode": "none",
+                "background_style": "default",
+                "text": {
+            "content": "",
+            "tag": ""
+            },
         "actions": null,
         "columns": [
         {
@@ -80,30 +80,30 @@ VALUES (''nt-cqh4361d6gvj80netqk0'', ''飞书高级消息卡片模版'', '''', '
             }
           ]
         },
-           { "tag" : "column",
-        "width": "weighted",
-        "weight": 1,
-        "vertical_align": "top",
-        "elements": [
+        { "tag" : "column",
+            "width": "weighted",
+                "weight": 1,
+                "vertical_align": "top",
+            "elements": [
             {
-              "tag": "div",
-        "text": {
+            "tag": "div",
+            "text": {
                 "content": "**🤖 报警类型：**\n${rule_name}",
-        "tag": "lark_md"
-              }
+                "tag": "lark_md"
+            }
             }
           ]
         }
       ],
         "elements": null
     },
-           { "tag" : "column_set",
-        "flexMode": "none",
-        "background_style": "default",
-        "text": {
-        "content": "",
-        "tag": ""
-      },
+        { "tag" : "column_set",
+            "flexMode": "none",
+                "background_style": "default",
+                "text": {
+            "content": "",
+            "tag": ""
+            },
         "actions": null,
         "columns": [
         {
@@ -121,30 +121,30 @@ VALUES (''nt-cqh4361d6gvj80netqk0'', ''飞书高级消息卡片模版'', '''', '
             }
           ]
         },
-           { "tag" : "column",
-        "width": "weighted",
-        "weight": 1,
-        "vertical_align": "top",
-        "elements": [
+        { "tag" : "column",
+            "width": "weighted",
+                "weight": 1,
+                "vertical_align": "top",
+            "elements": [
             {
-              "tag": "div",
-        "text": {
+            "tag": "div",
+            "text": {
                 "content": "**🕘 开始时间：**\n${first_trigger_time_format}",
-        "tag": "lark_md"
-              }
+                "tag": "lark_md"
+            }
             }
           ]
         }
       ],
         "elements": null
     },
-           { "tag" : "column_set",
-        "flexMode": "none",
-        "background_style": "default",
-        "text": {
-        "content": "",
-        "tag": ""
-      },
+        { "tag" : "column_set",
+            "flexMode": "none",
+                "background_style": "default",
+                "text": {
+            "content": "",
+            "tag": ""
+            },
         "actions": null,
         "columns": [
         {
@@ -162,30 +162,30 @@ VALUES (''nt-cqh4361d6gvj80netqk0'', ''飞书高级消息卡片模版'', '''', '
             }
           ]
         },
-           { "tag" : "column",
-        "width": "weighted",
-        "weight": 1,
-        "vertical_align": "top",
-        "elements": [
+        { "tag" : "column",
+            "width": "weighted",
+                "weight": 1,
+                "vertical_align": "top",
+            "elements": [
             {
-              "tag": "div",
-        "text": {
+            "tag": "div",
+            "text": {
                 "content": "**🖥 报警主机：**\n${metric.instance}",
-        "tag": "lark_md"
-              }
+                "tag": "lark_md"
+            }
             }
           ]
         }
       ],
         "elements": null
     },
-           { "tag" : "column_set",
-        "flexMode": "none",
-        "background_style": "default",
-        "text": {
-        "content": "",
-        "tag": ""
-      },
+        { "tag" : "column_set",
+            "flexMode": "none",
+                "background_style": "default",
+                "text": {
+            "content": "",
+            "tag": ""
+            },
         "actions": null,
         "columns": [
         {
@@ -206,24 +206,24 @@ VALUES (''nt-cqh4361d6gvj80netqk0'', ''飞书高级消息卡片模版'', '''', '
       ],
         "elements": null
     },
-           { "tag" : "hr",
-        "flexMode": "",
-        "background_style": "",
-        "text": {
-        "content": "",
-        "tag": ""
-      },
+        { "tag" : "hr",
+            "flexMode": "",
+                "background_style": "",
+                "text": {
+            "content": "",
+            "tag": ""
+            },
         "actions": null,
         "columns": null,
         "elements": null
     },
-           { "tag" : "note",
-        "flexMode": "",
-        "background_style": "",
-        "text": {
-        "content": "",
-        "tag": ""
-      },
+        { "tag" : "note",
+            "flexMode": "",
+                "background_style": "",
+                "text": {
+            "content": "",
+            "tag": ""
+            },
         "actions": null,
         "columns": null,
         "elements": [
@@ -242,7 +242,7 @@ VALUES (''nt-cqh4361d6gvj80netqk0'', ''飞书高级消息卡片模版'', '''', '
     }
   },
         "tag": ""
-}'', ''{
+}', '{
   "elements": [
     {
       "tag": "column_set",
@@ -256,13 +256,13 @@ VALUES (''nt-cqh4361d6gvj80netqk0'', ''飞书高级消息卡片模版'', '''', '
         "columns": [],
         "elements": null
     },
-           { "tag" : "column_set",
-        "flexMode": "none",
-        "background_style": "default",
-        "text": {
-        "content": "",
-        "tag": ""
-      },
+        { "tag" : "column_set",
+            "flexMode": "none",
+                "background_style": "default",
+                "text": {
+            "content": "",
+            "tag": ""
+            },
         "actions": null,
         "columns": [
         {
@@ -280,30 +280,30 @@ VALUES (''nt-cqh4361d6gvj80netqk0'', ''飞书高级消息卡片模版'', '''', '
             }
           ]
         },
-           { "tag" : "column",
-        "width": "weighted",
-        "weight": 1,
-        "vertical_align": "top",
-        "elements": [
+        { "tag" : "column",
+            "width": "weighted",
+                "weight": 1,
+                "vertical_align": "top",
+            "elements": [
             {
-              "tag": "div",
-        "text": {
+            "tag": "div",
+            "text": {
                 "content": "**🤖 报警类型：**\n${rule_name}",
-        "tag": "lark_md"
-              }
+                "tag": "lark_md"
+            }
             }
           ]
         }
       ],
         "elements": null
     },
-           { "tag" : "column_set",
-        "flexMode": "none",
-        "background_style": "default",
-        "text": {
-        "content": "",
-        "tag": ""
-      },
+        { "tag" : "column_set",
+            "flexMode": "none",
+                "background_style": "default",
+                "text": {
+            "content": "",
+            "tag": ""
+            },
         "actions": null,
         "columns": [
         {
@@ -321,30 +321,30 @@ VALUES (''nt-cqh4361d6gvj80netqk0'', ''飞书高级消息卡片模版'', '''', '
             }
           ]
         },
-           { "tag" : "column",
-        "width": "weighted",
-        "weight": 1,
-        "vertical_align": "top",
-        "elements": [
+        { "tag" : "column",
+            "width": "weighted",
+                "weight": 1,
+                "vertical_align": "top",
+            "elements": [
             {
-              "tag": "div",
-        "text": {
+            "tag": "div",
+            "text": {
                 "content": "**🕘 开始时间：**\n${first_trigger_time_format}",
-        "tag": "lark_md"
-              }
+                "tag": "lark_md"
+            }
             }
           ]
         }
       ],
         "elements": null
     },
-           { "tag" : "column_set",
-        "flexMode": "none",
-        "background_style": "default",
-        "text": {
-        "content": "",
-        "tag": ""
-      },
+        { "tag" : "column_set",
+            "flexMode": "none",
+                "background_style": "default",
+                "text": {
+            "content": "",
+            "tag": ""
+            },
         "actions": null,
         "columns": [
         {
@@ -362,30 +362,30 @@ VALUES (''nt-cqh4361d6gvj80netqk0'', ''飞书高级消息卡片模版'', '''', '
             }
           ]
         },
-           { "tag" : "column",
-        "width": "weighted",
-        "weight": 1,
-        "vertical_align": "top",
-        "elements": [
+        { "tag" : "column",
+            "width": "weighted",
+                "weight": 1,
+                "vertical_align": "top",
+            "elements": [
             {
-              "tag": "div",
-        "text": {
+            "tag": "div",
+            "text": {
                 "content": "**🖥 报警主机：**\n${metric.instance}",
-        "tag": "lark_md"
-              }
+                "tag": "lark_md"
+            }
             }
           ]
         }
       ],
         "elements": null
     },
-           { "tag" : "column_set",
-        "flexMode": "none",
-        "background_style": "default",
-        "text": {
-        "content": "",
-        "tag": ""
-      },
+        { "tag" : "column_set",
+            "flexMode": "none",
+                "background_style": "default",
+                "text": {
+            "content": "",
+            "tag": ""
+            },
         "actions": null,
         "columns": [
         {
@@ -406,13 +406,13 @@ VALUES (''nt-cqh4361d6gvj80netqk0'', ''飞书高级消息卡片模版'', '''', '
       ],
         "elements": null
     },
-           { "tag" : "column_set",
-        "flexMode": "none",
-        "background_style": "default",
-        "text": {
-        "content": "",
-        "tag": ""
-      },
+        { "tag" : "column_set",
+            "flexMode": "none",
+                "background_style": "default",
+                "text": {
+            "content": "",
+            "tag": ""
+            },
         "actions": null,
         "columns": [
         {
@@ -433,24 +433,24 @@ VALUES (''nt-cqh4361d6gvj80netqk0'', ''飞书高级消息卡片模版'', '''', '
       ],
         "elements": null
     },
-           { "tag" : "hr",
-        "flexMode": "",
-        "background_style": "",
-        "text": {
-        "content": "",
-        "tag": ""
-      },
+        { "tag" : "hr",
+            "flexMode": "",
+                "background_style": "",
+                "text": {
+            "content": "",
+            "tag": ""
+            },
         "actions": null,
         "columns": null,
         "elements": null
     },
-           { "tag" : "note",
-        "flexMode": "",
-        "background_style": "",
-        "text": {
-        "content": "",
-        "tag": ""
-      },
+        { "tag" : "note",
+            "flexMode": "",
+                "background_style": "",
+                "text": {
+            "content": "",
+            "tag": ""
+            },
         "actions": null,
         "columns": null,
         "elements": [
@@ -469,10 +469,10 @@ VALUES (''nt-cqh4361d6gvj80netqk0'', ''飞书高级消息卡片模版'', '''', '
     }
   },
         "tag": ""
-}'', ''FeiShu'');
+}', 'FeiShu');
 INSERT INTO `notice_template_examples` (`id`, `name`, `description`, `template`, `enable_fei_shu_json_card`,
                                         `template_firing`, `template_recover`, `notice_type`)
-VALUES (''nt-cqh4599d6gvj80netql0'', ''Email邮件通知模版'', '''', ''{{ define "Event" -}}
+VALUES ('nt-cqh4599d6gvj80netql0', 'Email邮件通知模版', '', '{{ define "Event" -}}
 {{- if not .IsRecovered -}}
 <p>==========<strong>告警通知</strong>==========</p>
 <strong>🤖 报警类型:</strong> ${rule_name}<br>
@@ -497,10 +497,10 @@ VALUES (''nt-cqh4599d6gvj80netql0'', ''Email邮件通知模版'', '''', ''{{ def
     <strong>👤 值班人员:</strong> ${duty_user}<br>
     <strong>📝 报警事件:</strong> ${annotations}<br>
     {{- end -}}
-    {{ end }}'', ''false'', '''', '''', ''Email'');
+    {{ end }}', false, '', '', 'Email');
 INSERT INTO `notice_template_examples` (`id`, `name`, `description`, `template`, `enable_fei_shu_json_card`,
                                         `template_firing`, `template_recover`, `notice_type`)
-VALUES (''nt-cqh45t9d6gvj80netqm0'', ''Loki日志告警通知模版'', '''', ''{{- define "Title" -}}
+VALUES ('nt-cqh45t9d6gvj80netqm0', 'Loki日志告警通知模版', '', '{{- define "Title" -}}
 {{- if not .IsRecovered -}}
     【报警中】- 即时设计业务系统 🔥
 {{- else -}}
@@ -543,10 +543,10 @@ green
 
     {{- define "Footer" -}}
     🧑‍💻 即时设计 - 运维团队
-{{- end }}'', ''false'', '''', '''', ''FeiShu'');
+{{- end }}', false, '', '', 'FeiShu');
 INSERT INTO `notice_template_examples` (`id`, `name`, `description`, `template`, `enable_fei_shu_json_card`,
                                         `template_firing`, `template_recover`, `notice_type`)
-VALUES (''nt-cqh464hd6gvj80netqng'', ''阿里云SLS日志告警通知模版'', '''', ''{{- define "Title" -}}
+VALUES ('nt-cqh464hd6gvj80netqng', '阿里云SLS日志告警通知模版', '', '{{- define "Title" -}}
 {{- if not .IsRecovered -}}
     【报警中】- 即时设计业务系统 🔥
 {{- else -}}
@@ -589,4 +589,4 @@ green
 
     {{- define "Footer" -}}
     🧑‍💻 即时设计 - 运维团队
-{{- end }}'', ''false'', '''', '''', ''FeiShu'');
+{{- end }}', false, '', '', 'FeiShu');
