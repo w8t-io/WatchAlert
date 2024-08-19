@@ -27,7 +27,7 @@ func NewMonitorSslConsumer(ctx *ctx.Context) MonitorSslConsumer {
 
 func (m *MonitorSslConsumer) Add(r models.MonitorSSLRule) {
 	m.l.Lock()
-	m.l.Unlock()
+	defer m.l.Unlock()
 
 	c, cancel := context.WithCancel(context.Background())
 	m.consumerPool[r.ID] = cancel
@@ -49,7 +49,7 @@ func (m *MonitorSslConsumer) Add(r models.MonitorSSLRule) {
 
 func (m *MonitorSslConsumer) Stop(id string) {
 	m.l.Lock()
-	m.l.Unlock()
+	defer m.l.Unlock()
 
 	if cancel, exists := m.consumerPool[id]; exists {
 		cancel()
