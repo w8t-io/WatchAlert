@@ -3,23 +3,30 @@ package alert
 import (
 	"watchAlert/alert/consumer"
 	"watchAlert/alert/eval"
-	"watchAlert/alert/task"
+	"watchAlert/alert/monitor"
 	"watchAlert/internal/global"
 	"watchAlert/pkg/ctx"
 )
 
 var (
-	MonEvalTask     task.MonitorSSLEval
+	MonEvalTask     monitor.MonitorSSLEval
 	MonConsumerTask consumer.MonitorSslConsumer
+	AlertRule       eval.AlertRule
 )
 
 func Initialize(ctx *ctx.Context) {
+	// 初始化告警规则消费任务
 	consumer.NewInterEvalConsumeWork(ctx).Run()
-	eval.NewInterAlertRuleWork(ctx).Run()
+	// 初始化监控告警的基础配置
 	initAlarmConfig(ctx)
+	// 初始化证书监控的消费任务
 	MonConsumerTask = consumer.NewMonitorSslConsumer(ctx)
-	MonEvalTask = task.NewMonitorSSLEval()
+	// 初始化证书监控任务
+	MonEvalTask = monitor.NewMonitorSSLEval()
 	MonEvalTask.RePushTask(ctx, &MonConsumerTask)
+	// 初始化告警规则评估任务
+	AlertRule = eval.NewAlertRuleEval(ctx)
+	AlertRule.RePushTask(ctx)
 }
 
 func initAlarmConfig(ctx *ctx.Context) {

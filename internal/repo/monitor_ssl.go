@@ -1,7 +1,6 @@
 package repo
 
 import (
-	"fmt"
 	"gorm.io/gorm"
 	"watchAlert/internal/global"
 	"watchAlert/internal/models"
@@ -47,7 +46,6 @@ func (m monitorSSLRepo) Update(r models.MonitorSSLRule) error {
 		},
 		Updates: r,
 	}
-	fmt.Println("--->", r)
 	err := m.g.Updates(u)
 	if err != nil {
 		global.Logger.Sugar().Error(err.Error())

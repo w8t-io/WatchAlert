@@ -5,6 +5,7 @@ import (
 	middleware "watchAlert/internal/middleware"
 	"watchAlert/internal/models"
 	"watchAlert/internal/services"
+	"watchAlert/pkg/utils/cmd"
 )
 
 type RuleController struct{}
@@ -44,6 +45,7 @@ func (rc RuleController) Create(ctx *gin.Context) {
 
 	tid, _ := ctx.Get("TenantID")
 	r.TenantId = tid.(string)
+	r.RuleId = "a-" + cmd.RandId()
 
 	Service(ctx, func() (interface{}, interface{}) {
 		return services.RuleService.Create(r)

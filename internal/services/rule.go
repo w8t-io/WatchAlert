@@ -2,16 +2,14 @@ package services
 
 import (
 	"fmt"
-	"watchAlert/alert/queue"
+	"watchAlert/alert"
 	"watchAlert/internal/global"
 	models "watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
-	"watchAlert/pkg/utils/cmd"
 )
 
 type ruleService struct {
-	rule chan *models.AlertRule
-	ctx  *ctx.Context
+	ctx *ctx.Context
 }
 
 type InterRuleService interface {
@@ -24,8 +22,7 @@ type InterRuleService interface {
 
 func newInterRuleService(ctx *ctx.Context) InterRuleService {
 	return &ruleService{
-		rule: queue.AlertRuleChannel,
-		ctx:  ctx,
+		ctx: ctx,
 	}
 }
 
@@ -35,10 +32,8 @@ func (rs ruleService) Create(req interface{}) (interface{}, interface{}) {
 	if !ok {
 		return nil, fmt.Errorf("创建失败, 配额不足")
 	}
-	r := rule
-	r.RuleId = "a-" + cmd.RandId()
 
-	rs.rule <- r
+	alert.AlertRule.Submit(*rule)
 
 	err := rs.ctx.DB.Rule().Create(*rule)
 	if err != nil {
@@ -46,7 +41,6 @@ func (rs ruleService) Create(req interface{}) (interface{}, interface{}) {
 	}
 
 	return nil, nil
-
 }
 
 func (rs ruleService) Update(req interface{}) (interface{}, interface{}) {
@@ -72,19 +66,15 @@ func (rs ruleService) Update(req interface{}) (interface{}, interface{}) {
 		判断当前状态是否是false 并且 历史状态是否为true
 	*/
 	if *alertInfo.Enabled == true && *rule.Enabled == false {
-		if cancel, exists := queue.WatchCtxMap[rule.RuleId]; exists {
-			cancel()
-		}
+		alert.AlertRule.Stop(rule.RuleId)
 	}
 	if *alertInfo.Enabled == true && *rule.Enabled == true {
-		if cancel, exists := queue.WatchCtxMap[rule.RuleId]; exists {
-			cancel()
-		}
+		alert.AlertRule.Stop(rule.RuleId)
 	}
 
 	// 启动协程
 	if *rule.Enabled {
-		rs.rule <- rule
+		alert.AlertRule.Submit(*rule)
 		global.Logger.Sugar().Infof("重启 RuleId 为 %s 的 Worker 进程", rule.RuleId)
 	} else {
 		delEvent()
@@ -115,9 +105,7 @@ func (rs ruleService) Delete(req interface{}) (interface{}, interface{}) {
 	// 退出该规则的协程
 	if *info.Enabled {
 		global.Logger.Sugar().Infof("停止 RuleId 为 %s 的 Worker 进程", rule.RuleId)
-		if cancel, exists := queue.WatchCtxMap[rule.RuleId]; exists {
-			cancel()
-		}
+		alert.AlertRule.Stop(rule.RuleId)
 	}
 
 	iter := rs.ctx.Redis.Redis().Scan(0, rule.TenantId+":"+models.FiringAlertCachePrefix+rule.RuleId+"*", 0).Iterator()
