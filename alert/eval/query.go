@@ -101,7 +101,7 @@ func prometheus(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
 			t, _ := strconv.ParseFloat(matches[2], 64)
 
 			f := func() models.AlertCurEvent {
-				event := process.ParserDefaultEvent(rule)
+				event := process.BuildEvent(rule)
 				event.DatasourceId = datasourceId
 				event.Fingerprint = v.GetFingerprint()
 				event.Metric = v.GetMetric()
@@ -170,7 +170,7 @@ func victoriametrics(ctx *ctx.Context, datasourceId string, rule models.AlertRul
 			t, _ := strconv.ParseFloat(matches[2], 64)
 
 			f := func() models.AlertCurEvent {
-				event := process.ParserDefaultEvent(rule)
+				event := process.BuildEvent(rule)
 				event.DatasourceId = datasourceId
 				event.Fingerprint = v.GetFingerprint()
 				event.Metric = v.GetMetric()
@@ -241,7 +241,7 @@ func aliCloudSLS(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
 	for _, body := range bodyList.MetricList {
 
 		event := func() models.AlertCurEvent {
-			event := process.ParserDefaultEvent(rule)
+			event := process.BuildEvent(rule)
 			event.DatasourceId = datasourceId
 			event.Fingerprint = body.GetFingerprint()
 			event.Annotations = body.GetAnnotations()
@@ -300,14 +300,13 @@ func loki(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
 	}
 
 	for _, v := range res {
-
 		count := len(v.Values)
 		if count <= 0 {
 			continue
 		}
 
 		event := func() models.AlertCurEvent {
-			event := process.ParserDefaultEvent(rule)
+			event := process.BuildEvent(rule)
 			event.DatasourceId = datasourceId
 			event.Fingerprint = v.GetFingerprint()
 			event.Metric = v.GetMetric()
@@ -366,7 +365,7 @@ func jaeger(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
 	}
 
 	for _, v := range res.Data {
-		event := process.ParserDefaultEvent(rule)
+		event := process.BuildEvent(rule)
 		event.DatasourceId = datasourceId
 		event.Fingerprint = v.GetFingerprint()
 		event.Metric = v.GetMetric(rule)
@@ -420,7 +419,7 @@ func cloudWatch(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
 		}
 
 		event := func() models.AlertCurEvent {
-			event := process.ParserDefaultEvent(rule)
+			event := process.BuildEvent(rule)
 			event.DatasourceId = datasourceId
 			event.Fingerprint = query.GetFingerprint()
 			event.Metric = query.GetMetrics()
@@ -469,7 +468,7 @@ func kubernetesEvent(ctx *ctx.Context, datasourceId string, rule models.AlertRul
 		// 同一个资源可能有多条不同的事件信息
 		eventMapping[item.InvolvedObject.Name] = append(eventMapping[item.InvolvedObject.Name], "\n"+item.Message)
 		k8sItem := process.KubernetesAlertEvent(ctx, item)
-		alertEvent := process.ParserDefaultEvent(rule)
+		alertEvent := process.BuildEvent(rule)
 		alertEvent.DatasourceId = datasourceId
 		alertEvent.Fingerprint = k8sItem.GetFingerprint()
 		alertEvent.Metric = k8sItem.GetMetrics()
@@ -516,7 +515,7 @@ func elasticSearch(ctx *ctx.Context, datasourceId string, rule models.AlertRule)
 
 	for _, v := range res {
 		event := func() models.AlertCurEvent {
-			event := process.ParserDefaultEvent(rule)
+			event := process.BuildEvent(rule)
 			event.DatasourceId = datasourceId
 			event.Fingerprint = v.GetFingerprint()
 			event.Metric = v.GetMetric()

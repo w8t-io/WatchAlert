@@ -4,16 +4,18 @@ import (
 	"context"
 	"github.com/sirupsen/logrus"
 	"testing"
+	"watchAlert/internal/models"
+	"watchAlert/internal/types"
 )
 
 func TestNewElasticSearchClient(t *testing.T) {
-	client, err := NewElasticSearchClient(context.Background(), "http://192.168.1.190:9200", "", "")
+	client, err := NewElasticSearchClient(context.Background(), models.AlertDataSource{})
 	if err != nil {
 		logrus.Errorf("client -> %s", err.Error())
 		return
 	}
 
-	q := []ESQueryFilter{
+	q := []types.ESQueryFilter{
 		{
 			"message",
 			"docker",

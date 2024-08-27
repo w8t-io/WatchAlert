@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/go-redis/redis"
 	"log"
+	"sync"
 	"time"
 	"watchAlert/internal/global"
 	"watchAlert/internal/models"
@@ -13,6 +14,7 @@ import (
 type (
 	eventCache struct {
 		rc *redis.Client
+		sync.RWMutex
 	}
 
 	InterEventCache interface {
@@ -27,11 +29,14 @@ type (
 
 func newEventCacheInterface(r *redis.Client) InterEventCache {
 	return &eventCache{
-		r,
+		rc: r,
 	}
 }
 
-func (ec eventCache) SetCache(cacheType string, event models.AlertCurEvent, expiration time.Duration) {
+func (ec *eventCache) SetCache(cacheType string, event models.AlertCurEvent, expiration time.Duration) {
+	ec.Lock()
+	defer ec.Unlock()
+
 	alertJson, _ := json.Marshal(event)
 	switch cacheType {
 	case "Firing":
@@ -42,7 +47,10 @@ func (ec eventCache) SetCache(cacheType string, event models.AlertCurEvent, expi
 
 }
 
-func (ec eventCache) DelCache(key string) {
+func (ec *eventCache) DelCache(key string) {
+	ec.Lock()
+	defer ec.Unlock()
+
 	// 使用Scan命令获取所有匹配指定模式的键
 	iter := client.Redis.Scan(0, key, 0).Iterator()
 	keysToDelete := make([]string, 0)
@@ -67,7 +75,7 @@ func (ec eventCache) DelCache(key string) {
 	}
 }
 
-func (ec eventCache) GetCache(key string) models.AlertCurEvent {
+func (ec *eventCache) GetCache(key string) models.AlertCurEvent {
 
 	var alert models.AlertCurEvent
 
@@ -81,7 +89,7 @@ func (ec eventCache) GetCache(key string) models.AlertCurEvent {
 
 }
 
-func (ec eventCache) GetFirstTime(key string) int64 {
+func (ec *eventCache) GetFirstTime(key string) int64 {
 
 	ft := ec.GetCache(key).FirstTriggerTime
 	if ft == 0 {
@@ -91,7 +99,7 @@ func (ec eventCache) GetFirstTime(key string) int64 {
 
 }
 
-func (ec eventCache) GetLastEvalTime(key string) int64 {
+func (ec *eventCache) GetLastEvalTime(key string) int64 {
 
 	curTime := time.Now().Unix()
 	let := ec.GetCache(key).LastEvalTime
@@ -103,7 +111,7 @@ func (ec eventCache) GetLastEvalTime(key string) int64 {
 
 }
 
-func (ec eventCache) GetLastSendTime(key string) int64 {
+func (ec *eventCache) GetLastSendTime(key string) int64 {
 
 	return ec.GetCache(key).LastSendTime
 

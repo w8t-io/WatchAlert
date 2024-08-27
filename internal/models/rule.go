@@ -47,10 +47,11 @@ type AlertRule struct {
 
 	ElasticSearchConfig ElasticSearchConfig `json:"elasticSearchConfig" gorm:"elasticSearchConfig;serializer:json"`
 
-	NoticeId      string      `json:"noticeId"`
-	NoticeGroup   NoticeGroup `json:"noticeGroup" gorm:"noticeGroup;serializer:json"`
-	RecoverNotify *bool       `json:"recoverNotify"`
-	Enabled       *bool       `json:"enabled" gorm:"enabled"`
+	NoticeId         string      `json:"noticeId"`
+	NoticeGroup      NoticeGroup `json:"noticeGroup" gorm:"noticeGroup;serializer:json"`
+	RecoverNotify    *bool       `json:"recoverNotify"`
+	AlarmAggregation *bool       `json:"alarmAggregation"`
+	Enabled          *bool       `json:"enabled" gorm:"enabled"`
 }
 
 type ElasticSearchConfig struct {
