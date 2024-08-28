@@ -16,44 +16,8 @@ import (
 	"watchAlert/pkg/utils/cmd"
 )
 
-<<<<<<< HEAD:alert/query/query.go
-type RuleQuery struct {
-	alertEvent models.AlertCurEvent
-	ctx        *ctx.Context
-}
-
-func (rq *RuleQuery) Query(ctx *ctx.Context, rule models.AlertRule) {
-	rq.ctx = ctx
-
-	for _, dsId := range rule.DatasourceIdList {
-		switch rule.DatasourceType {
-		case "Prometheus":
-			rq.prometheus(dsId, rule)
-		case "VictoriaMetrics":
-			rq.victoriametrics(dsId, rule)
-		case "AliCloudSLS":
-			rq.aliCloudSLS(dsId, rule)
-		case "Loki":
-			rq.loki(dsId, rule)
-		case "Jaeger":
-			rq.jaeger(dsId, rule)
-		case "CloudWatch":
-			rq.cloudWatch(dsId, rule)
-		case "KubernetesEvent":
-			rq.kubernetesEvent(dsId, rule)
-		case "ElasticSearch":
-			rq.elasticSearch(dsId, rule)
-		}
-	}
-
-}
-
-func (rq *RuleQuery) alertRecover(rule models.AlertRule, curKeys []string) {
-	firingKeys, err := rq.ctx.Redis.Rule().GetAlertFiringCacheKeys(models.AlertRuleQuery{
-=======
 func alertRecover(ctx *ctx.Context, rule models.AlertRule, curKeys []string) {
 	firingKeys, err := ctx.Redis.Rule().GetAlertFiringCacheKeys(models.AlertRuleQuery{
->>>>>>> Cairry-master:alert/eval/query.go
 		TenantId:         rule.TenantId,
 		RuleId:           rule.RuleId,
 		DatasourceIdList: rule.DatasourceIdList,
@@ -571,62 +535,5 @@ func elasticSearch(ctx *ctx.Context, datasourceId string, rule models.AlertRule)
 
 		// 评估告警条件
 		process.EvalCondition(ctx, event, float64(count), options)
-	}
-}
-
-func (rq *RuleQuery) elasticSearch(datasourceId string, rule models.AlertRule) {
-	var curKeys []string
-	defer func() {
-		rq.alertRecover(rule, curKeys)
-		go process.GcRecoverWaitCache(rule, curKeys)
-	}()
-
-	datasourceInfo, err := rq.ctx.DB.Datasource().Get(models.DatasourceQuery{
-		TenantId: rule.TenantId,
-		Id:       datasourceId,
-	})
-	if err != nil {
-		return
-	}
-
-	cli, err := client.NewElasticSearchClient(rq.ctx.Ctx, datasourceInfo)
-	if err != nil {
-		global.Logger.Sugar().Error(err.Error())
-		return
-	}
-
-	res, err := cli.Query(rq.ctx.Ctx, rule.ElasticSearchConfig.Index, rule.ElasticSearchConfig.Filter, rule.ElasticSearchConfig.Scope)
-	if err != nil {
-		global.Logger.Sugar().Error(err.Error())
-		return
-	}
-
-	count := len(res)
-	if count <= 0 {
-		return
-	}
-
-	for _, v := range res {
-		event := func() models.AlertCurEvent {
-			event := process.ParserDefaultEvent(rule)
-			event.DatasourceId = datasourceId
-			event.Fingerprint = v.GetFingerprint()
-			event.Metric = v.GetMetric()
-			event.Annotations = v.GetAnnotations()
-
-			key := event.GetPendingAlertCacheKey()
-			curKeys = append(curKeys, key)
-
-			return event
-		}
-
-		options := models.EvalCondition{
-			Type:     "count",
-			Operator: ">",
-			Value:    1,
-		}
-
-		// 评估告警条件
-		process.EvalCondition(rq.ctx, event, float64(count), options)
 	}
 }

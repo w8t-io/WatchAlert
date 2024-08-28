@@ -6,7 +6,6 @@ import (
 	"watchAlert/internal/global"
 	models "watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
-	"watchAlert/pkg/utils/cmd"
 )
 
 type ruleService struct {
@@ -33,14 +32,8 @@ func (rs ruleService) Create(req interface{}) (interface{}, interface{}) {
 	if !ok {
 		return nil, fmt.Errorf("创建失败, 配额不足")
 	}
-	r := rule
-	r.RuleId = "a-" + cmd.RandId()
 
-<<<<<<< HEAD
-	rs.rule <- r
-=======
 	alert.AlertRule.Submit(*rule)
->>>>>>> Cairry-master
 
 	err := rs.ctx.DB.Rule().Create(*rule)
 	if err != nil {
