@@ -18,6 +18,7 @@ type (
 		Update(r models.AlertRule) error
 		Delete(r models.AlertRuleQuery) error
 		GetRuleIsExist(ruleId string) bool
+		GetRuleObject(ruleId string) models.AlertRule
 	}
 )
 
@@ -163,4 +164,13 @@ func (rr RuleRepo) GetRuleIsExist(ruleId string) bool {
 	}
 
 	return false
+}
+
+func (rr RuleRepo) GetRuleObject(ruleId string) models.AlertRule {
+	var data models.AlertRule
+	rr.DB().Model(&models.AlertRule{}).
+		Where("rule_id = ?", ruleId).
+		First(&data)
+
+	return data
 }

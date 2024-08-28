@@ -31,6 +31,7 @@ type AlertCurEvent struct {
 	DutyUser               string                 `json:"duty_user" gorm:"-"`
 	EffectiveTime          EffectiveTime          `json:"effectiveTime" gorm:"effectiveTime;serializer:json"`
 	RecoverNotify          *bool                  `json:"recoverNotify"`
+	AlarmAggregation       *bool                  `json:"alarmAggregation"`
 
 	ResponseTime  string `json:"response_time" gorm:"-"`
 	TimeRemaining int64  `json:"time_remaining" gorm:"-"`

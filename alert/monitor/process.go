@@ -1,4 +1,4 @@
-package task
+package monitor
 
 import (
 	"watchAlert/internal/models"
