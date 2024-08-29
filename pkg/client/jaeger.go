@@ -24,7 +24,7 @@ type JaegerQueryOptions struct {
 }
 
 func NewJaegerClient(query models.AlertDataSource) JaegerClient {
-	_, err := http.Get(query.HTTP.URL)
+	_, err := http.Get(nil, query.HTTP.URL)
 	if err != nil {
 		global.Logger.Sugar().Errorf(err.Error())
 		return JaegerClient{}
@@ -61,7 +61,7 @@ func (jc JaegerClient) JaegerQuery(options JaegerQueryOptions) JaegerResult {
 	args := fmt.Sprintf("/api/traces?service=%s&start=%d&end=%d&limit=%d&tags=%s", options.Service, options.StartAt, options.EndAt, options.Limit, options.Tags)
 	requestURL := jc.BaseURL + args
 
-	res, err := http.Get(requestURL)
+	res, err := http.Get(nil, requestURL)
 	if err != nil {
 		return JaegerResult{}
 	}
@@ -98,7 +98,7 @@ type JaegerServiceData struct {
 
 func (jc JaegerClient) GetJaegerService() (JaegerServiceData, error) {
 	url := jc.BaseURL + "/api/services"
-	res, err := http.Get(url)
+	res, err := http.Get(nil, url)
 	if err != nil {
 		return JaegerServiceData{}, nil
 	}

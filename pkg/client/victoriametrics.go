@@ -49,7 +49,7 @@ func NewVictoriaMetricsClient(ds models.AlertDataSource) VM {
 func (a VM) Query(promQL string) ([]VMVector, error) {
 	apiEndpoint := fmt.Sprintf("%s%s?query=%s&time=%d", a.address, "/prometheus/api/v1/query", promQL, time.Now().Unix())
 
-	resp, err := utilsHttp.Get(apiEndpoint)
+	resp, err := utilsHttp.Get(nil, apiEndpoint)
 	if err != nil {
 		global.Logger.Sugar().Error(err.Error())
 		return nil, err

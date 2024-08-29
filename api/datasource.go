@@ -131,7 +131,7 @@ func (dc DatasourceController) PromQuery(ctx *gin.Context) {
 		}
 
 		encodedQuery := url.QueryEscape(r.Query)
-		get, err := http.Get(fmt.Sprintf("%s%s?query=%s", r.Addr, path, encodedQuery))
+		get, err := http.Get(nil, fmt.Sprintf("%s%s?query=%s", r.Addr, path, encodedQuery))
 		if err != nil {
 			return nil, err
 		}

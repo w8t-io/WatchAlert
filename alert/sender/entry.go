@@ -39,7 +39,7 @@ func Sender(ctx *ctx.Context, alert models.AlertCurEvent, notice models.AlertNot
 		}
 	case "FeiShu", "DingDing":
 		cardContentByte := bytes.NewReader([]byte(n.CardContentMsg))
-		res, err := http.Post(notice.Hook, cardContentByte)
+		res, err := http.Post(nil, notice.Hook, cardContentByte)
 		if err != nil || res.StatusCode != 200 {
 			global.Logger.Sugar().Errorf("Hook 类型报警发送失败 code: %d data: %s", res.StatusCode, n.CardContentMsg)
 			return err
