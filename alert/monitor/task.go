@@ -62,7 +62,7 @@ func (t *MonitorSSLEval) worker(w8tCtx *ctx.Context, rule models.MonitorSSLRule)
 	// 记录开始时间
 	startTime := time.Now()
 
-	resp, err := http.Get("https://" + rule.Domain)
+	resp, err := http.Get(nil, "https://"+rule.Domain)
 	if err != nil {
 		return
 	}

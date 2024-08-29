@@ -76,7 +76,7 @@ func (lc LokiClient) QueryRange(options QueryOptions) ([]Result, error) {
 	requestURL = strings.ReplaceAll(requestURL, `"`, "%22")
 	requestURL = strings.ReplaceAll(requestURL, " ", "%20")
 
-	res, err := http.Get(requestURL)
+	res, err := http.Get(nil, requestURL)
 	if err != nil {
 		return nil, err
 	}

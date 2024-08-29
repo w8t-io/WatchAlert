@@ -31,7 +31,7 @@ func (cc *CallbackController) FeiShuEvent(ctx *gin.Context) {
 
 	jsonData, _ := json.Marshal(challengeInfo)
 	body := bytes.NewReader(jsonData)
-	_, err = http.Post("http://127.0.0.1:"+global.Config.Server.Port+"/api/v1/alert/createSilence?uuid="+uuid, body)
+	_, err = http.Post(nil, "http://127.0.0.1:"+global.Config.Server.Port+"/api/v1/alert/createSilence?uuid="+uuid, body)
 	if err != nil {
 		log.Println(err)
 		return
