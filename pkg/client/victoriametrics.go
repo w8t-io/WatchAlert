@@ -37,12 +37,6 @@ type VMVector struct {
 }
 
 func NewVictoriaMetricsClient(ds models.AlertDataSource) VM {
-	_, err := ds.CheckHealth()
-	if err != nil {
-		global.Logger.Sugar().Errorf(fmt.Sprintf("数据源不健康, Type: %s, Name: %s, Address: %s, Msg: %s", ds.Type, ds.Name, ds.HTTP.URL, err.Error()))
-		return VM{}
-	}
-
 	return VM{address: ds.HTTP.URL}
 }
 
