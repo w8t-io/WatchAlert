@@ -299,18 +299,16 @@ func loki(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
 		return
 	}
 
+	// count 用于统计日志条数
+	var count int
 	for _, v := range res {
-		count := len(v.Values)
-		if count <= 0 {
-			continue
-		}
-
+		count += len(v.Values)
 		event := func() models.AlertCurEvent {
 			event := process.BuildEvent(rule)
 			event.DatasourceId = datasourceId
 			event.Fingerprint = v.GetFingerprint()
 			event.Metric = v.GetMetric()
-			event.Annotations = v.GetAnnotations().(string)
+			event.Annotations = fmt.Sprintf("\\_\\_count\\_\\_: %d\n%s", count, v.GetAnnotations().(string))
 
 			key := event.GetPendingAlertCacheKey()
 			curKeys = append(curKeys, key)
@@ -326,9 +324,7 @@ func loki(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
 
 		// 评估告警条件
 		process.EvalCondition(ctx, event, float64(count), options)
-
 	}
-
 }
 
 // Jaeger 数据源
