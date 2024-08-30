@@ -1,6 +1,7 @@
 package services
 
 import (
+	"watchAlert/alert/process"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
 )
@@ -26,7 +27,7 @@ func newInterDatasourceService(ctx *ctx.Context) InterDatasourceService {
 
 func (ds datasourceService) Create(req interface{}) (interface{}, interface{}) {
 	dataSource := req.(*models.AlertDataSource)
-	ok, err := dataSource.CheckHealth()
+	ok, err := process.CheckDatasourceHealth(*dataSource)
 	if !ok {
 		return nil, err
 	}
@@ -41,7 +42,12 @@ func (ds datasourceService) Create(req interface{}) (interface{}, interface{}) {
 
 func (ds datasourceService) Update(req interface{}) (interface{}, interface{}) {
 	dataSource := req.(*models.AlertDataSource)
-	err := ds.ctx.DB.Datasource().Update(*dataSource)
+	ok, err := process.CheckDatasourceHealth(*dataSource)
+	if !ok {
+		return nil, err
+	}
+
+	err = ds.ctx.DB.Datasource().Update(*dataSource)
 	if err != nil {
 		return nil, err
 	}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 	"watchAlert/alert/process"
 	"watchAlert/alert/queue"
@@ -462,7 +463,7 @@ func kubernetesEvent(ctx *ctx.Context, datasourceId string, rule models.AlertRul
 	var eventMapping = make(map[string][]string)
 	for _, item := range process.FilterKubeEvent(event, rule.KubernetesConfig.Filter).Items {
 		// 同一个资源可能有多条不同的事件信息
-		eventMapping[item.InvolvedObject.Name] = append(eventMapping[item.InvolvedObject.Name], "\n"+item.Message)
+		eventMapping[item.InvolvedObject.Name] = append(eventMapping[item.InvolvedObject.Name], "\n"+strings.ReplaceAll(item.Message, "\"", "'"))
 		k8sItem := process.KubernetesAlertEvent(ctx, item)
 		alertEvent := process.BuildEvent(rule)
 		alertEvent.DatasourceId = datasourceId

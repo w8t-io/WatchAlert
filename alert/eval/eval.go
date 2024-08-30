@@ -5,9 +5,11 @@ import (
 	"golang.org/x/sync/errgroup"
 	"sync"
 	"time"
+	"watchAlert/alert/process"
 	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
+	"watchAlert/pkg/utils/cmd"
 )
 
 type AlertRule struct {
@@ -48,8 +50,18 @@ func (t *AlertRule) Eval(ctx context.Context, rule models.AlertRule) {
 	for {
 		select {
 		case <-timer.C:
-			global.Logger.Sugar().Infof("规则评估 -> %v", rule)
 			for _, dsId := range rule.DatasourceIdList {
+				instance, err := t.ctx.DB.Datasource().GetInstance(dsId)
+				if err != nil {
+					global.Logger.Sugar().Error(err.Error())
+					return
+				}
+
+				_, err = process.CheckDatasourceHealth(instance)
+				if err != nil {
+					global.Logger.Sugar().Errorf("数据源不健康, Id: %s, Name: %s, Type: %s, Msg: %s", instance.Id, instance.Name, instance.Type, err.Error())
+					return
+				}
 				switch rule.DatasourceType {
 				case "Prometheus":
 					prometheus(t.ctx, dsId, rule)
@@ -69,6 +81,7 @@ func (t *AlertRule) Eval(ctx context.Context, rule models.AlertRule) {
 					elasticSearch(t.ctx, dsId, rule)
 				}
 			}
+			global.Logger.Sugar().Infof("规则评估 -> %v", cmd.JsonMarshal(rule))
 		case <-ctx.Done():
 			global.Logger.Sugar().Infof("停止 RuleId 为 %v 的 Watch 协程", rule.RuleId)
 			return
