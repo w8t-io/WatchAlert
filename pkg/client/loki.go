@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/url"
 	"strconv"
-	"strings"
 	"time"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/utils/cmd"
@@ -69,13 +69,8 @@ func (lc LokiClient) QueryRange(options QueryOptions) ([]Result, error) {
 		options.EndAt = curTime.Format(time.RFC3339Nano)
 	}
 
-	args := fmt.Sprintf("/loki/api/v1/query_range?query=%s&direction=%s&limit=%d&start=%s&end=%s", options.Query, options.Direction, options.Limit, options.StartAt, options.EndAt)
+	args := fmt.Sprintf("/loki/api/v1/query_range?query=%s&direction=%s&limit=%d&start=%s&end=%s", url.QueryEscape(options.Query), options.Direction, options.Limit, options.StartAt, options.EndAt)
 	requestURL := lc.BaseURL + args
-	requestURL = strings.ReplaceAll(requestURL, "{", "%7B")
-	requestURL = strings.ReplaceAll(requestURL, "}", "%7D")
-	requestURL = strings.ReplaceAll(requestURL, `"`, "%22")
-	requestURL = strings.ReplaceAll(requestURL, " ", "%20")
-
 	res, err := http.Get(nil, requestURL)
 	if err != nil {
 		return nil, err
