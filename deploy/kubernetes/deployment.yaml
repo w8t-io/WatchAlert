@@ -35,7 +35,7 @@ spec:
               cpu: 100m
               memory: 100M
 
-          livelinessProbe:
+          livenessProbe:
             failureThreshold: 3
             httpGet:
               path: /hello
