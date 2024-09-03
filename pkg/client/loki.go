@@ -44,12 +44,12 @@ type Result struct {
 	Values []interface{}     `json:"values"`
 }
 
-func (lc LokiClient) QueryRange(options QueryOptions) ([]Result, error) {
+func (lc LokiClient) QueryRange(options QueryOptions) ([]Result, int, error) {
 
 	curTime := time.Now()
 
 	if options.Query == "" {
-		return nil, nil
+		return nil, 0, nil
 	}
 
 	if options.Direction == "" {
@@ -73,18 +73,23 @@ func (lc LokiClient) QueryRange(options QueryOptions) ([]Result, error) {
 	requestURL := lc.BaseURL + args
 	res, err := http.Get(nil, requestURL)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	body, _ := io.ReadAll(res.Body)
 	var resultData result
 	err = json.Unmarshal(body, &resultData)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return resultData.Data.Result, nil
+	// count 用于统计日志条数
+	var count int
+	for _, v := range resultData.Data.Result {
+		count += len(v.Values)
+	}
 
+	return resultData.Data.Result, count, nil
 }
 
 func (r Result) GetFingerprint() string {
