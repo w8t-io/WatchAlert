@@ -14,6 +14,7 @@ import (
 	"watchAlert/pkg/community/aws/cloudwatch"
 	"watchAlert/pkg/community/aws/cloudwatch/types"
 	"watchAlert/pkg/ctx"
+	"watchAlert/pkg/provider"
 	"watchAlert/pkg/utils/cmd"
 )
 
@@ -62,8 +63,8 @@ func alertRecover(ctx *ctx.Context, rule models.AlertRule, curKeys []string) {
 	}
 }
 
-// Prometheus 数据源
-func prometheus(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
+// Metrics 包含 Prometheus、VictoriaMetrics 数据源
+func metrics(ctx *ctx.Context, datasourceId, datasourceType string, rule models.AlertRule) {
 	var (
 		curFiringKeys  []string
 		curPendingKeys []string
@@ -78,85 +79,53 @@ func prometheus(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
 	r := models.DatasourceQuery{
 		TenantId: rule.TenantId,
 		Id:       datasourceId,
-		Type:     "Prometheus",
+		Type:     datasourceType,
 	}
 	datasourceInfo, err := ctx.DB.Datasource().Get(r)
 	if err != nil {
 		return
 	}
 
-	resQuery, _, err := client.NewPromClient(datasourceInfo).Query(rule.PrometheusConfig.PromQL)
-
-	if err != nil {
-		return
-	}
-
-	if resQuery == nil {
-		return
-	}
-
-	for _, v := range resQuery {
-		for _, ruleExpr := range rule.PrometheusConfig.Rules {
-			re := regexp.MustCompile(`([^\d]+)(\d+)`)
-			matches := re.FindStringSubmatch(ruleExpr.Expr)
-			t, _ := strconv.ParseFloat(matches[2], 64)
-
-			f := func() models.AlertCurEvent {
-				event := process.BuildEvent(rule)
-				event.DatasourceId = datasourceId
-				event.Fingerprint = v.GetFingerprint()
-				event.Metric = v.GetMetric()
-				event.Metric["severity"] = ruleExpr.Severity
-				event.Severity = ruleExpr.Severity
-				event.Annotations = cmd.ParserVariables(rule.PrometheusConfig.Annotations, event.Metric)
-
-				firingKey := event.GetFiringAlertCacheKey()
-				pendingKey := event.GetPendingAlertCacheKey()
-
-				curFiringKeys = append(curFiringKeys, firingKey)
-				curPendingKeys = append(curPendingKeys, pendingKey)
-
-				return event
-			}
-
-			option := models.EvalCondition{
-				Type:     "metric",
-				Operator: matches[1],
-				Value:    t,
-			}
-
-			process.EvalCondition(ctx, f, v.Value, option)
+	var resQuery []provider.Metrics
+	switch datasourceType {
+	case provider.PrometheusDsProvider:
+		health := provider.CheckDatasourceHealth(datasourceInfo)
+		if !health {
+			global.Logger.Sugar().Error(err.Error())
+			return
 		}
-	}
 
-}
+		prometheusClient, err := provider.NewPrometheusClient(datasourceInfo)
+		if err != nil {
+			global.Logger.Sugar().Error(err.Error())
+			return
+		}
 
-// VictorMetrics 数据源
-func victoriametrics(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
-	var (
-		curFiringKeys  []string
-		curPendingKeys []string
-	)
+		resQuery, err = prometheusClient.Query(rule.PrometheusConfig.PromQL)
+		if err != nil {
+			global.Logger.Sugar().Error(err.Error())
+			return
+		}
+	case provider.VictoriaMetricsDsProvider:
+		health := provider.CheckDatasourceHealth(datasourceInfo)
+		if !health {
+			global.Logger.Sugar().Error(err.Error())
+			return
+		}
 
-	defer func() {
-		go process.GcPendingCache(ctx, rule, curPendingKeys)
-		alertRecover(ctx, rule, curFiringKeys)
-		go process.GcRecoverWaitCache(rule, curFiringKeys)
-	}()
+		vmClient, err := provider.NewVictoriaMetricsClient(datasourceInfo)
+		if err != nil {
+			global.Logger.Sugar().Error(err.Error())
+			return
+		}
 
-	r := models.DatasourceQuery{
-		TenantId: rule.TenantId,
-		Id:       datasourceId,
-		Type:     "VictoriaMetrics",
-	}
-	datasourceInfo, err := ctx.DB.Datasource().Get(r)
-	if err != nil {
-		return
-	}
-
-	cmCli := client.NewVictoriaMetricsClient(datasourceInfo)
-	resQuery, err := cmCli.Query(rule.PrometheusConfig.PromQL)
-	if err != nil {
+		resQuery, err = vmClient.Query(rule.PrometheusConfig.PromQL)
+		if err != nil {
+			global.Logger.Sugar().Error(err.Error())
+			return
+		}
+	default:
+		global.Logger.Sugar().Errorf("Unsupported metrics type, type: %s", datasourceType)
 		return
 	}
 
