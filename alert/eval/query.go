@@ -294,16 +294,13 @@ func loki(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
 		return
 	}
 
-	res, err := client.NewLokiClient(datasourceInfo).QueryRange(args)
+	res, count, err := client.NewLokiClient(datasourceInfo).QueryRange(args)
 	if err != nil {
 		global.Logger.Sugar().Errorf("查询 Loki 日志失败 %s", err.Error())
 		return
 	}
 
-	// count 用于统计日志条数
-	var count int
 	for _, v := range res {
-		count += len(v.Values)
 		event := func() models.AlertCurEvent {
 			event := process.BuildEvent(rule)
 			event.DatasourceId = datasourceId
@@ -325,6 +322,8 @@ func loki(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
 
 		// 评估告警条件
 		process.EvalCondition(ctx, event, float64(count), options)
+		// 只需要评估出第一条日志信息即可
+		break
 	}
 }
 
