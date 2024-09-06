@@ -188,7 +188,6 @@ func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.Ale
 
 	health := provider.CheckDatasourceHealth(datasourceInfo)
 	if !health {
-		global.Logger.Sugar().Error(err.Error())
 		return
 	}
 
