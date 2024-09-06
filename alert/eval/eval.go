@@ -5,7 +5,6 @@ import (
 	"golang.org/x/sync/errgroup"
 	"sync"
 	"time"
-	"watchAlert/alert/process"
 	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
@@ -54,36 +53,24 @@ func (t *AlertRule) Eval(ctx context.Context, rule models.AlertRule) {
 				instance, err := t.ctx.DB.Datasource().GetInstance(dsId)
 				if err != nil {
 					global.Logger.Sugar().Error(err.Error())
-					return
 				}
 
-				_, err = process.CheckDatasourceHealth(instance)
-				if err != nil {
-					global.Logger.Sugar().Errorf("数据源不健康, Id: %s, Name: %s, Type: %s, Msg: %s", instance.Id, instance.Name, instance.Type, err.Error())
-					return
-				}
 				switch rule.DatasourceType {
-				case "Prometheus":
-					prometheus(t.ctx, dsId, rule)
-				case "VictoriaMetrics":
-					victoriametrics(t.ctx, dsId, rule)
-				case "AliCloudSLS":
-					aliCloudSLS(t.ctx, dsId, rule)
-				case "Loki":
-					loki(t.ctx, dsId, rule)
+				case "Prometheus", "VictoriaMetrics":
+					metrics(t.ctx, dsId, instance.Type, rule)
+				case "AliCloudSLS", "Loki", "ElasticSearch":
+					logs(t.ctx, dsId, instance.Type, rule)
 				case "Jaeger":
-					jaeger(t.ctx, dsId, rule)
+					traces(t.ctx, dsId, instance.Type, rule)
 				case "CloudWatch":
 					cloudWatch(t.ctx, dsId, rule)
 				case "KubernetesEvent":
 					kubernetesEvent(t.ctx, dsId, rule)
-				case "ElasticSearch":
-					elasticSearch(t.ctx, dsId, rule)
 				}
 			}
 			global.Logger.Sugar().Infof("规则评估 -> %v", cmd.JsonMarshal(rule))
 		case <-ctx.Done():
-			global.Logger.Sugar().Infof("停止 RuleId 为 %v 的 Watch 协程", rule.RuleId)
+			global.Logger.Sugar().Infof("停止 RuleId: %v, RuleName: %s 的 Watch 协程", rule.RuleId, rule.RuleName)
 			return
 		}
 		timer.Reset(time.Second * time.Duration(rule.EvalInterval))

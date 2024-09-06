@@ -3,6 +3,7 @@ package sender
 import (
 	"bytes"
 	"errors"
+	"io"
 	"watchAlert/alert/mute"
 	"watchAlert/internal/global"
 	"watchAlert/internal/models"
@@ -38,11 +39,25 @@ func Sender(ctx *ctx.Context, alert models.AlertCurEvent, notice models.AlertNot
 			return err
 		}
 	case "FeiShu", "DingDing":
+		var msg string
 		cardContentByte := bytes.NewReader([]byte(n.CardContentMsg))
 		res, err := http.Post(nil, notice.Hook, cardContentByte)
-		if err != nil || res.StatusCode != 200 {
+		if err != nil {
+			msg = err.Error()
+		}
+
+		if res.StatusCode != 200 {
+			all, err := io.ReadAll(res.Body)
+			if err != nil {
+				global.Logger.Sugar().Error(err.Error())
+				return err
+			}
+			msg = string(all)
+		}
+
+		if msg != "" {
 			global.Logger.Sugar().Errorf("Hook 类型报警发送失败 code: %d data: %s", res.StatusCode, n.CardContentMsg)
-			return err
+			return errors.New(msg)
 		}
 	default:
 		return errors.New("无效的通知类型: " + notice.NoticeType)

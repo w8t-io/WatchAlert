@@ -112,7 +112,9 @@ func FormatJson(s string) string {
 			}
 		}
 	} else {
-		ns = s
+		// 不是 json 格式的需要转义下其中的特殊符号，并且只取双引号(")内的内容。
+		ns = JsonMarshal(s)
+		ns = ns[1 : len(ns)-1]
 	}
 	return ns
 }

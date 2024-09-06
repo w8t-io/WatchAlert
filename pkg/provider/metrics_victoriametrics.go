@@ -1,4 +1,4 @@
-package client
+package provider
 
 import (
 	"encoding/json"
@@ -8,12 +8,15 @@ import (
 	"time"
 	"watchAlert/internal/global"
 	"watchAlert/internal/models"
-	"watchAlert/pkg/utils/hash"
 	utilsHttp "watchAlert/pkg/utils/http"
 )
 
-type VM struct {
+type VictoriaMetricsProvider struct {
 	address string
+}
+
+func NewVictoriaMetricsClient(ds models.AlertDataSource) (MetricsFactoryProvider, error) {
+	return VictoriaMetricsProvider{address: ds.HTTP.URL}, nil
 }
 
 type QueryResponse struct {
@@ -30,18 +33,8 @@ type VMResult struct {
 	Value  []interface{}          `json:"value"`
 }
 
-type VMVector struct {
-	Metric    map[string]interface{}
-	Value     float64
-	Timestamp float64
-}
-
-func NewVictoriaMetricsClient(ds models.AlertDataSource) VM {
-	return VM{address: ds.HTTP.URL}
-}
-
-func (a VM) Query(promQL string) ([]VMVector, error) {
-	apiEndpoint := fmt.Sprintf("%s%s?query=%s&time=%d", a.address, "/prometheus/api/v1/query", promQL, time.Now().Unix())
+func (v VictoriaMetricsProvider) Query(promQL string) ([]Metrics, error) {
+	apiEndpoint := fmt.Sprintf("%s%s?query=%s&time=%d", v.address, "/api/v1/query", promQL, time.Now().Unix())
 
 	resp, err := utilsHttp.Get(nil, apiEndpoint)
 	if err != nil {
@@ -71,15 +64,15 @@ func (a VM) Query(promQL string) ([]VMVector, error) {
 	return vmVectors(vmRespBody.VMData.VMResult), nil
 }
 
-func vmVectors(res []VMResult) []VMVector {
-	var vectors []VMVector
+func vmVectors(res []VMResult) []Metrics {
+	var vectors []Metrics
 	for _, item := range res {
 		valueFloat, err := strconv.ParseFloat(item.Value[1].(string), 64)
 		if err != nil {
 			global.Logger.Sugar().Error(err.Error())
 			return nil
 		}
-		vectors = append(vectors, VMVector{
+		vectors = append(vectors, Metrics{
 			Metric:    item.Metric,
 			Value:     valueFloat,
 			Timestamp: item.Value[0].(float64),
@@ -89,23 +82,14 @@ func vmVectors(res []VMResult) []VMVector {
 	return vectors
 }
 
-func (a VMVector) GetFingerprint() string {
-	if len(a.Metric) == 0 {
-		return strconv.FormatUint(hash.HashNew(), 10)
+func (v VictoriaMetricsProvider) Check() (bool, error) {
+	res, err := utilsHttp.Get(nil, v.address+"/api/v1/labels")
+	if err != nil {
+		return false, err
 	}
 
-	var result uint64
-	for labelName, labelValue := range a.Metric {
-		sum := hash.HashNew()
-		sum = hash.HashAdd(sum, labelName)
-		sum = hash.HashAdd(sum, labelValue.(string))
-		result ^= sum
+	if res.StatusCode != 200 {
+		return false, err
 	}
-
-	return strconv.FormatUint(result, 10)
-}
-
-func (a VMVector) GetMetric() map[string]interface{} {
-	a.Metric["value"] = a.Value
-	return a.Metric
+	return true, nil
 }

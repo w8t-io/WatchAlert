@@ -10,10 +10,10 @@ import (
 	"watchAlert/alert/queue"
 	"watchAlert/internal/global"
 	models "watchAlert/internal/models"
-	"watchAlert/pkg/client"
 	"watchAlert/pkg/community/aws/cloudwatch"
 	"watchAlert/pkg/community/aws/cloudwatch/types"
 	"watchAlert/pkg/ctx"
+	"watchAlert/pkg/provider"
 	"watchAlert/pkg/utils/cmd"
 )
 
@@ -62,8 +62,8 @@ func alertRecover(ctx *ctx.Context, rule models.AlertRule, curKeys []string) {
 	}
 }
 
-// Prometheus 数据源
-func prometheus(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
+// Metrics 包含 Prometheus、VictoriaMetrics 数据源
+func metrics(ctx *ctx.Context, datasourceId, datasourceType string, rule models.AlertRule) {
 	var (
 		curFiringKeys  []string
 		curPendingKeys []string
@@ -78,16 +78,47 @@ func prometheus(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
 	r := models.DatasourceQuery{
 		TenantId: rule.TenantId,
 		Id:       datasourceId,
-		Type:     "Prometheus",
+		Type:     datasourceType,
 	}
 	datasourceInfo, err := ctx.DB.Datasource().Get(r)
 	if err != nil {
 		return
 	}
 
-	resQuery, _, err := client.NewPromClient(datasourceInfo).Query(rule.PrometheusConfig.PromQL)
+	health := provider.CheckDatasourceHealth(datasourceInfo)
+	if !health {
+		global.Logger.Sugar().Error(err.Error())
+		return
+	}
 
-	if err != nil {
+	var resQuery []provider.Metrics
+	switch datasourceType {
+	case provider.PrometheusDsProvider:
+		prometheusClient, err := provider.NewPrometheusClient(datasourceInfo)
+		if err != nil {
+			global.Logger.Sugar().Error(err.Error())
+			return
+		}
+
+		resQuery, err = prometheusClient.Query(rule.PrometheusConfig.PromQL)
+		if err != nil {
+			global.Logger.Sugar().Error(err.Error())
+			return
+		}
+	case provider.VictoriaMetricsDsProvider:
+		vmClient, err := provider.NewVictoriaMetricsClient(datasourceInfo)
+		if err != nil {
+			global.Logger.Sugar().Error(err.Error())
+			return
+		}
+
+		resQuery, err = vmClient.Query(rule.PrometheusConfig.PromQL)
+		if err != nil {
+			global.Logger.Sugar().Error(err.Error())
+			return
+		}
+	default:
+		global.Logger.Sugar().Errorf("Unsupported metrics type, type: %s", datasourceType)
 		return
 	}
 
@@ -131,182 +162,134 @@ func prometheus(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
 
 }
 
-// VictorMetrics 数据源
-func victoriametrics(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
+// Logs 包含 AliSLS、Loki、ElasticSearch 数据源
+func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.AlertRule) {
 	var (
-		curFiringKeys  []string
-		curPendingKeys []string
+		curKeys     []string
+		queryRes    []provider.Logs
+		count       int
+		err         error
+		evalOptions models.EvalCondition
 	)
-
-	defer func() {
-		go process.GcPendingCache(ctx, rule, curPendingKeys)
-		alertRecover(ctx, rule, curFiringKeys)
-		go process.GcRecoverWaitCache(rule, curFiringKeys)
-	}()
-
-	r := models.DatasourceQuery{
-		TenantId: rule.TenantId,
-		Id:       datasourceId,
-		Type:     "VictoriaMetrics",
-	}
-	datasourceInfo, err := ctx.DB.Datasource().Get(r)
-	if err != nil {
-		return
-	}
-
-	cmCli := client.NewVictoriaMetricsClient(datasourceInfo)
-	resQuery, err := cmCli.Query(rule.PrometheusConfig.PromQL)
-	if err != nil {
-		return
-	}
-
-	if resQuery == nil {
-		return
-	}
-
-	for _, v := range resQuery {
-		for _, ruleExpr := range rule.PrometheusConfig.Rules {
-			re := regexp.MustCompile(`([^\d]+)(\d+)`)
-			matches := re.FindStringSubmatch(ruleExpr.Expr)
-			t, _ := strconv.ParseFloat(matches[2], 64)
-
-			f := func() models.AlertCurEvent {
-				event := process.BuildEvent(rule)
-				event.DatasourceId = datasourceId
-				event.Fingerprint = v.GetFingerprint()
-				event.Metric = v.GetMetric()
-				event.Metric["severity"] = ruleExpr.Severity
-				event.Severity = ruleExpr.Severity
-				event.Annotations = cmd.ParserVariables(rule.PrometheusConfig.Annotations, event.Metric)
-
-				firingKey := event.GetFiringAlertCacheKey()
-				pendingKey := event.GetPendingAlertCacheKey()
-
-				curFiringKeys = append(curFiringKeys, firingKey)
-				curPendingKeys = append(curPendingKeys, pendingKey)
-
-				return event
-			}
-
-			option := models.EvalCondition{
-				Type:     "metric",
-				Operator: matches[1],
-				Value:    t,
-			}
-
-			process.EvalCondition(ctx, f, v.Value, option)
-		}
-	}
-
-}
-
-// AliCloudSLS 数据源
-func aliCloudSLS(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
-	var curKeys []string
 	defer func() {
 		alertRecover(ctx, rule, curKeys)
 		go process.GcRecoverWaitCache(rule, curKeys)
 	}()
 
-	curAt := time.Now()
-	startsAt := process.ParserDuration(curAt, rule.AliCloudSLSConfig.LogScope, "m")
-	args := client.AliCloudSlsQueryArgs{
-		Project:  rule.AliCloudSLSConfig.Project,
-		Logstore: rule.AliCloudSLSConfig.Logstore,
-		StartsAt: int32(startsAt.Unix()),
-		EndsAt:   int32(curAt.Unix()),
-		Query:    rule.AliCloudSLSConfig.LogQL,
-	}
-
-	datasourceInfo, err := ctx.DB.Datasource().Get(models.DatasourceQuery{
+	r := models.DatasourceQuery{
 		TenantId: rule.TenantId,
 		Id:       datasourceId,
-	})
+		Type:     datasourceType,
+	}
+	datasourceInfo, err := ctx.DB.Datasource().Get(r)
 	if err != nil {
 		return
 	}
 
-	res, err := client.NewAliCloudSlsClient(datasourceInfo).Query(args)
-	if err != nil {
-		global.Logger.Sugar().Error("查询 AliCloudSls 日志失败 ->", err.Error())
+	health := provider.CheckDatasourceHealth(datasourceInfo)
+	if !health {
+		global.Logger.Sugar().Error(err.Error())
 		return
 	}
 
-	count := len(res.Body)
-	if count <= 0 {
-		return
-	}
-
-	bodyList := client.GetSLSBodyData(res)
-
-	for _, body := range bodyList.MetricList {
-
-		event := func() models.AlertCurEvent {
-			event := process.BuildEvent(rule)
-			event.DatasourceId = datasourceId
-			event.Fingerprint = body.GetFingerprint()
-			event.Annotations = body.GetAnnotations()
-			event.Metric = body.GetMetric()
-
-			key := event.GetFiringAlertCacheKey()
-			curKeys = append(curKeys, key)
-
-			return event
+	switch datasourceType {
+	case provider.LokiDsProviderName:
+		lokiCli, err := provider.NewLokiClient(datasourceInfo)
+		if err != nil {
+			global.Logger.Sugar().Error(err.Error())
+			return
 		}
 
-		options := models.EvalCondition{
-			/*
-				触发告警的条件
-				- 有数据 > number	// 有数据并大于多少条。
-			*/
+		curAt := time.Now()
+		startsAt := process.ParserDuration(curAt, rule.LokiConfig.LogScope, "m")
+		queryOptions := provider.LogQueryOptions{
+			Loki: provider.Loki{
+				Query: rule.LokiConfig.LogQL,
+			},
+			StartAt: startsAt.Unix(),
+			EndAt:   curAt.Unix(),
+		}
+		queryRes, count, err = lokiCli.Query(queryOptions)
+		if err != nil {
+			global.Logger.Sugar().Error(err.Error())
+			return
+		}
+
+		evalOptions = models.EvalCondition{
+			Type:     rule.LokiConfig.EvalCondition.Type,
+			Operator: rule.LokiConfig.EvalCondition.Operator,
+			Value:    rule.LokiConfig.EvalCondition.Value,
+		}
+	case provider.AliCloudSLSDsProviderName:
+		slsClient, err := provider.NewAliCloudSlsClient(datasourceInfo)
+		if err != nil {
+			global.Logger.Sugar().Error(err.Error())
+			return
+		}
+
+		curAt := time.Now()
+		startsAt := process.ParserDuration(curAt, rule.AliCloudSLSConfig.LogScope, "m")
+		queryOptions := provider.LogQueryOptions{
+			AliCloudSLS: provider.AliCloudSLS{
+				Query:    rule.AliCloudSLSConfig.LogQL,
+				Project:  rule.AliCloudSLSConfig.Project,
+				LogStore: rule.AliCloudSLSConfig.Logstore,
+			},
+			StartAt: int32(startsAt.Unix()),
+			EndAt:   int32(curAt.Unix()),
+		}
+		queryRes, count, err = slsClient.Query(queryOptions)
+		if err != nil {
+			global.Logger.Sugar().Error(err.Error())
+			return
+		}
+
+		evalOptions = models.EvalCondition{
 			Type:     rule.AliCloudSLSConfig.EvalCondition.Type,
 			Operator: rule.AliCloudSLSConfig.EvalCondition.Operator,
 			Value:    rule.AliCloudSLSConfig.EvalCondition.Value,
 		}
+	case provider.ElasticSearchDsProviderName:
+		searchClient, err := provider.NewElasticSearchClient(ctx.Ctx, datasourceInfo)
+		if err != nil {
+			global.Logger.Sugar().Error(err.Error())
+			return
+		}
 
-		// 评估告警条件
-		process.EvalCondition(ctx, event, float64(count), options)
+		curAt := time.Now()
+		startsAt := process.ParserDuration(curAt, int(rule.ElasticSearchConfig.Scope), "m")
+		queryOptions := provider.LogQueryOptions{
+			ElasticSearch: provider.Elasticsearch{
+				Index:       rule.ElasticSearchConfig.Index,
+				QueryFilter: rule.ElasticSearchConfig.Filter,
+			},
+			StartAt: cmd.FormatTimeToUTC(startsAt.Unix()),
+			EndAt:   cmd.FormatTimeToUTC(curAt.Unix()),
+		}
+		queryRes, count, err = searchClient.Query(queryOptions)
+		if err != nil {
+			global.Logger.Sugar().Error(err.Error())
+			return
+		}
+
+		evalOptions = models.EvalCondition{
+			Type:     "count",
+			Operator: ">",
+			Value:    1,
+		}
 	}
 
-}
-
-// Loki 数据源
-func loki(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
-	var curKeys []string
-	defer func() {
-		alertRecover(ctx, rule, curKeys)
-		go process.GcRecoverWaitCache(rule, curKeys)
-	}()
-
-	curAt := time.Now().UTC()
-	startsAt := process.ParserDuration(curAt, rule.LokiConfig.LogScope, "m")
-	args := client.QueryOptions{
-		Query:   rule.LokiConfig.LogQL,
-		StartAt: startsAt.Format(time.RFC3339Nano),
-		EndAt:   curAt.Format(time.RFC3339Nano),
-	}
-
-	datasourceInfo, err := ctx.DB.Datasource().Get(models.DatasourceQuery{
-		TenantId: rule.TenantId,
-		Id:       datasourceId,
-	})
-	if err != nil {
+	if count <= 0 {
 		return
 	}
 
-	res, count, err := client.NewLokiClient(datasourceInfo).QueryRange(args)
-	if err != nil {
-		global.Logger.Sugar().Errorf("查询 Loki 日志失败 %s", err.Error())
-		return
-	}
-
-	for _, v := range res {
+	for _, v := range queryRes {
 		event := func() models.AlertCurEvent {
 			event := process.BuildEvent(rule)
 			event.DatasourceId = datasourceId
 			event.Fingerprint = v.GetFingerprint()
 			event.Metric = v.GetMetric()
-			event.Annotations = fmt.Sprintf("\\_\\_count\\_\\_: %d\n%s", count, v.GetAnnotations().(string))
+			event.Annotations = fmt.Sprintf("统计日志条数: %d 条\n%s", count, cmd.FormatJson(v.GetAnnotations()[0].(string)))
 
 			key := event.GetPendingAlertCacheKey()
 			curKeys = append(curKeys, key)
@@ -314,57 +297,69 @@ func loki(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
 			return event
 		}
 
-		options := models.EvalCondition{
-			Type:     rule.LokiConfig.EvalCondition.Type,
-			Operator: rule.LokiConfig.EvalCondition.Operator,
-			Value:    rule.LokiConfig.EvalCondition.Value,
-		}
-
 		// 评估告警条件
-		process.EvalCondition(ctx, event, float64(count), options)
-		// 只需要评估出第一条日志信息即可
-		break
+		process.EvalCondition(ctx, event, float64(count), evalOptions)
 	}
 }
 
-// Jaeger 数据源
-func jaeger(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
-	var curKeys []string
+// Traces 包含 Jaeger 数据源
+func traces(ctx *ctx.Context, datasourceId, datasourceType string, rule models.AlertRule) {
+	var (
+		curKeys  []string
+		queryRes []provider.Traces
+		err      error
+	)
 	defer func() {
 		alertRecover(ctx, rule, curKeys)
 		go process.GcRecoverWaitCache(rule, curKeys)
 	}()
 
-	curAt := time.Now().UTC()
-	startsAt := process.ParserDuration(curAt, rule.JaegerConfig.Scope, "m")
-
-	rule.DatasourceType = "Jaeger"
-	rule.DatasourceIdList = []string{"jaeger"}
-
-	opt := client.JaegerQueryOptions{
-		Tags:    rule.JaegerConfig.Tags,
-		Service: rule.JaegerConfig.Service,
-		StartAt: startsAt.UnixMicro(),
-		EndAt:   curAt.UnixMicro(),
+	r := models.DatasourceQuery{
+		TenantId: rule.TenantId,
+		Id:       datasourceId,
+		Type:     datasourceType,
 	}
-
-	datasourceInfo, err := ctx.DB.Datasource().Get(models.DatasourceQuery{
-		Id: datasourceId,
-	})
+	datasourceInfo, err := ctx.DB.Datasource().Get(r)
 	if err != nil {
+		global.Logger.Sugar().Error(err.Error())
 		return
 	}
 
-	res := client.NewJaegerClient(datasourceInfo).JaegerQuery(opt)
-	if res.Data == nil {
+	health := provider.CheckDatasourceHealth(datasourceInfo)
+	if !health {
+		global.Logger.Sugar().Error(err.Error())
 		return
 	}
 
-	for _, v := range res.Data {
+	switch datasourceType {
+	case provider.JaegerDsProviderName:
+		curAt := time.Now().UTC()
+		startsAt := process.ParserDuration(curAt, rule.JaegerConfig.Scope, "m")
+
+		jaegerClient, err := provider.NewJaegerClient(datasourceInfo)
+		if err != nil {
+			global.Logger.Sugar().Error(err.Error())
+			return
+		}
+
+		queryOptions := provider.TraceQueryOptions{
+			Tags:    rule.JaegerConfig.Tags,
+			Service: rule.JaegerConfig.Service,
+			StartAt: startsAt.UnixMicro(),
+			EndAt:   curAt.UnixMicro(),
+		}
+		queryRes, err = jaegerClient.Query(queryOptions)
+		if err != nil {
+			global.Logger.Sugar().Error(err.Error())
+			return
+		}
+	}
+
+	for _, v := range queryRes {
 		event := process.BuildEvent(rule)
 		event.DatasourceId = datasourceId
 		event.Fingerprint = v.GetFingerprint()
-		event.Metric = v.GetMetric(rule)
+		event.Metric = v.GetMetric()
 		event.Annotations = v.GetAnnotations(rule, datasourceInfo)
 
 		key := event.GetFiringAlertCacheKey()
@@ -372,7 +367,6 @@ func jaeger(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
 
 		process.SaveAlertEvent(ctx, event)
 	}
-
 }
 
 func cloudWatch(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
@@ -387,7 +381,7 @@ func cloudWatch(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
 		return
 	}
 
-	cfg, err := client.NewAWSCredentialCfg(datasourceObj.AWSCloudWatch.Region, datasourceObj.AWSCloudWatch.AccessKey, datasourceObj.AWSCloudWatch.SecretKey)
+	cfg, err := provider.NewAWSCredentialCfg(datasourceObj.AWSCloudWatch.Region, datasourceObj.AWSCloudWatch.AccessKey, datasourceObj.AWSCloudWatch.SecretKey)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -443,15 +437,18 @@ func kubernetesEvent(ctx *ctx.Context, datasourceId string, rule models.AlertRul
 
 	datasourceObj, err := ctx.DB.Datasource().GetInstance(datasourceId)
 	if err != nil {
+		global.Logger.Sugar().Error(err.Error())
 		return
 	}
 
-	cli, err := client.NewKubernetesClient(ctx.Ctx, datasourceObj.KubeConfig)
+	cli, err := provider.NewKubernetesClient(ctx.Ctx, datasourceObj.KubeConfig)
 	if err != nil {
+		global.Logger.Sugar().Error(err.Error())
 		return
 	}
 	event, err := cli.GetWarningEvent(rule.KubernetesConfig.Reason, rule.KubernetesConfig.Scope)
 	if err != nil {
+		global.Logger.Sugar().Error(err.Error())
 		return
 	}
 
@@ -468,68 +465,11 @@ func kubernetesEvent(ctx *ctx.Context, datasourceId string, rule models.AlertRul
 		alertEvent.DatasourceId = datasourceId
 		alertEvent.Fingerprint = k8sItem.GetFingerprint()
 		alertEvent.Metric = k8sItem.GetMetrics()
-		alertEvent.Annotations = fmt.Sprintf("\n- 环境: %s\n- 命名空间: %s\n- 资源类型: %s\n- 资源名称: %s\n- 事件类型: %s\n- 事件详情: %s\n",
+		alertEvent.Annotations = fmt.Sprintf("- 环境: %s\n- 命名空间: %s\n- 资源类型: %s\n- 资源名称: %s\n- 事件类型: %s\n- 事件详情: %s\n",
 			datasourceObj.Name, item.Namespace, item.InvolvedObject.Kind,
 			item.InvolvedObject.Name, item.Reason, eventMapping[item.InvolvedObject.Name],
 		)
 
 		process.SaveAlertEvent(ctx, alertEvent)
-	}
-}
-
-func elasticSearch(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
-	var curKeys []string
-	defer func() {
-		alertRecover(ctx, rule, curKeys)
-		go process.GcRecoverWaitCache(rule, curKeys)
-	}()
-
-	datasourceInfo, err := ctx.DB.Datasource().Get(models.DatasourceQuery{
-		TenantId: rule.TenantId,
-		Id:       datasourceId,
-	})
-	if err != nil {
-		return
-	}
-
-	cli, err := client.NewElasticSearchClient(ctx.Ctx, datasourceInfo)
-	if err != nil {
-		global.Logger.Sugar().Error(err.Error())
-		return
-	}
-
-	res, err := cli.Query(ctx.Ctx, rule.ElasticSearchConfig.Index, rule.ElasticSearchConfig.Filter, rule.ElasticSearchConfig.Scope)
-	if err != nil {
-		global.Logger.Sugar().Error(err.Error())
-		return
-	}
-
-	count := len(res)
-	if count <= 0 {
-		return
-	}
-
-	for _, v := range res {
-		event := func() models.AlertCurEvent {
-			event := process.BuildEvent(rule)
-			event.DatasourceId = datasourceId
-			event.Fingerprint = v.GetFingerprint()
-			event.Metric = v.GetMetric()
-			event.Annotations = v.GetAnnotations()
-
-			key := event.GetPendingAlertCacheKey()
-			curKeys = append(curKeys, key)
-
-			return event
-		}
-
-		options := models.EvalCondition{
-			Type:     "count",
-			Operator: ">",
-			Value:    1,
-		}
-
-		// 评估告警条件
-		process.EvalCondition(ctx, event, float64(count), options)
 	}
 }

@@ -12,8 +12,6 @@ type ESQueryFilter struct {
 }
 
 type ESQueryResponse struct {
-	Index  string `json:"_index"`
-	Id     string `json:"_id"`
 	Source source `json:"_source"`
 }
 

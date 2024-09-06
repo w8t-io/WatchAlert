@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 	"github.com/aws/aws-sdk-go-v2/service/rds"
-	"watchAlert/pkg/client"
 	"watchAlert/pkg/community/aws/cloudwatch/types"
 	"watchAlert/pkg/ctx"
+	"watchAlert/pkg/provider"
 )
 
 type (
@@ -32,7 +32,7 @@ func (a awsRdsService) GetDBInstanceIdentifier(req interface{}) (interface{}, in
 		return nil, err
 	}
 
-	cfg, err := client.NewAWSCredentialCfg(datasourceObj.AWSCloudWatch.Region, datasourceObj.AWSCloudWatch.AccessKey, datasourceObj.AWSCloudWatch.SecretKey)
+	cfg, err := provider.NewAWSCredentialCfg(datasourceObj.AWSCloudWatch.Region, datasourceObj.AWSCloudWatch.AccessKey, datasourceObj.AWSCloudWatch.SecretKey)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func (a awsRdsService) GetDBClusterIdentifier(req interface{}) (interface{}, int
 		return nil, err
 	}
 
-	cfg, err := client.NewAWSCredentialCfg(datasourceObj.AWSCloudWatch.Region, datasourceObj.AWSCloudWatch.AccessKey, datasourceObj.AWSCloudWatch.SecretKey)
+	cfg, err := provider.NewAWSCredentialCfg(datasourceObj.AWSCloudWatch.Region, datasourceObj.AWSCloudWatch.AccessKey, datasourceObj.AWSCloudWatch.SecretKey)
 	if err != nil {
 		return nil, err
 	}

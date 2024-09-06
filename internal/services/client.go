@@ -2,8 +2,8 @@ package services
 
 import (
 	"watchAlert/internal/models"
-	"watchAlert/pkg/client"
 	"watchAlert/pkg/ctx"
+	"watchAlert/pkg/provider"
 )
 
 type (
@@ -30,7 +30,7 @@ func (cs clientService) GetJaegerService(req interface{}) (interface{}, interfac
 		return nil, err
 	}
 
-	cli := client.NewJaegerClient(getInfo)
+	cli, err := provider.NewJaegerClient(getInfo)
 	service, err := cli.GetJaegerService()
 	if err != nil {
 		return nil, err

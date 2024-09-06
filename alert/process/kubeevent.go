@@ -6,6 +6,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"strings"
 	"watchAlert/pkg/ctx"
+	"watchAlert/pkg/utils/cmd"
 )
 
 type KubernetesEvent struct {
@@ -19,8 +20,13 @@ func KubernetesAlertEvent(ctx *ctx.Context, event v1.Event) KubernetesEvent {
 
 func (a KubernetesEvent) GetFingerprint() string {
 	h := md5.New()
-	streamString := a.event.Namespace + "-" + a.event.Reason
-	h.Write([]byte(streamString))
+	s := map[string]interface{}{
+		"namespace": a.event.Namespace,
+		"resource":  a.event.Reason,
+		"podName":   a.event.InvolvedObject.Name,
+	}
+
+	h.Write([]byte(cmd.JsonMarshal(s)))
 	fingerprint := hex.EncodeToString(h.Sum(nil))
 	return fingerprint
 }
