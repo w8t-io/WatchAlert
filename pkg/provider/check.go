@@ -31,22 +31,22 @@ func CheckDatasourceHealth(datasource models.AlertDataSource) bool {
 		}
 	case "ElasticSearch":
 		searchClient, err := NewElasticSearchClient(context.Background(), datasource)
-		if err != nil {
+		if err == nil {
 			check, err = searchClient.Check()
 		}
 	case "AliCloudSLS":
 		slsClient, err := NewAliCloudSlsClient(datasource)
-		if err != nil {
+		if err == nil {
 			check, err = slsClient.Check()
 		}
 	case "Loki":
 		lokiClient, err := NewLokiClient(datasource)
-		if err != nil {
+		if err == nil {
 			check, err = lokiClient.Check()
 		}
 	case "Jaeger":
 		jaegerClient, err := NewJaegerClient(datasource)
-		if err != nil {
+		if err == nil {
 			check, err = jaegerClient.Check()
 		}
 	case "CloudWatch":

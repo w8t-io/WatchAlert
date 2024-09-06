@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/olivere/elastic/v7"
 	"watchAlert/internal/models"
+	utilsHttp "watchAlert/pkg/utils/http"
 )
 
 type ElasticSearchDsProvider struct {
@@ -84,8 +85,12 @@ func (e ElasticSearchDsProvider) Query(options LogQueryOptions) ([]Logs, int, er
 }
 
 func (e ElasticSearchDsProvider) Check() (bool, error) {
-	_, _, err := e.cli.Ping(e.url).Do(context.Background())
+	res, err := utilsHttp.Get(nil, e.url+"/_cat/health")
 	if err != nil {
+		return false, err
+	}
+
+	if res.StatusCode != 200 {
 		return false, err
 	}
 	return true, nil
