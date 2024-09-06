@@ -2,7 +2,6 @@ package models
 
 import (
 	"sort"
-	"watchAlert/internal/types"
 	//"watchAlert/pkg/client"
 	"watchAlert/pkg/utils/hash"
 )
@@ -55,9 +54,14 @@ type AlertRule struct {
 }
 
 type ElasticSearchConfig struct {
-	Index  string                `json:"index"`
-	Scope  int64                 `json:"scope"`
-	Filter []types.ESQueryFilter `json:"filter"`
+	Index  string          `json:"index"`
+	Scope  int64           `json:"scope"`
+	Filter []EsQueryFilter `json:"filter"`
+}
+
+type EsQueryFilter struct {
+	Field string `json:"field"`
+	Value string `json:"value"`
 }
 
 type KubernetesConfig struct {

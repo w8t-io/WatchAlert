@@ -58,23 +58,19 @@ func (t *AlertRule) Eval(ctx context.Context, rule models.AlertRule) {
 				switch rule.DatasourceType {
 				case "Prometheus", "VictoriaMetrics":
 					metrics(t.ctx, dsId, instance.Type, rule)
-				case "AliCloudSLS":
-					aliCloudSLS(t.ctx, dsId, rule)
-				case "Loki":
-					loki(t.ctx, dsId, rule)
+				case "AliCloudSLS", "Loki", "ElasticSearch":
+					logs(t.ctx, dsId, instance.Type, rule)
 				case "Jaeger":
-					jaeger(t.ctx, dsId, rule)
+					traces(t.ctx, dsId, instance.Type, rule)
 				case "CloudWatch":
 					cloudWatch(t.ctx, dsId, rule)
 				case "KubernetesEvent":
 					kubernetesEvent(t.ctx, dsId, rule)
-				case "ElasticSearch":
-					elasticSearch(t.ctx, dsId, rule)
 				}
 			}
 			global.Logger.Sugar().Infof("规则评估 -> %v", cmd.JsonMarshal(rule))
 		case <-ctx.Done():
-			global.Logger.Sugar().Infof("停止 RuleId 为 %v 的 Watch 协程", rule.RuleId)
+			global.Logger.Sugar().Infof("停止 RuleId: %v, RuleName: %s 的 Watch 协程", rule.RuleId, rule.RuleName)
 			return
 		}
 		timer.Reset(time.Second * time.Duration(rule.EvalInterval))

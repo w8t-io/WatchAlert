@@ -1,11 +1,10 @@
-package client
+package provider
 
 import (
 	"context"
 	"github.com/sirupsen/logrus"
 	"testing"
 	"watchAlert/internal/models"
-	"watchAlert/internal/types"
 )
 
 func TestNewElasticSearchClient(t *testing.T) {
@@ -15,15 +14,5 @@ func TestNewElasticSearchClient(t *testing.T) {
 		return
 	}
 
-	q := []types.ESQueryFilter{
-		{
-			"message",
-			"docker",
-		},
-		{
-			"message",
-			"ready",
-		},
-	}
-	client.Query(context.Background(), "test-2024-05.20", q, 1000000)
+	client.Query(LogQueryOptions{})
 }

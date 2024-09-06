@@ -4,8 +4,6 @@ import (
 	"context"
 	"watchAlert/internal/global"
 	"watchAlert/internal/models"
-	"watchAlert/pkg/client"
-	utilsHttp "watchAlert/pkg/utils/http"
 )
 
 func CheckDatasourceHealth(datasource models.AlertDataSource) bool {
@@ -26,16 +24,32 @@ func CheckDatasourceHealth(datasource models.AlertDataSource) bool {
 			check, err = vmClient.Check()
 		}
 	case "Kubernetes":
-		cli, err := client.NewKubernetesClient(context.Background(), datasource.KubeConfig)
+		cli, err := NewKubernetesClient(context.Background(), datasource.KubeConfig)
 		if err == nil {
 			_, err = cli.GetWarningEvent("", 1)
 			check = (err == nil)
 		}
 	case "ElasticSearch":
-		res, err := utilsHttp.Get(nil, datasource.ElasticSearch.Url+"/_cat/health")
-		check = (err == nil && res.StatusCode == 200)
-	case "Jaeger", "Loki", "AliCloud", "CloudWatch":
-		// 这几种数据源默认返回健康
+		searchClient, err := NewElasticSearchClient(context.Background(), datasource)
+		if err != nil {
+			check, err = searchClient.Check()
+		}
+	case "AliCloudSLS":
+		slsClient, err := NewAliCloudSlsClient(datasource)
+		if err != nil {
+			check, err = slsClient.Check()
+		}
+	case "Loki":
+		lokiClient, err := NewLokiClient(datasource)
+		if err != nil {
+			check, err = lokiClient.Check()
+		}
+	case "Jaeger":
+		jaegerClient, err := NewJaegerClient(datasource)
+		if err != nil {
+			check, err = jaegerClient.Check()
+		}
+	case "CloudWatch":
 		return true
 	}
 
