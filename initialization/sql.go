@@ -36,10 +36,16 @@ func InitUserRolesSQL(ctx *ctx.Context) {
 	}
 
 	err := db.Where("name = ?", "admin").First(&adminRole).Error
-	if err == gorm.ErrRecordNotFound {
-		err := ctx.DB.DB().Create(&roles).Error
-		if err != nil {
-			global.Logger.Sugar().Errorf(err.Error())
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			err = ctx.DB.DB().Create(&roles).Error
 		}
+	} else {
+		err = db.Where("name = ?", "admin").Updates(models.UserRole{Permissions: perms}).Error
+	}
+
+	if err != nil {
+		global.Logger.Sugar().Errorf(err.Error())
+		panic(err)
 	}
 }
