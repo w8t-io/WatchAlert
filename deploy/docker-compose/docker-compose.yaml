@@ -13,6 +13,7 @@ services:
       - "9001:9001"
     depends_on:
       - w8t-mysql
+      - w8t-redis
     networks:
       - w8t
 
@@ -25,24 +26,31 @@ services:
     privileged: true
     ports:
       - "80:80"
-
     networks:
       - w8t
 
   w8t-redis:
     container_name: w8t-redis
     image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis:/data
     environment:
       - TZ=Asia/Shanghai
     restart: always
     networks:
       - w8t
 
+
   w8t-mysql:
     container_name: w8t-mysql
-    image: mysql:latest
+    image: mysql:8.0
     ports:
       - "3306:3306"
+    volumes:
+      - ./mysql:/var/lib/mysql
+      - ../sql:/docker-entrypoint-initdb.d
     environment:
       - TZ=Asia/Shanghai
       - MYSQL_ROOT_PASSWORD=w8t.123

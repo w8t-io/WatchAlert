@@ -12,7 +12,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.38.5
 	github.com/aws/aws-sdk-go-v2/service/rds v1.79.5
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/elastic/go-elasticsearch/v7 v7.17.10
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/google/uuid v1.6.0
@@ -97,7 +96,6 @@ require (
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_model v0.6.0 // indirect
-	github.com/speps/go-hashids/v2 v2.0.1 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
