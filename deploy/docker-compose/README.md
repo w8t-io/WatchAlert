@@ -12,16 +12,8 @@
 ```
 配置文件
 
-- [config.yaml](../../config/config.yaml)
+- [config/config.yaml](../../config/config.yaml)
 
-Docker-Compose 
-> 注意：w8t-web 的 command。
->
-> REACT_APP_BACKEND_PORT=9001 yarn start
->
-> 参数解析：
->
-> - REACT_APP_BACKEND_PORT：有特殊需要需要修改后端端口，需要在这里指定后端端口。
 
 - [docker-compose.yaml](docker-compose.yaml)
 
@@ -38,5 +30,3 @@ w8t-service   /app/watchAlert                  Up      0.0.0.0:9002->9001/tcp
 w8t-web       /bin/sh -c REACT_APP_BACKE ...   Up      0.0.0.0:80->3000/tcp      
 ```
 
-初始化数据
-- [README](../sql/README.md)

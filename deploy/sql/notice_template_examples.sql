@@ -1,3 +1,4 @@
+use watchalert;
 INSERT INTO `notice_template_examples` (`id`, `name`, `description`, `template`, `enable_fei_shu_json_card`,
                                         `template_firing`, `template_recover`, `notice_type`)
 VALUES ('nt-cqh3uppd6gvj2ctaqd60', '通用模版', '', '{{- define "Title" -}}
