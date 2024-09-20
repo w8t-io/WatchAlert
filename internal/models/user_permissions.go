@@ -339,5 +339,33 @@ func PermissionsInfo() map[string]UserPermissions {
 			Key: "获取证书监控信息",
 			API: "/api/w8t/monitor/getMon",
 		},
+		"listFolder": {
+			Key: "获取仪表盘目录列表",
+			API: "/api/w8t/dashboard/listFolder",
+		},
+		"getFolder": {
+			Key: "获取仪表盘目录详情",
+			API: "/api/w8t/dashboard/getFolder",
+		},
+		"createFolder": {
+			Key: "创建仪表盘目录",
+			API: "/api/w8t/dashboard/createFolder",
+		},
+		"updateFolder": {
+			Key: "删除仪表盘目录",
+			API: "/api/w8t/dashboard/updateFolder",
+		},
+		"deleteFolder": {
+			Key: "删除仪表盘目录",
+			API: "/api/w8t/dashboard/deleteFolder",
+		},
+		"listGrafanaDashboards": {
+			Key: "获取仪表盘信息",
+			API: "/api/w8t/dashboard/listGrafanaDashboards",
+		},
+		"getDashboardFullUrl": {
+			Key: "获取仪表盘完整URL",
+			API: "/api/w8t/dashboard/getDashboardFullUrl",
+		},
 	}
 }
