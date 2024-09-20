@@ -11,8 +11,14 @@ services:
     privileged: true
     ports:
       - "9001:9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://w8t-mysql:3306"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
     depends_on:
       - w8t-mysql
+      - w8t-redis
     networks:
       - w8t
 
@@ -25,29 +31,53 @@ services:
     privileged: true
     ports:
       - "80:80"
-
     networks:
       - w8t
 
   w8t-redis:
     container_name: w8t-redis
     image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis:/data
     environment:
       - TZ=Asia/Shanghai
     restart: always
     networks:
       - w8t
 
+
   w8t-mysql:
     container_name: w8t-mysql
-    image: mysql:latest
+    image: mysql:8.0
     ports:
       - "3306:3306"
+    volumes:
+      - ./mysql:/var/lib/mysql
     environment:
       - TZ=Asia/Shanghai
       - MYSQL_ROOT_PASSWORD=w8t.123
       - MYSQL_DATABASE=watchalert
     restart: always
+    networks:
+      - w8t
+
+  #必须在服务启动创建表后再导入数据
+  init-mysql:
+    container_name: init-mysql
+    image: mysql:8.0
+    volumes:
+      - ../sql:/sql
+    environment:
+      - TZ=Asia/Shanghai
+      - MYSQL_ROOT_PASSWORD=w8t.123
+      - MYSQL_DATABASE=watchalert
+    restart: on-failure
+    command: ["sh", "-c", "/sql/auto_import.sh"]
+    depends_on:
+      - w8t-mysql
+      - w8t-service
     networks:
       - w8t
 
