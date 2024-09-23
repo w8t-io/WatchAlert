@@ -2,6 +2,7 @@ package sender
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"io"
 	"watchAlert/alert/mute"
@@ -12,6 +13,11 @@ import (
 	"watchAlert/pkg/utils/http"
 	"watchAlert/pkg/utils/templates"
 )
+
+type ResponseMsg struct {
+	ErrCode int    `json:"errcode"`
+	ErrMsg  string `json:"errmsg"`
+}
 
 func Sender(ctx *ctx.Context, alert models.AlertCurEvent, notice models.AlertNotice) error {
 	ok := mute.IsMuted(ctx, &alert)
@@ -46,13 +52,31 @@ func Sender(ctx *ctx.Context, alert models.AlertCurEvent, notice models.AlertNot
 			msg = err.Error()
 		}
 
+		// 读取响应体内容
+		body, err := io.ReadAll(res.Body)
+
+		if err != nil {
+			global.Logger.Sugar().Errorf("Error reading response body: %v", err)
+			return err
+		}
+
+		// 创建 Response 对象
+		var response ResponseMsg
+
+		// 将 JSON 数据解析到 Response 结构体
+		err = json.Unmarshal(body, &response)
+		if err != nil {
+			global.Logger.Sugar().Errorf("Error unmarshalling response: %v", err)
+			return err
+		}
+
+		if response.ErrCode != 0 {
+			global.Logger.Sugar().Error(response.ErrMsg)
+			return errors.New(response.ErrMsg)
+		}
+
 		if res.StatusCode != 200 {
-			all, err := io.ReadAll(res.Body)
-			if err != nil {
-				global.Logger.Sugar().Error(err.Error())
-				return err
-			}
-			msg = string(all)
+			msg = string(body)
 		}
 
 		if msg != "" {
