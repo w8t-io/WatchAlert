@@ -75,8 +75,22 @@ func (us userService) Login(req interface{}) (interface{}, interface{}) {
 		return nil, err
 	}
 
-	if data.Password != hashPassword {
-		return nil, fmt.Errorf("密码错误")
+	switch data.CreateBy {
+	case "LDAP":
+		if global.Config.Ldap.Enabled {
+			err := LdapService.Login(r.UserName, r.Password)
+			if err != nil {
+				global.Logger.Sugar().Warnf("LDAP 用户登陆失败, err: %s", err.Error())
+				return nil, fmt.Errorf("LDAP 用户登陆失败, err: %s", err.Error())
+			}
+		} else {
+			global.Logger.Sugar().Warnf("请先开启 LDAP 功能!")
+			return nil, fmt.Errorf("请先开启 LDAP 功能!")
+		}
+	default:
+		if data.Password != hashPassword {
+			return nil, fmt.Errorf("密码错误")
+		}
 	}
 
 	r.UserId = data.UserId

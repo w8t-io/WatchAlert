@@ -19,3 +19,23 @@ Redis:
 Jwt:
   # 失效时间
   expire: 18000
+
+Ldap:
+  # 启动 LDAP
+  enabled: false
+  # LDAP 服务地址
+  address: ""
+  # 基础 DN
+  baseDN: "dc=test,dc=com"
+  # admin DN
+  adminUser: "cn=admin,dc=test,dc=com"
+  # admin 密码
+  adminPass: "123456"
+  # 用户 DN
+  userDN: "ou=people,dc=test,dc=com"
+  # 用户 DN 前缀
+  userPrefix: "uid"
+  # 默认用户角色
+  defaultUserRole: "ur-cq7nkj1d6gviooaigqi0"
+  # 定时任务，用于同步 LDAP 用户到W8T
+  cronjob: "*/1 * * * *"

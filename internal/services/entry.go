@@ -31,6 +31,7 @@ var (
 	SettingService          InterSettingService
 	ClientService           InterClientService
 	MonitorService          InterMonitorService
+	LdapService             InterLdapService
 )
 
 func NewServices(ctx *ctx.Context) {
@@ -58,4 +59,5 @@ func NewServices(ctx *ctx.Context) {
 	SettingService = newInterSettingService(ctx)
 	ClientService = newInterClientService(ctx)
 	MonitorService = newInterMonitorService(ctx)
+	LdapService = newInterLdapService(ctx)
 }
