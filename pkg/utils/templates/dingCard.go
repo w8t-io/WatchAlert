@@ -2,7 +2,6 @@ package templates
 
 import (
 	"fmt"
-	"watchAlert/internal/global"
 	models2 "watchAlert/internal/models"
 	"watchAlert/pkg/utils/cmd"
 )
@@ -35,7 +34,6 @@ func dingdingTemplate(alert models2.AlertCurEvent, noticeTmpl models2.NoticeTemp
 	}
 
 	cardContentString := cmd.JsonMarshal(t)
-	global.Logger.Sugar().Info("ding msg: ", cardContentString)
 
 	return cardContentString
 
