@@ -51,13 +51,11 @@ func (ec *Consume) Run() {
 func (ec *Consume) processAlerts() {
 	alertKeys := process.GetRedisFiringKeys(ec.ctx)
 	ec.loadAlertsToMem(alertKeys)
-
 	for key, alerts := range ec.alertsMap {
 		if len(alerts) == 0 {
 			continue
 		}
 		waitTime := ec.calculateWaitTime(key)
-
 		if ec.Timing[key] >= waitTime {
 			curEvents := ec.filterAlerts(alerts)
 			ec.fireAlertEvent(curEvents)
@@ -127,7 +125,6 @@ func (ec *Consume) filterAlerts(alerts []models.AlertCurEvent) map[string][]mode
 			newAlertsMap[alert.RuleId] = append(newAlertsMap[alert.RuleId], alert)
 		}
 	}
-
 	return newAlertsMap
 }
 
@@ -146,7 +143,6 @@ func (ec *Consume) fireAlertEvent(alertsMap map[string][]models.AlertCurEvent) {
 			}
 		}
 	}
-
 	ec.handleAlert(ec.preStoreFiringAlertEvents)
 	ec.handleAlert(ec.preStoreRecoverAlertEvents)
 }
@@ -250,7 +246,7 @@ func (ec *Consume) handleAlert(alertMapping map[string][]models.AlertCurEvent) {
 			}
 			noticeData, _ := ec.ctx.DB.Notice().Get(r)
 			alert.DutyUser = process.GetDutyUser(ec.ctx, noticeData)
-			err := sender.Sender(ec.ctx, alert, noticeData)
+			err := sender.Sender(ec.ctx, alert, noticeData) //发送告警
 			if err != nil {
 				global.Logger.Sugar().Errorf(err.Error())
 				return

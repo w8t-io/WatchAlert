@@ -1,5 +1,5 @@
 use watchalert;
-INSERT INTO `notice_template_examples` (`id`, `name`, `description`, `template`, `enable_fei_shu_json_card`,
+INSERT ignore  INTO `notice_template_examples` (`id`, `name`, `description`, `template`, `enable_fei_shu_json_card`,
                                         `template_firing`, `template_recover`, `notice_type`)
 VALUES ('nt-cqh3uppd6gvj2ctaqd60', '通用模版', '', '{{- define "Title" -}}
 {{- if not .IsRecovered -}}
@@ -41,7 +41,7 @@ green
     {{- define "Footer" -}}
     🧑‍💻 即时设计 - 运维团队
 {{- end }}', false, '', '', 'FeiShu');
-INSERT INTO `notice_template_examples` (`id`, `name`, `description`, `template`, `enable_fei_shu_json_card`,
+INSERT  ignore INTO `notice_template_examples` (`id`, `name`, `description`, `template`, `enable_fei_shu_json_card`,
                                         `template_firing`, `template_recover`, `notice_type`)
 VALUES ('nt-cqh4361d6gvj80netqk0', '飞书高级消息卡片模版', '', '', true, '{
   "elements": [
@@ -471,7 +471,7 @@ VALUES ('nt-cqh4361d6gvj80netqk0', '飞书高级消息卡片模版', '', '', tru
   },
         "tag": ""
 }', 'FeiShu');
-INSERT INTO `notice_template_examples` (`id`, `name`, `description`, `template`, `enable_fei_shu_json_card`,
+INSERT  ignore INTO `notice_template_examples` (`id`, `name`, `description`, `template`, `enable_fei_shu_json_card`,
                                         `template_firing`, `template_recover`, `notice_type`)
 VALUES ('nt-cqh4599d6gvj80netql0', 'Email邮件通知模版', '', '{{ define "Event" -}}
 {{- if not .IsRecovered -}}
@@ -499,7 +499,7 @@ VALUES ('nt-cqh4599d6gvj80netql0', 'Email邮件通知模版', '', '{{ define "Ev
     <strong>📝 报警事件:</strong> ${annotations}<br>
     {{- end -}}
     {{ end }}', false, '', '', 'Email');
-INSERT INTO `notice_template_examples` (`id`, `name`, `description`, `template`, `enable_fei_shu_json_card`,
+INSERT  ignore INTO `notice_template_examples` (`id`, `name`, `description`, `template`, `enable_fei_shu_json_card`,
                                         `template_firing`, `template_recover`, `notice_type`)
 VALUES ('nt-cqh45t9d6gvj80netqm0', 'Loki日志告警通知模版', '', '{{- define "Title" -}}
 {{- if not .IsRecovered -}}
@@ -545,7 +545,7 @@ green
     {{- define "Footer" -}}
     🧑‍💻 即时设计 - 运维团队
 {{- end }}', false, '', '', 'FeiShu');
-INSERT INTO `notice_template_examples` (`id`, `name`, `description`, `template`, `enable_fei_shu_json_card`,
+INSERT  ignore INTO `notice_template_examples` (`id`, `name`, `description`, `template`, `enable_fei_shu_json_card`,
                                         `template_firing`, `template_recover`, `notice_type`)
 VALUES ('nt-cqh464hd6gvj80netqng', '阿里云SLS日志告警通知模版', '', '{{- define "Title" -}}
 {{- if not .IsRecovered -}}

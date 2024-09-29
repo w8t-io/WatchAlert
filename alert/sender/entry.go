@@ -2,6 +2,7 @@ package sender
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"io"
 	"watchAlert/alert/mute"
@@ -13,6 +14,17 @@ import (
 	"watchAlert/pkg/utils/templates"
 )
 
+type DingResponseMsg struct {
+	Code int    `json:"errcode"`
+	Msg  string `json:"errmsg"`
+}
+
+type FeishuResponseMsg struct {
+	Code int    `json:"code"`
+	Msg  string `json:"msg"`
+	Data string `json:"data"`
+}
+
 func Sender(ctx *ctx.Context, alert models.AlertCurEvent, notice models.AlertNotice) error {
 	ok := mute.IsMuted(ctx, &alert)
 	if ok {
@@ -20,8 +32,8 @@ func Sender(ctx *ctx.Context, alert models.AlertCurEvent, notice models.AlertNot
 	}
 
 	n := templates.NewTemplate(ctx, alert, notice)
-
-	switch notice.NoticeType {
+	NoticeType := notice.NoticeType
+	switch NoticeType {
 	case "Email":
 		setting, err := ctx.DB.Setting().Get()
 		if err != nil {
@@ -46,13 +58,41 @@ func Sender(ctx *ctx.Context, alert models.AlertCurEvent, notice models.AlertNot
 			msg = err.Error()
 		}
 
-		if res.StatusCode != 200 {
-			all, err := io.ReadAll(res.Body)
+		// 读取响应体内容
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			global.Logger.Sugar().Errorf("Error reading response body: %v", err)
+			return err
+		}
+
+		if NoticeType == "FeiShu" {
+			var response FeishuResponseMsg
+			err = json.Unmarshal(body, &response)
 			if err != nil {
-				global.Logger.Sugar().Error(err.Error())
+				global.Logger.Sugar().Errorf("Error unmarshalling %v response: %v", NoticeType, err)
 				return err
 			}
-			msg = string(all)
+			if response.Code != 0 {
+				global.Logger.Sugar().Error(response.Msg)
+				return errors.New(response.Msg)
+			}
+		}
+
+		if NoticeType == "DingDing" {
+			var response DingResponseMsg
+			err = json.Unmarshal(body, &response)
+			if err != nil {
+				global.Logger.Sugar().Errorf("Error unmarshalling %v response: %v", NoticeType, err)
+				return err
+			}
+			if response.Code != 0 {
+				global.Logger.Sugar().Error(response.Msg)
+				return errors.New(response.Msg)
+			}
+		}
+
+		if res.StatusCode != 200 {
+			msg = string(body)
 		}
 
 		if msg != "" {
