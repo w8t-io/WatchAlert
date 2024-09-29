@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"fmt"
 	"gorm.io/gorm"
 	"watchAlert/internal/global"
 	"watchAlert/internal/models"
@@ -16,6 +17,9 @@ type (
 		Update(d models.Dashboard) error
 		Delete(d models.DashboardQuery) error
 		Search(d models.DashboardQuery) ([]models.Dashboard, error)
+		CreateDashboardFolder(fd models.DashboardFolders) error
+		UpdateDashboardFolder(fd models.DashboardFolders) error
+		DeleteDashboardFolder(fd models.DashboardFolders) error
 	}
 )
 
@@ -83,4 +87,48 @@ func (dr DashboardRepo) Search(d models.DashboardQuery) ([]models.Dashboard, err
 		return nil, err
 	}
 	return data, nil
+}
+
+func (dr DashboardRepo) CreateDashboardFolder(fd models.DashboardFolders) error {
+	fmt.Println("--->", fd)
+	err := dr.g.Create(&models.DashboardFolders{}, fd)
+	if err != nil {
+		global.Logger.Sugar().Error(err)
+		return err
+	}
+	return nil
+}
+
+func (dr DashboardRepo) UpdateDashboardFolder(fd models.DashboardFolders) error {
+	fmt.Println("--->", fd)
+	u := Updates{
+		Table: &models.DashboardFolders{},
+		Where: map[string]interface{}{
+			"tenant_id = ?": fd.TenantId,
+			"id = ?":        fd.ID,
+		},
+		Updates: fd,
+	}
+	err := dr.g.Updates(u)
+	if err != nil {
+		global.Logger.Sugar().Error(err)
+		return err
+	}
+	return nil
+}
+
+func (dr DashboardRepo) DeleteDashboardFolder(fd models.DashboardFolders) error {
+	d := Delete{
+		Table: &models.DashboardFolders{},
+		Where: map[string]interface{}{
+			"tenant_id = ?": fd.TenantId,
+			"id = ?":        fd.ID,
+		},
+	}
+	err := dr.g.Delete(d)
+	if err != nil {
+		global.Logger.Sugar().Error(err)
+		return err
+	}
+	return nil
 }

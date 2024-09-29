@@ -38,4 +38,9 @@ func InitBasic() {
 	// 初始化角色数据
 	InitUserRolesSQL(ctx)
 
+	if global.Config.Ldap.Enabled {
+		// 定时同步LDAP用户任务
+		go services.LdapService.SyncUsersCronjob()
+	}
+
 }

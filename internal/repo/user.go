@@ -74,6 +74,11 @@ func (ur UserRepo) Get(r models.MemberQuery) (models.Member, bool, error) {
 	if r.UserName != "" {
 		db.Where("user_name = ?", r.UserName)
 	}
+
+	if r.Query != "" {
+		db.Where("user_id LIKE ? or user_name LIKE ? or email LIKE ? or phone LIKE ?", "%"+r.Query+"%", "%"+r.Query+"%", "%"+r.Query+"%", "%"+r.Query+"%")
+	}
+
 	err := db.First(&data).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {

@@ -115,7 +115,7 @@ func (ds DatasourceRepo) Update(r models.AlertDataSource) error {
 
 func (ds DatasourceRepo) Delete(r models.DatasourceQuery) error {
 	var ruleNum int64
-	ds.DB().Model(&models.AlertRule{}).Where("tenant_id = ? AND datasource_id LIKE ?", r.TenantId, "%"+r.Id+"%").Count(&ruleNum)
+	ds.DB().Model(&models.AlertRule{}).Where("tenant_id = ? AND datasource_id_list LIKE ?", r.TenantId, "%"+r.Id+"%").Count(&ruleNum)
 	if ruleNum != 0 {
 		return fmt.Errorf("无法删除数据源 %s, 因为已有告警规则绑定", r.Id)
 	}
