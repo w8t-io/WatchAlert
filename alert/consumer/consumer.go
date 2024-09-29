@@ -55,10 +55,9 @@ func (ec *Consume) processAlerts() {
 		if len(alerts) == 0 {
 			continue
 		}
-		waitTime := ec.calculateWaitTime(key) //10
+		waitTime := ec.calculateWaitTime(key)
 		if ec.Timing[key] >= waitTime {
 			curEvents := ec.filterAlerts(alerts)
-			global.Logger.Sugar().Info(curEvents)
 			ec.fireAlertEvent(curEvents)
 			ec.clear(key)
 		}
@@ -117,11 +116,9 @@ func (ec *Consume) filterAlerts(alerts []models.AlertCurEvent) map[string][]mode
 			latestAlert[alert.Fingerprint] = alert
 		}
 	}
-	//global.Logger.Sugar().Info("last alert", latestAlert)
 
 	// 进一步处理重复通知
 	for _, alert := range latestAlert {
-		global.Logger.Sugar().Info(!alert.IsRecovered, alert.LastSendTime, alert.LastEvalTime, alert.LastSendTime, alert.RepeatNoticeInterval*60, alert.LastEvalTime >= alert.LastSendTime+alert.RepeatNoticeInterval*60)
 		if !alert.IsRecovered && (alert.LastSendTime == 0 || alert.LastEvalTime >= alert.LastSendTime+alert.RepeatNoticeInterval*60) {
 			newAlertsMap[alert.RuleId] = append(newAlertsMap[alert.RuleId], alert)
 		} else if alert.IsRecovered {
