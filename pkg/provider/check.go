@@ -55,7 +55,7 @@ func CheckDatasourceHealth(datasource models.AlertDataSource) bool {
 
 	// 检查数据源健康状况并返回结果
 	if err != nil || !check {
-		global.Logger.Sugar().Error("数据源不健康, Id: %s, Name: %s, Type: %s", datasource.Id, datasource.Name, datasource.Type)
+		global.Logger.Sugar().Errorf("数据源不健康, Id: %s, Name: %s, Type: %s", datasource.Id, datasource.Name, datasource.Type)
 		return false
 	}
 

@@ -82,12 +82,12 @@ func metrics(ctx *ctx.Context, datasourceId, datasourceType string, rule models.
 	}
 	datasourceInfo, err := ctx.DB.Datasource().Get(r)
 	if err != nil {
+		global.Logger.Sugar().Error(err.Error())
 		return
 	}
 
 	health := provider.CheckDatasourceHealth(datasourceInfo)
 	if !health {
-		global.Logger.Sugar().Error(err.Error())
 		return
 	}
 
@@ -326,7 +326,6 @@ func traces(ctx *ctx.Context, datasourceId, datasourceType string, rule models.A
 
 	health := provider.CheckDatasourceHealth(datasourceInfo)
 	if !health {
-		global.Logger.Sugar().Error(err.Error())
 		return
 	}
 
