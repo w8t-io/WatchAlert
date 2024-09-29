@@ -49,16 +49,14 @@ func (ec *Consume) Run() {
 
 // 处理告警的主循环
 func (ec *Consume) processAlerts() {
-	alertKeys := process.GetRedisFiringKeys(ec.ctx) //default:firing-alert-a-crmholquvt7mu1lu5hbg-ds-crmhbd8k9c98fvjhr2d0-14733670903374573262
+	alertKeys := process.GetRedisFiringKeys(ec.ctx)
 	ec.loadAlertsToMem(alertKeys)
 	for key, alerts := range ec.alertsMap {
 		if len(alerts) == 0 {
 			continue
 		}
 		waitTime := ec.calculateWaitTime(key) //10
-		global.Logger.Sugar().Info("ec.Timing[key] ", key, ec.Timing[key], waitTime)
 		if ec.Timing[key] >= waitTime {
-			//global.Logger.Sugar().Infof("alert keys: %v", alerts)
 			curEvents := ec.filterAlerts(alerts)
 			global.Logger.Sugar().Info(curEvents)
 			ec.fireAlertEvent(curEvents)
@@ -72,7 +70,6 @@ func (ec *Consume) processAlerts() {
 func (ec *Consume) loadAlertsToMem(alertKeys []string) {
 	for _, key := range alertKeys {
 		alert := ec.ctx.Redis.Event().GetCache(key)
-		//global.Logger.Sugar().Info("redis alert: ", alert)
 		if alert.Fingerprint != "" {
 			ec.addAlertToRuleIdMap(alert)
 		}
@@ -82,7 +79,7 @@ func (ec *Consume) loadAlertsToMem(alertKeys []string) {
 // 根据告警的状态计算等待时间
 func (ec *Consume) calculateWaitTime(key string) int {
 	alert := ec.ctx.Redis.Event().GetCache(key)
-	if alert.LastSendTime == 0 { //1727342731 2024-09-26 17:25:31
+	if alert.LastSendTime == 0 {
 		return global.Config.Server.AlarmConfig.GroupWait
 	}
 	return global.Config.Server.AlarmConfig.GroupInterval
@@ -123,14 +120,13 @@ func (ec *Consume) filterAlerts(alerts []models.AlertCurEvent) map[string][]mode
 	//global.Logger.Sugar().Info("last alert", latestAlert)
 
 	// 进一步处理重复通知
-	for _, alert := range latestAlert { //661 >= 550 + 60*60
-		newAlertsMap[alert.RuleId] = append(newAlertsMap[alert.RuleId], alert)
-		//global.Logger.Sugar().Info(!alert.IsRecovered, alert.LastSendTime, alert.LastEvalTime, alert.LastSendTime, alert.RepeatNoticeInterval*60, alert.LastEvalTime >= alert.LastSendTime+alert.RepeatNoticeInterval*60)
-		//if !alert.IsRecovered && (alert.LastSendTime == 0 || alert.LastEvalTime >= alert.LastSendTime+alert.RepeatNoticeInterval*60) {
-		//	newAlertsMap[alert.RuleId] = append(newAlertsMap[alert.RuleId], alert)
-		//} else if alert.IsRecovered {
-		//	newAlertsMap[alert.RuleId] = append(newAlertsMap[alert.RuleId], alert)
-		//}
+	for _, alert := range latestAlert {
+		global.Logger.Sugar().Info(!alert.IsRecovered, alert.LastSendTime, alert.LastEvalTime, alert.LastSendTime, alert.RepeatNoticeInterval*60, alert.LastEvalTime >= alert.LastSendTime+alert.RepeatNoticeInterval*60)
+		if !alert.IsRecovered && (alert.LastSendTime == 0 || alert.LastEvalTime >= alert.LastSendTime+alert.RepeatNoticeInterval*60) {
+			newAlertsMap[alert.RuleId] = append(newAlertsMap[alert.RuleId], alert)
+		} else if alert.IsRecovered {
+			newAlertsMap[alert.RuleId] = append(newAlertsMap[alert.RuleId], alert)
+		}
 	}
 	return newAlertsMap
 }
@@ -150,7 +146,6 @@ func (ec *Consume) fireAlertEvent(alertsMap map[string][]models.AlertCurEvent) {
 			}
 		}
 	}
-	global.Logger.Sugar().Info("22222", ec.preStoreFiringAlertEvents)
 	ec.handleAlert(ec.preStoreFiringAlertEvents)
 	ec.handleAlert(ec.preStoreRecoverAlertEvents)
 }
