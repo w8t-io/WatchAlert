@@ -54,6 +54,7 @@ func InitDB() *gorm.DB {
 		&models.TenantLinkedUsers{},
 		&models.MonitorSSLRule{},
 		&models.DashboardFolders{},
+		&models.AlertSubscribe{},
 	)
 	if err != nil {
 		global.Logger.Sugar().Error(err.Error())

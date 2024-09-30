@@ -32,6 +32,7 @@ type (
 		UserPermissions() InterUserPermissionsRepo
 		Setting() InterSettingRepo
 		MonitorSSL() InterMonitorSSLRepo
+		Subscribe() InterSubscribeRepo
 	}
 )
 
@@ -68,3 +69,4 @@ func (e *entryRepo) UserPermissions() InterUserPermissionsRepo {
 }
 func (e *entryRepo) Setting() InterSettingRepo       { return newSettingRepoInterface(e.db, e.g) }
 func (e *entryRepo) MonitorSSL() InterMonitorSSLRepo { return newMonitorSSLInterface(e.db, e.g) }
+func (e *entryRepo) Subscribe() InterSubscribeRepo   { return newInterSubscribeRepo(e.db, e.g) }

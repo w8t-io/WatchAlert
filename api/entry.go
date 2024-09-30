@@ -31,6 +31,7 @@ type ApiGroup struct {
 	SettingsController
 	KubernetesTypesController
 	MonitorSSLController
+	SubscribeController
 }
 
 var ApiGroupApp = new(ApiGroup)

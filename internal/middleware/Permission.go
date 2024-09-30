@@ -45,6 +45,9 @@ func Permission() gin.HandlerFunc {
 			return
 		}
 
+		context.Set("UserId", user.UserId)
+		context.Set("UserEmail", user.Email)
+
 		// 获取租户用户角色
 		tenantUserInfo, _ := c.DB.Tenant().GetTenantLinkedUserInfo(models.GetTenantLinkedUserInfo{ID: tid, UserID: userId})
 		if err != nil {

@@ -367,5 +367,21 @@ func PermissionsInfo() map[string]UserPermissions {
 			Key: "获取仪表盘完整URL",
 			API: "/api/w8t/dashboard/getDashboardFullUrl",
 		},
+		"createSubscribe": {
+			Key: "创建告警订阅",
+			API: "/api/w8t/subscribe/createSubscribe",
+		},
+		"deleteSubscribe": {
+			Key: "删除告警订阅",
+			API: "/api/w8t/subscribe/deleteSubscribe",
+		},
+		"listSubscribe": {
+			Key: "获取告警订阅",
+			API: "/api/w8t/subscribe/listSubscribe",
+		},
+		"getSubscribe": {
+			Key: "搜索告警订阅",
+			API: "/api/w8t/subscribe/getSubscribe",
+		},
 	}
 }
