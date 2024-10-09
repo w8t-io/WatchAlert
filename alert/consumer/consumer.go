@@ -52,13 +52,11 @@ func (ec *Consume) Run() {
 func (ec *Consume) processAlerts() {
 	alertKeys := process.GetRedisFiringKeys(ec.ctx)
 	ec.loadAlertsToMem(alertKeys)
-
 	for key, alerts := range ec.alertsMap {
 		if len(alerts) == 0 {
 			continue
 		}
 		waitTime := ec.calculateWaitTime(key)
-
 		if ec.Timing[key] >= waitTime {
 			curEvents := ec.filterAlerts(alerts)
 			ec.fireAlertEvent(curEvents)
@@ -128,7 +126,6 @@ func (ec *Consume) filterAlerts(alerts []models.AlertCurEvent) map[string][]mode
 			newAlertsMap[alert.RuleId] = append(newAlertsMap[alert.RuleId], alert)
 		}
 	}
-
 	return newAlertsMap
 }
 
@@ -150,6 +147,7 @@ func (ec *Consume) fireAlertEvent(alertsMap map[string][]models.AlertCurEvent) {
 
 	ec.GotoSendAlert(ec.preStoreFiringAlertEvents)
 	ec.GotoSendAlert(ec.preStoreRecoverAlertEvents)
+
 }
 
 // 删除缓存
@@ -250,7 +248,6 @@ func (ec *Consume) handleSubscribe(alerts []models.AlertCurEvent) {
 				Uuid:     noticeId,
 			}
 			noticeData, _ := ec.ctx.DB.Notice().Get(r)
-
 			err := processSubscribe(ec.ctx, event, noticeData)
 			if err != nil {
 				return fmt.Errorf("处理订阅逻辑失败: %s", err.Error())

@@ -1,2 +1,2 @@
 use watchalert;
-INSERT INTO `tenant_linked_users`(`id`, `users`) VALUES ('default', '[{"userId":"admin","userName":"admin","userRole":"admin"}]');
+INSERT  ignore INTO `tenant_linked_users`(`id`, `users`) VALUES ('default', '[{"userId":"admin","userName":"admin","userRole":"admin"}]');

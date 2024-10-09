@@ -84,7 +84,7 @@ func (ec *eventCache) GetCache(key string) models.AlertCurEvent {
 	if err != nil {
 		return alert
 	}
-
+	//global.Logger.Sugar().Info(alert)
 	return alert
 
 }

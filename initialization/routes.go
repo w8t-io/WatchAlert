@@ -22,7 +22,9 @@ func InitRoute() {
 		// 启用CORS中间件
 		middleware.Cors(),
 		// 自定义请求日志格式
-		gin.LoggerWithFormatter(middleware.RequestLoggerFormatter),
+		middleware.GinZapLogger(global.Logger),
+		gin.Recovery(),
+		//gin.LoggerWithFormatter(middleware.RequestLoggerFormatter),
 	)
 	allRouter(ginEngine)
 

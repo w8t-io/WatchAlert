@@ -21,8 +21,7 @@ Jwt:
   expire: 18000
 
 Ldap:
-  # 启动 LDAP
-  enabled: true
+  enabled: false
   # LDAP 服务地址
   address: "192.168.1.100:399"
   # 基础 DN
