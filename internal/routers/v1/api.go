@@ -43,6 +43,7 @@ func Router(engine *gin.Engine) {
 			Setting.API(w8t)
 			KubeEvent.API(w8t)
 			Monitor.API(w8t)
+			Subscribe.API(w8t)
 		}
 
 	}

@@ -29,4 +29,5 @@ var (
 	Setting        = api.ApiGroupApp.SettingsController
 	KubeEvent      = api.ApiGroupApp.KubernetesTypesController
 	Monitor        = api.ApiGroupApp.MonitorSSLController
+	Subscribe      = api.ApiGroupApp.SubscribeController
 )

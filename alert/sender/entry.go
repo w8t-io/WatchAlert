@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"watchAlert/alert/mute"
 	"watchAlert/internal/global"
 	"watchAlert/internal/models"
-	"watchAlert/pkg/client"
 	"watchAlert/pkg/ctx"
 	"watchAlert/pkg/utils/http"
 	"watchAlert/pkg/utils/templates"
@@ -35,20 +35,9 @@ func Sender(ctx *ctx.Context, alert models.AlertCurEvent, notice models.AlertNot
 	NoticeType := notice.NoticeType
 	switch NoticeType {
 	case "Email":
-		setting, err := ctx.DB.Setting().Get()
+		err := SendToEmail(alert, notice.Email.Subject, notice.Email.To, notice.Email.CC, n.CardContentMsg)
 		if err != nil {
-			return errors.New("获取系统配置失败: " + err.Error())
-		}
-		eCli := client.NewEmailClient(setting.EmailConfig.ServerAddress, setting.EmailConfig.Email, setting.EmailConfig.Token, setting.EmailConfig.Port)
-		if alert.IsRecovered {
-			notice.Email.Subject = notice.Email.Subject + "「已恢复」"
-		} else {
-			notice.Email.Subject = notice.Email.Subject + "「报警中」"
-		}
-		err = eCli.Send(notice.Email.To, notice.Email.CC, notice.Email.Subject, []byte(n.CardContentMsg))
-		if err != nil {
-			global.Logger.Sugar().Error("Email 类型报警发送失败: " + err.Error() + ", Content: " + n.CardContentMsg)
-			return err
+			return fmt.Errorf("邮件发送失败, err: %s", err.Error())
 		}
 	case "FeiShu", "DingDing":
 		var msg string
@@ -56,6 +45,15 @@ func Sender(ctx *ctx.Context, alert models.AlertCurEvent, notice models.AlertNot
 		res, err := http.Post(nil, notice.Hook, cardContentByte)
 		if err != nil {
 			msg = err.Error()
+		} else {
+			if res.StatusCode != 200 {
+				all, err := io.ReadAll(res.Body)
+				if err != nil {
+					global.Logger.Sugar().Error(err.Error())
+					return err
+				}
+				msg = string(all)
+			}
 		}
 
 		// 读取响应体内容
@@ -96,7 +94,7 @@ func Sender(ctx *ctx.Context, alert models.AlertCurEvent, notice models.AlertNot
 		}
 
 		if msg != "" {
-			global.Logger.Sugar().Errorf("Hook 类型报警发送失败 code: %d data: %s", res.StatusCode, n.CardContentMsg)
+			global.Logger.Sugar().Errorf("Hook 类型报警发送失败 data: %s", n.CardContentMsg)
 			return errors.New(msg)
 		}
 	default:

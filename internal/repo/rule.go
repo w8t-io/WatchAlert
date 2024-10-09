@@ -71,7 +71,13 @@ func (rr RuleRepo) List(r models.AlertRuleQuery) (models.RuleResponse, error) {
 
 	db := rr.db.Model(&models.AlertRule{})
 	db.Where("tenant_id = ?", r.TenantId)
-	db.Where("rule_group_id = ?", r.RuleGroupId)
+	if r.RuleGroupId != "" {
+		db.Where("rule_group_id = ?", r.RuleGroupId)
+	}
+
+	if r.DatasourceType != "" {
+		db.Where("datasource_type = ?", r.DatasourceType)
+	}
 
 	if r.Query != "" {
 		db.Where("rule_id LIKE ? OR rule_name LIKE ? OR description LIKE ?",
@@ -79,14 +85,12 @@ func (rr RuleRepo) List(r models.AlertRuleQuery) (models.RuleResponse, error) {
 	}
 
 	if r.Status != "all" {
-		var s bool
 		switch r.Status {
 		case "enabled":
-			s = true
+			db.Where("enabled = ?", true)
 		case "disabled":
-			s = false
+			db.Where("enabled = ?", false)
 		}
-		db.Where("enabled = ?", s)
 	}
 
 	db.Count(&count)
