@@ -29,6 +29,11 @@ func newRuleTmplInterface(db *gorm.DB, g InterGormDBCli) InterRuleTmplRepo {
 func (rt RuleTmplRepo) List(r models.RuleTemplateQuery) ([]models.RuleTemplate, error) {
 	var data []models.RuleTemplate
 	db := rt.db.Model(&models.RuleTemplate{}).Where("rule_group_name = ?", r.RuleGroupName)
+	if r.Query != "" {
+		db.Where("rule_name LIKE ? OR datasource_type LIKE ?",
+			"%"+r.Query+"%", "%"+r.Query+"%")
+	}
+
 	err := db.Find(&data).Error
 	if err != nil {
 		return nil, err

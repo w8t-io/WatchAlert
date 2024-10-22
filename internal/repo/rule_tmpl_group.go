@@ -11,7 +11,7 @@ type (
 	}
 
 	InterRuleTmplGroupRepo interface {
-		List() ([]models.RuleTemplateGroup, error)
+		List(r models.RuleTemplateGroupQuery) ([]models.RuleTemplateGroup, error)
 		Create(r models.RuleTemplateGroup) error
 		Delete(r models.RuleTemplateGroupQuery) error
 	}
@@ -26,9 +26,13 @@ func newRuleTmplGroupInterface(db *gorm.DB, g InterGormDBCli) InterRuleTmplGroup
 	}
 }
 
-func (rtg RuleTmplGroupRepo) List() ([]models.RuleTemplateGroup, error) {
+func (rtg RuleTmplGroupRepo) List(r models.RuleTemplateGroupQuery) ([]models.RuleTemplateGroup, error) {
 	var data []models.RuleTemplateGroup
 	db := rtg.db.Model(&models.RuleTemplateGroup{})
+	if r.Query != "" {
+		db.Where("name LIKE ? OR description LIKE ?",
+			"%"+r.Query+"%", "%"+r.Query+"%")
+	}
 	err := db.Find(&data).Error
 	if err != nil {
 		return nil, err

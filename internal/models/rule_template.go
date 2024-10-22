@@ -9,6 +9,7 @@ type RuleTemplateGroup struct {
 type RuleTemplateGroupQuery struct {
 	Name        string `json:"name" form:"name"`
 	Description string `json:"description" form:"description"`
+	Query       string `json:"query" form:"query"`
 }
 
 type RuleTemplate struct {
@@ -30,4 +31,5 @@ type RuleTemplateQuery struct {
 	DatasourceType string `json:"datasourceType" form:"datasourceType"`
 	Severity       int64  `json:"severity" form:"severity"`
 	Annotations    string `json:"annotations" form:"annotations"`
+	Query          string `json:"query" form:"query"`
 }

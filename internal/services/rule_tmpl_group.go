@@ -22,7 +22,8 @@ func newInterRuleTmplGroupService(ctx *ctx.Context) InterRuleTmplGroupService {
 }
 
 func (rtg ruleTmplGroupService) List(req interface{}) (interface{}, interface{}) {
-	data, err := rtg.ctx.DB.RuleTmplGroup().List()
+	r := req.(*models.RuleTemplateGroupQuery)
+	data, err := rtg.ctx.DB.RuleTmplGroup().List(*r)
 	if err != nil {
 		return nil, err
 	}
