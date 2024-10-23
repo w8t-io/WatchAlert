@@ -275,16 +275,18 @@ func (ec *Consume) handleAlert(rule models.AlertRule, alerts []models.AlertCurEv
 			TenantId: alert.TenantId,
 			Uuid:     noticeId,
 		}
-		noticeData, _ := ec.ctx.DB.Notice().Get(r)
-		alert.DutyUser = process.GetDutyUser(ec.ctx, noticeData)
-		err := sender.Sender(ec.ctx, alert, noticeData)
-		if err != nil {
-			return
-		}
 
 		if !alert.IsRecovered {
 			alert.LastSendTime = curTime
 			ctx.Redis.Event().SetCache("Firing", alert, 0)
+		}
+
+		noticeData, _ := ec.ctx.DB.Notice().Get(r)
+		alert.DutyUser = process.GetDutyUser(ec.ctx, noticeData)
+		err := sender.Sender(ec.ctx, alert, noticeData)
+		if err != nil {
+			global.Logger.Sugar().Errorf(err.Error())
+			return
 		}
 	}
 
