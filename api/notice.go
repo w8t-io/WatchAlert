@@ -36,6 +36,8 @@ func (nc NoticeController) API(gin *gin.RouterGroup) {
 	{
 		noticeB.GET("noticeList", nc.List)
 		noticeB.GET("noticeSearch", nc.Search)
+		noticeB.GET("noticeRecordList", nc.ListRecord)
+		noticeB.GET("noticeRecordMetric", nc.GetRecordMetric)
 	}
 }
 
@@ -121,5 +123,29 @@ func (nc NoticeController) Search(ctx *gin.Context) {
 
 	Service(ctx, func() (interface{}, interface{}) {
 		return services.NoticeService.Search(r)
+	})
+}
+
+func (nc NoticeController) ListRecord(ctx *gin.Context) {
+	r := new(models.NoticeQuery)
+	BindQuery(ctx, r)
+
+	tid, _ := ctx.Get("TenantID")
+	r.TenantId = tid.(string)
+
+	Service(ctx, func() (interface{}, interface{}) {
+		return services.NoticeService.ListRecord(r)
+	})
+}
+
+func (nc NoticeController) GetRecordMetric(ctx *gin.Context) {
+	r := new(models.NoticeQuery)
+	BindQuery(ctx, r)
+
+	tid, _ := ctx.Get("TenantID")
+	r.TenantId = tid.(string)
+
+	Service(ctx, func() (interface{}, interface{}) {
+		return services.NoticeService.GetRecordMetric(r)
 	})
 }

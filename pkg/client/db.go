@@ -55,6 +55,7 @@ func InitDB() *gorm.DB {
 		&models.MonitorSSLRule{},
 		&models.DashboardFolders{},
 		&models.AlertSubscribe{},
+		&models.NoticeRecord{},
 	)
 	if err != nil {
 		global.Logger.Sugar().Error(err.Error())

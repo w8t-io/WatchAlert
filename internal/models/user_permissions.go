@@ -383,5 +383,13 @@ func PermissionsInfo() map[string]UserPermissions {
 			Key: "搜索告警订阅",
 			API: "/api/w8t/subscribe/getSubscribe",
 		},
+		"noticeRecordList": {
+			Key: "获取通知记录列表",
+			API: "/api/w8t/notice/noticeRecordList",
+		},
+		"noticeRecordMetric": {
+			Key: "获取通知记录指标",
+			API: "/api/w8t/notice/noticeRecordMetric",
+		},
 	}
 }

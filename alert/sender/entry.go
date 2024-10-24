@@ -1,8 +1,8 @@
 package sender
 
 import (
-	"errors"
 	"fmt"
+	"time"
 	"watchAlert/alert/mute"
 	"watchAlert/internal/global"
 	"watchAlert/internal/models"
@@ -18,26 +18,48 @@ func Sender(ctx *ctx.Context, alert models.AlertCurEvent, notice models.AlertNot
 
 	n := templates.NewTemplate(ctx, alert, notice)
 	NoticeType := notice.NoticeType
+	var sendFunc func() error
 	switch NoticeType {
 	case "Email":
-		err := SendToEmail(alert, notice.Email.Subject, notice.Email.To, notice.Email.CC, n.CardContentMsg)
-		if err != nil {
-			return fmt.Errorf("Send alarm failed to email , err: %s", err.Error())
+		sendFunc = func() error {
+			return SendToEmail(alert, notice.Email.Subject, notice.Email.To, notice.Email.CC, n.CardContentMsg)
 		}
 	case "FeiShu":
-		err := SendToFeiShu(notice.Hook, n.CardContentMsg)
-		if err != nil {
-			return fmt.Errorf("Send alarm failed to FeiShu, err: %s", err.Error())
+		sendFunc = func() error {
+			return SendToFeiShu(notice.Hook, n.CardContentMsg)
 		}
 	case "DingDing":
-		err := SendToDingDing(notice.Hook, n.CardContentMsg)
-		if err != nil {
-			return fmt.Errorf("Send alarm failed to DingDing, err: %s", err.Error())
+		sendFunc = func() error {
+			return SendToDingDing(notice.Hook, n.CardContentMsg)
 		}
 	default:
-		return errors.New(fmt.Sprintf("Send alarm failed, exist 无效的通知类型: %s, NoticeId: %s, NoticeName: %s", notice.NoticeType, notice.Uuid, notice.Name))
+		return fmt.Errorf("Send alarm failed, exist 无效的通知类型: %s, NoticeId: %s, NoticeName: %s", notice.NoticeType, notice.Uuid, notice.Name)
 	}
 
+	if err := sendFunc(); err != nil {
+		addRecord(ctx, alert, notice, 1, n.CardContentMsg, err.Error())
+		return fmt.Errorf("Send alarm failed to %s, err: %s", notice.NoticeType, err.Error())
+	}
+
+	addRecord(ctx, alert, notice, 0, n.CardContentMsg, "")
 	global.Logger.Sugar().Info("Send alarm ok, msg: ", n.CardContentMsg)
 	return nil
+}
+
+func addRecord(ctx *ctx.Context, alert models.AlertCurEvent, notice models.AlertNotice, status int, msg, errMsg string) {
+	err := ctx.DB.Notice().AddRecord(models.NoticeRecord{
+		Date:     time.Now().Format("2006-01-02"),
+		CreateAt: time.Now().Unix(),
+		TenantId: alert.TenantId,
+		RuleName: alert.RuleName,
+		NType:    notice.NoticeType,
+		NObj:     notice.Name + " (" + notice.Uuid + ")",
+		Severity: alert.Severity,
+		Status:   status,
+		AlarmMsg: msg,
+		ErrMsg:   errMsg,
+	})
+	if err != nil {
+		global.Logger.Sugar().Errorf("Add notice record failed, err: %s", err.Error())
+	}
 }

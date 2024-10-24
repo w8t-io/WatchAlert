@@ -19,6 +19,9 @@ type (
 		Create(r models.AlertNotice) error
 		Update(r models.AlertNotice) error
 		Delete(r models.NoticeQuery) error
+		AddRecord(r models.NoticeRecord) error
+		ListRecord(r models.NoticeQuery) ([]models.NoticeRecord, error)
+		CountRecord(r models.CountRecord) (int64, error)
 	}
 )
 
@@ -138,4 +141,53 @@ func (nr NoticeRepo) Delete(r models.NoticeQuery) error {
 		return err
 	}
 	return nil
+}
+
+// AddRecord 添加通知记录
+func (nr NoticeRepo) AddRecord(r models.NoticeRecord) error {
+	err := nr.g.Create(models.NoticeRecord{}, r)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (nr NoticeRepo) ListRecord(r models.NoticeQuery) ([]models.NoticeRecord, error) {
+	var records []models.NoticeRecord
+	db := nr.db.Model(&models.NoticeRecord{})
+	db.Where("tenant_id = ?", r.TenantId)
+	if r.Severity != "" {
+		db.Where("severity = ?", r.Severity)
+	}
+	if r.Status != "" {
+		db.Where("status = ?", r.Status)
+	}
+	if r.Query != "" {
+		db.Where("rule_name LIKE ? OR alarm_msg LIKE ? OR err_msg LIKE ?", "%"+r.Query+"%", "%"+r.Query+"%", "%"+r.Query+"%")
+	}
+
+	err := db.Order("create_at DESC").Find(&records).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return records, nil
+}
+
+func (nr NoticeRepo) CountRecord(r models.CountRecord) (int64, error) {
+	var count int64
+	db := nr.db.Model(&models.NoticeRecord{})
+	db.Where("tenant_id = ?", r.TenantId)
+	if r.Date != "" {
+		db.Where("date = ?", r.Date)
+	}
+	if r.Severity != "" {
+		db.Where("severity = ?", r.Severity)
+	}
+	err := db.Count(&count).Error
+	if err != nil {
+		return count, err
+	}
+
+	return count, nil
 }
