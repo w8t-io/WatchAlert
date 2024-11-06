@@ -5,7 +5,7 @@ import (
 	"gorm.io/gorm"
 	"time"
 	models "watchAlert/internal/models"
-	"watchAlert/pkg/utils/cmd"
+	"watchAlert/pkg/tools"
 )
 
 type (
@@ -60,12 +60,18 @@ func (d DutyRepo) List(r models.DutyManagementQuery) ([]models.DutyManagement, e
 		return nil, err
 	}
 
+	for index, value := range data {
+		var dutySchedule models.DutySchedule
+		d.DB().Model(models.DutySchedule{}).Where("duty_id = ? and time = ?", value.ID, time.Now().Format("2006-1-2")).Find(&dutySchedule)
+		data[index].CurDutyUser = dutySchedule.Username
+	}
+
 	return data, nil
 }
 
 func (d DutyRepo) Create(r models.DutyManagement) error {
 	nr := r
-	nr.ID = "dt-" + cmd.RandId()
+	nr.ID = "dt-" + tools.RandId()
 	nr.CreateAt = time.Now().Unix()
 	err := d.g.Create(&models.DutyManagement{}, nr)
 	if err != nil {

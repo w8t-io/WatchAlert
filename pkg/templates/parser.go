@@ -8,7 +8,7 @@ import (
 	"time"
 	"watchAlert/internal/global"
 	"watchAlert/internal/models"
-	"watchAlert/pkg/utils/cmd"
+	"watchAlert/pkg/tools"
 )
 
 var tmpl *template.Template
@@ -32,7 +32,7 @@ func ParserTemplate(defineName string, alert models.AlertCurEvent, templateStr s
 		err = tmpl.Execute(&buf, alert)
 		// 当前告警的 json 反序列化成 map 对象, 用于解析报警事件详情中的 ${xx} 变量
 		data := parserEvent(alert)
-		return cmd.ParserVariables(buf.String(), data)
+		return tools.ParserVariables(buf.String(), data)
 	}
 
 	err = tmpl.ExecuteTemplate(&buf, defineName, alert)
@@ -44,7 +44,7 @@ func ParserTemplate(defineName string, alert models.AlertCurEvent, templateStr s
 	// 前面只会渲染出模版框架, 下面来渲染告警数据内容
 	if defineName == "Event" {
 		data := parserEvent(alert)
-		return cmd.ParserVariables(buf.String(), data)
+		return tools.ParserVariables(buf.String(), data)
 	}
 
 	return buf.String()
@@ -55,7 +55,7 @@ func parserEvent(alert models.AlertCurEvent) map[string]interface{} {
 
 	data := make(map[string]interface{})
 
-	eventJson := cmd.JsonMarshal(alert)
+	eventJson := tools.JsonMarshal(alert)
 	err := json.Unmarshal([]byte(eventJson), &data)
 	if err != nil {
 		global.Logger.Sugar().Error("parserEvent Unmarshal failed: ", err)

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"github.com/olivere/elastic/v7"
 	"watchAlert/internal/models"
-	utilsHttp "watchAlert/pkg/utils/http"
+	utilsHttp "watchAlert/pkg/tools"
 )
 
 type ElasticSearchDsProvider struct {

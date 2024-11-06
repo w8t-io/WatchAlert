@@ -11,7 +11,7 @@ import (
 	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
-	"watchAlert/pkg/utils/hash"
+	"watchAlert/pkg/tools"
 )
 
 type Consume struct {
@@ -40,10 +40,12 @@ func NewInterEvalConsumeWork(ctx *ctx.Context) InterEvalConsume {
 
 // Run 启动告警消费进程
 func (ec *Consume) Run() {
+	taskChan := make(chan struct{}, 1)
 	go func() {
 		for {
+			taskChan <- struct{}{}
 			ec.processAlerts()
-			time.Sleep(time.Second)
+			<-taskChan
 		}
 	}()
 }
@@ -215,7 +217,7 @@ func (ec *Consume) addAlertToGroupByRuleId(alert models.AlertCurEvent) {
 
 // hash
 func (ec *Consume) calculateGroupHash(key, value string) string {
-	return hash.Md5Hash([]byte(key + ":" + value))
+	return tools.Md5Hash([]byte(key + ":" + value))
 }
 
 // GotoSendAlert 推送告警

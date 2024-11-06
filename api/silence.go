@@ -5,7 +5,7 @@ import (
 	middleware "watchAlert/internal/middleware"
 	"watchAlert/internal/models"
 	"watchAlert/internal/services"
-	jwtUtils "watchAlert/pkg/utils/jwt"
+	jwtUtils "watchAlert/pkg/tools"
 )
 
 type SilenceController struct{}

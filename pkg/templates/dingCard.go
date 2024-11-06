@@ -3,7 +3,7 @@ package templates
 import (
 	"fmt"
 	models2 "watchAlert/internal/models"
-	"watchAlert/pkg/utils/cmd"
+	"watchAlert/pkg/tools"
 )
 
 func dingdingTemplate(alert models2.AlertCurEvent, noticeTmpl models2.NoticeTemplateExample) string {
@@ -33,7 +33,7 @@ func dingdingTemplate(alert models2.AlertCurEvent, noticeTmpl models2.NoticeTemp
 		},
 	}
 
-	cardContentString := cmd.JsonMarshal(t)
+	cardContentString := tools.JsonMarshal(t)
 
 	return cardContentString
 

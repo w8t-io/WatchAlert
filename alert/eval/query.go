@@ -7,74 +7,17 @@ import (
 	"strings"
 	"time"
 	"watchAlert/alert/process"
-	"watchAlert/alert/queue"
 	"watchAlert/internal/global"
 	models "watchAlert/internal/models"
 	"watchAlert/pkg/community/aws/cloudwatch"
 	"watchAlert/pkg/community/aws/cloudwatch/types"
 	"watchAlert/pkg/ctx"
 	"watchAlert/pkg/provider"
-	"watchAlert/pkg/utils/cmd"
+	"watchAlert/pkg/tools"
 )
 
-func alertRecover(ctx *ctx.Context, rule models.AlertRule, curKeys []string) {
-	firingKeys, err := ctx.Redis.Rule().GetAlertFiringCacheKeys(models.AlertRuleQuery{
-		TenantId:         rule.TenantId,
-		RuleId:           rule.RuleId,
-		DatasourceIdList: rule.DatasourceIdList,
-	})
-	if err != nil {
-		return
-	}
-	// 获取已恢复告警的keys
-	recoverKeys := process.GetSliceDifference(firingKeys, curKeys)
-	if recoverKeys == nil {
-		return
-	}
-
-	curTime := time.Now().Unix()
-	for _, key := range recoverKeys {
-		event := ctx.Redis.Event().GetCache(key)
-		if event.IsRecovered == true {
-			return
-		}
-
-		if _, exists := queue.RecoverWaitMap[key]; !exists {
-			// 如果没有，则记录当前时间
-			queue.RecoverWaitMap[key] = curTime
-			continue
-		}
-
-		// 判断是否在等待时间范围内
-		rt := time.Unix(queue.RecoverWaitMap[key], 0).Add(time.Minute * time.Duration(global.Config.Server.AlarmConfig.RecoverWait)).Unix()
-		if rt > curTime {
-			continue
-		}
-
-		event.IsRecovered = true
-		event.RecoverTime = curTime
-		event.LastSendTime = 0
-
-		ctx.Redis.Event().SetCache("Firing", event, 0)
-
-		// 触发恢复删除带恢复中的 key
-		delete(queue.RecoverWaitMap, key)
-	}
-}
-
 // Metrics 包含 Prometheus、VictoriaMetrics 数据源
-func metrics(ctx *ctx.Context, datasourceId, datasourceType string, rule models.AlertRule) {
-	var (
-		curFiringKeys  []string
-		curPendingKeys []string
-	)
-
-	defer func() {
-		go process.GcPendingCache(ctx, rule, curPendingKeys)
-		alertRecover(ctx, rule, curFiringKeys)
-		go process.GcRecoverWaitCache(rule, curFiringKeys)
-	}()
-
+func metrics(ctx *ctx.Context, datasourceId, datasourceType string, rule models.AlertRule) (curFiringKeys, curPendingKeys []string) {
 	r := models.DatasourceQuery{
 		TenantId: rule.TenantId,
 		Id:       datasourceId,
@@ -139,7 +82,7 @@ func metrics(ctx *ctx.Context, datasourceId, datasourceType string, rule models.
 				event.Metric = v.GetMetric()
 				event.Metric["severity"] = ruleExpr.Severity
 				event.Severity = ruleExpr.Severity
-				event.Annotations = cmd.ParserVariables(rule.PrometheusConfig.Annotations, event.Metric)
+				event.Annotations = tools.ParserVariables(rule.PrometheusConfig.Annotations, event.Metric)
 
 				firingKey := event.GetFiringAlertCacheKey()
 				pendingKey := event.GetPendingAlertCacheKey()
@@ -160,21 +103,17 @@ func metrics(ctx *ctx.Context, datasourceId, datasourceType string, rule models.
 		}
 	}
 
+	return
 }
 
 // Logs 包含 AliSLS、Loki、ElasticSearch 数据源
-func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.AlertRule) {
+func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.AlertRule) (curFiringKeys []string) {
 	var (
-		curKeys     []string
 		queryRes    []provider.Logs
 		count       int
 		err         error
 		evalOptions models.EvalCondition
 	)
-	defer func() {
-		alertRecover(ctx, rule, curKeys)
-		go process.GcRecoverWaitCache(rule, curKeys)
-	}()
 
 	r := models.DatasourceQuery{
 		TenantId: rule.TenantId,
@@ -200,7 +139,7 @@ func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.Ale
 		}
 
 		curAt := time.Now()
-		startsAt := process.ParserDuration(curAt, rule.LokiConfig.LogScope, "m")
+		startsAt := tools.ParserDuration(curAt, rule.LokiConfig.LogScope, "m")
 		queryOptions := provider.LogQueryOptions{
 			Loki: provider.Loki{
 				Query: rule.LokiConfig.LogQL,
@@ -227,7 +166,7 @@ func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.Ale
 		}
 
 		curAt := time.Now()
-		startsAt := process.ParserDuration(curAt, rule.AliCloudSLSConfig.LogScope, "m")
+		startsAt := tools.ParserDuration(curAt, rule.AliCloudSLSConfig.LogScope, "m")
 		queryOptions := provider.LogQueryOptions{
 			AliCloudSLS: provider.AliCloudSLS{
 				Query:    rule.AliCloudSLSConfig.LogQL,
@@ -256,14 +195,14 @@ func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.Ale
 		}
 
 		curAt := time.Now()
-		startsAt := process.ParserDuration(curAt, int(rule.ElasticSearchConfig.Scope), "m")
+		startsAt := tools.ParserDuration(curAt, int(rule.ElasticSearchConfig.Scope), "m")
 		queryOptions := provider.LogQueryOptions{
 			ElasticSearch: provider.Elasticsearch{
 				Index:       rule.ElasticSearchConfig.Index,
 				QueryFilter: rule.ElasticSearchConfig.Filter,
 			},
-			StartAt: cmd.FormatTimeToUTC(startsAt.Unix()),
-			EndAt:   cmd.FormatTimeToUTC(curAt.Unix()),
+			StartAt: tools.FormatTimeToUTC(startsAt.Unix()),
+			EndAt:   tools.FormatTimeToUTC(curAt.Unix()),
 		}
 		queryRes, count, err = searchClient.Query(queryOptions)
 		if err != nil {
@@ -288,10 +227,10 @@ func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.Ale
 			event.DatasourceId = datasourceId
 			event.Fingerprint = v.GetFingerprint()
 			event.Metric = v.GetMetric()
-			event.Annotations = fmt.Sprintf("统计日志条数: %d 条\n%s", count, cmd.FormatJson(v.GetAnnotations()[0].(string)))
+			event.Annotations = fmt.Sprintf("统计日志条数: %d 条\n%s", count, tools.FormatJson(v.GetAnnotations()[0].(string)))
 
 			key := event.GetPendingAlertCacheKey()
-			curKeys = append(curKeys, key)
+			curFiringKeys = append(curFiringKeys, key)
 
 			return event
 		}
@@ -299,19 +238,16 @@ func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.Ale
 		// 评估告警条件
 		process.EvalCondition(ctx, event, float64(count), evalOptions)
 	}
+
+	return
 }
 
 // Traces 包含 Jaeger 数据源
-func traces(ctx *ctx.Context, datasourceId, datasourceType string, rule models.AlertRule) {
+func traces(ctx *ctx.Context, datasourceId, datasourceType string, rule models.AlertRule) (curFiringKeys []string) {
 	var (
-		curKeys  []string
 		queryRes []provider.Traces
 		err      error
 	)
-	defer func() {
-		alertRecover(ctx, rule, curKeys)
-		go process.GcRecoverWaitCache(rule, curKeys)
-	}()
 
 	r := models.DatasourceQuery{
 		TenantId: rule.TenantId,
@@ -332,7 +268,7 @@ func traces(ctx *ctx.Context, datasourceId, datasourceType string, rule models.A
 	switch datasourceType {
 	case provider.JaegerDsProviderName:
 		curAt := time.Now().UTC()
-		startsAt := process.ParserDuration(curAt, rule.JaegerConfig.Scope, "m")
+		startsAt := tools.ParserDuration(curAt, rule.JaegerConfig.Scope, "m")
 
 		jaegerClient, err := provider.NewJaegerClient(datasourceInfo)
 		if err != nil {
@@ -361,19 +297,15 @@ func traces(ctx *ctx.Context, datasourceId, datasourceType string, rule models.A
 		event.Annotations = v.GetAnnotations(rule, datasourceInfo)
 
 		key := event.GetFiringAlertCacheKey()
-		curKeys = append(curKeys, key)
+		curFiringKeys = append(curFiringKeys, key)
 
 		process.SaveAlertEvent(ctx, event)
 	}
+
+	return
 }
 
-func cloudWatch(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
-	var curKeys []string
-	defer func() {
-		alertRecover(ctx, rule, curKeys)
-		go process.GcRecoverWaitCache(rule, curKeys)
-	}()
-
+func cloudWatch(ctx *ctx.Context, datasourceId string, rule models.AlertRule) (curFiringKeys []string) {
 	datasourceObj, err := ctx.DB.Datasource().GetInstance(datasourceId)
 	if err != nil {
 		return
@@ -388,7 +320,7 @@ func cloudWatch(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
 	cli := cfg.CloudWatchCli()
 
 	curAt := time.Now().UTC()
-	startsAt := process.ParserDuration(curAt, rule.CloudWatchConfig.Period, "m")
+	startsAt := tools.ParserDuration(curAt, rule.CloudWatchConfig.Period, "m")
 
 	for _, endpoint := range rule.CloudWatchConfig.Endpoints {
 		query := types.CloudWatchQuery{
@@ -403,7 +335,7 @@ func cloudWatch(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
 		}
 		_, values := cloudwatch.MetricDataQuery(cli, query)
 		if len(values) == 0 {
-			return
+			return []string{}
 		}
 
 		event := func() models.AlertCurEvent {
@@ -424,15 +356,11 @@ func cloudWatch(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
 
 		process.EvalCondition(ctx, event, values[0], options)
 	}
+
+	return
 }
 
-func kubernetesEvent(ctx *ctx.Context, datasourceId string, rule models.AlertRule) {
-	var curKeys []string
-	defer func() {
-		alertRecover(ctx, rule, curKeys)
-		go process.GcRecoverWaitCache(rule, curKeys)
-	}()
-
+func kubernetesEvent(ctx *ctx.Context, datasourceId string, rule models.AlertRule) (curFiringKeys []string) {
 	datasourceObj, err := ctx.DB.Datasource().GetInstance(datasourceId)
 	if err != nil {
 		global.Logger.Sugar().Error(err.Error())
@@ -451,7 +379,7 @@ func kubernetesEvent(ctx *ctx.Context, datasourceId string, rule models.AlertRul
 	}
 
 	if len(event.Items) < rule.KubernetesConfig.Value {
-		return
+		return []string{}
 	}
 
 	var eventMapping = make(map[string][]string)
@@ -470,4 +398,6 @@ func kubernetesEvent(ctx *ctx.Context, datasourceId string, rule models.AlertRul
 
 		process.SaveAlertEvent(ctx, alertEvent)
 	}
+
+	return
 }

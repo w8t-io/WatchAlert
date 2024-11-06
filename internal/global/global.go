@@ -1,6 +1,7 @@
 package global
 
 import (
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"watchAlert/config"
 )
@@ -10,4 +11,6 @@ var (
 	Config  config.App
 	Logger  *zap.Logger
 	Version string
+	// StSignKey 签发的秘钥
+	StSignKey = []byte(viper.GetString("jwt.WatchAlert"))
 )

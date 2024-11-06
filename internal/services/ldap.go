@@ -8,7 +8,7 @@ import (
 	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
-	"watchAlert/pkg/utils/cmd"
+	"watchAlert/pkg/tools"
 )
 
 type ldapService struct {
@@ -99,7 +99,7 @@ func (l ldapService) SyncUserToW8t() {
 		if b {
 			continue
 		}
-		uid := cmd.RandUid()
+		uid := tools.RandUid()
 		m := models.Member{
 			UserId:   uid,
 			UserName: u.Uid,

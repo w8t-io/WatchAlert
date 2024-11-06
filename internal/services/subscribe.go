@@ -6,7 +6,7 @@ import (
 	"time"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
-	"watchAlert/pkg/utils/cmd"
+	"watchAlert/pkg/tools"
 )
 
 type (
@@ -58,7 +58,7 @@ func (s alertSubscribeService) Create(req interface{}) (interface{}, interface{}
 		return nil, fmt.Errorf("用户已订阅该规则, 请勿重复创建!")
 	}
 
-	r.SId = "as-" + cmd.RandId()
+	r.SId = "as-" + tools.RandId()
 	r.SCreateAt = time.Now().Unix()
 	err = s.ctx.DB.Subscribe().Create(*r)
 	if err != nil {

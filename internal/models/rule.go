@@ -2,8 +2,7 @@ package models
 
 import (
 	"sort"
-	//"watchAlert/pkg/client"
-	"watchAlert/pkg/utils/hash"
+	"watchAlert/pkg/tools"
 )
 
 type Duration int64
@@ -150,7 +149,7 @@ type RuleResponse struct {
 
 var (
 	// cache the signature of an empty label set.
-	emptyLabelSignature = hash.HashNew()
+	emptyLabelSignature = tools.HashNew()
 )
 
 const SeparatorByte byte = 255
@@ -173,12 +172,12 @@ func (a *AlertRule) Fingerprint() Fingerprint {
 	sort.Strings(labelNames)
 
 	// 在随机生成的hash的基础上，新增标签hash
-	sum := hash.HashNew()
+	sum := tools.HashNew()
 	for _, labelName := range labelNames {
-		sum = hash.HashAdd(sum, labelName)
-		sum = hash.HashAddByte(sum, SeparatorByte)
-		sum = hash.HashAdd(sum, a.Labels[labelName])
-		sum = hash.HashAddByte(sum, SeparatorByte)
+		sum = tools.HashAdd(sum, labelName)
+		sum = tools.HashAddByte(sum, SeparatorByte)
+		sum = tools.HashAdd(sum, a.Labels[labelName])
+		sum = tools.HashAddByte(sum, SeparatorByte)
 	}
 	return Fingerprint(sum)
 

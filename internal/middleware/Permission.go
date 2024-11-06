@@ -9,8 +9,7 @@ import (
 	models "watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
 	"watchAlert/pkg/response"
-	"watchAlert/pkg/utils/cmd"
-	"watchAlert/pkg/utils/jwt"
+	utils2 "watchAlert/pkg/tools"
 )
 
 func Permission() gin.HandlerFunc {
@@ -28,9 +27,9 @@ func Permission() gin.HandlerFunc {
 		}
 
 		// Bearer Token, 获取 Token 值
-		tokenStr = tokenStr[len(utils.TokenType)+1:]
+		tokenStr = tokenStr[len(utils2.TokenType)+1:]
 
-		userId := utils.GetUserID(tokenStr)
+		userId := utils2.GetUserID(tokenStr)
 
 		c := ctx.DO()
 		// 获取当前用户
@@ -69,7 +68,7 @@ func Permission() gin.HandlerFunc {
 			context.Abort()
 			return
 		}
-		_ = json.Unmarshal([]byte(cmd.JsonMarshal(role.Permissions)), &permission)
+		_ = json.Unmarshal([]byte(utils2.JsonMarshal(role.Permissions)), &permission)
 
 		urlPath := context.Request.URL.Path
 

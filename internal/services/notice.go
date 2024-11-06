@@ -6,7 +6,7 @@ import (
 	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
-	"watchAlert/pkg/utils/cmd"
+	"watchAlert/pkg/tools"
 )
 
 type noticeService struct {
@@ -47,7 +47,7 @@ func (n noticeService) Create(req interface{}) (interface{}, interface{}) {
 		return models.AlertNotice{}, fmt.Errorf("创建失败, 配额不足")
 	}
 
-	r.Uuid = "n-" + cmd.RandId()
+	r.Uuid = "n-" + tools.RandId()
 
 	err := n.ctx.DB.Notice().Create(*r)
 	if err != nil {

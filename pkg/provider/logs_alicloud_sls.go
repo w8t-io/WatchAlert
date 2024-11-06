@@ -6,7 +6,7 @@ import (
 	util "github.com/alibabacloud-go/tea-utils/v2/service"
 	"github.com/alibabacloud-go/tea/tea"
 	"watchAlert/internal/models"
-	"watchAlert/pkg/utils/cmd"
+	"watchAlert/pkg/tools"
 )
 
 type AliCloudSlsDsProvider struct {
@@ -52,7 +52,7 @@ func (a AliCloudSlsDsProvider) Query(query LogQueryOptions) ([]Logs, int, error)
 		metric  = map[string]interface{}{}
 	)
 	for _, body := range res.Body {
-		msg := cmd.FormatJson(cmd.JsonMarshal(body))
+		msg := tools.FormatJson(tools.JsonMarshal(body))
 		msgList = append(msgList, msg)
 
 		metric["_container_name_"] = body["__tag__:_container_name_"]

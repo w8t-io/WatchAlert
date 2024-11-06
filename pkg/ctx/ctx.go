@@ -11,7 +11,7 @@ type Context struct {
 	DB    repo.InterEntryRepo
 	Redis cache.InterEntryCache
 	Ctx   context.Context
-	sync.RWMutex
+	Mux   sync.RWMutex
 }
 
 var (

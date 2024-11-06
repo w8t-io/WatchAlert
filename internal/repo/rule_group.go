@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"gorm.io/gorm"
 	"watchAlert/internal/models"
-	"watchAlert/pkg/utils/cmd"
+	"watchAlert/pkg/tools"
 )
 
 type (
@@ -78,7 +78,7 @@ func (r RuleGroupRepo) Create(req models.RuleGroups) error {
 	}
 
 	nr := req
-	nr.ID = "rg-" + cmd.RandId()
+	nr.ID = "rg-" + tools.RandId()
 	err := r.g.Create(models.RuleGroups{}, nr)
 	if err != nil {
 		return err

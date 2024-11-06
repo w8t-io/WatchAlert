@@ -10,7 +10,7 @@ import (
 	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
-	"watchAlert/pkg/utils/http"
+	"watchAlert/pkg/tools"
 )
 
 type MonitorSSLEval struct {
@@ -62,7 +62,7 @@ func (t *MonitorSSLEval) worker(w8tCtx *ctx.Context, rule models.MonitorSSLRule)
 	// 记录开始时间
 	startTime := time.Now()
 
-	resp, err := http.Get(nil, "https://"+rule.Domain)
+	resp, err := tools.Get(nil, "https://"+rule.Domain)
 	if err != nil {
 		return
 	}

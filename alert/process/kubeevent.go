@@ -6,7 +6,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"strings"
 	"watchAlert/pkg/ctx"
-	"watchAlert/pkg/utils/cmd"
+	"watchAlert/pkg/tools"
 )
 
 type KubernetesEvent struct {
@@ -26,7 +26,7 @@ func (a KubernetesEvent) GetFingerprint() string {
 		"podName":   a.event.InvolvedObject.Name,
 	}
 
-	h.Write([]byte(cmd.JsonMarshal(s)))
+	h.Write([]byte(tools.JsonMarshal(s)))
 	fingerprint := hex.EncodeToString(h.Sum(nil))
 	return fingerprint
 }

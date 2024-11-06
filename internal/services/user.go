@@ -8,8 +8,7 @@ import (
 	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
-	"watchAlert/pkg/utils/cmd"
-	jwtUtils "watchAlert/pkg/utils/jwt"
+	"watchAlert/pkg/tools"
 )
 
 type userService struct {
@@ -95,13 +94,13 @@ func (us userService) Login(req interface{}) (interface{}, interface{}) {
 
 	r.UserId = data.UserId
 	r.Password = hashPassword
-	tokenData, err := jwtUtils.GenerateToken(*r)
+	tokenData, err := tools.GenerateToken(r.UserId, r.UserName, r.Password)
 	if err != nil {
 		return nil, err
 	}
 
 	duration := time.Duration(global.Config.Jwt.Expire) * time.Second
-	us.ctx.Redis.Redis().Set("uid-"+data.UserId, cmd.JsonMarshal(r), duration)
+	us.ctx.Redis.Redis().Set("uid-"+data.UserId, tools.JsonMarshal(r), duration)
 
 	return tokenData, nil
 }
@@ -119,7 +118,7 @@ func (us userService) Register(req interface{}) (interface{}, interface{}) {
 	hashPassword := hex.EncodeToString(arr[:])
 	// 在初始化admin用户时会固定一个userid，所以这里需要做一下判断；
 	if r.UserId == "" {
-		r.UserId = cmd.RandUid()
+		r.UserId = tools.RandUid()
 	}
 
 	r.Password = hashPassword

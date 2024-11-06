@@ -3,7 +3,7 @@ package types
 import (
 	"crypto/md5"
 	"encoding/hex"
-	"watchAlert/pkg/utils/cmd"
+	"watchAlert/pkg/tools"
 )
 
 type ESQueryFilter struct {
@@ -38,13 +38,13 @@ func (r ESQueryResponse) GetFingerprint() string {
 		"Index": r.Source.Index,
 	}
 	h := md5.New()
-	h.Write([]byte(cmd.JsonMarshal(newMetric)))
+	h.Write([]byte(tools.JsonMarshal(newMetric)))
 	fingerprint := hex.EncodeToString(h.Sum(nil))
 	return fingerprint
 }
 
 func (r ESQueryResponse) GetAnnotations() string {
-	s := cmd.JsonMarshal(r)
-	annotations := cmd.FormatJson(s)
+	s := tools.JsonMarshal(r)
+	annotations := tools.FormatJson(s)
 	return annotations
 }

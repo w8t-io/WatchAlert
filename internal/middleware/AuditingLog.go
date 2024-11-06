@@ -11,15 +11,14 @@ import (
 	models "watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
 	"watchAlert/pkg/response"
-	"watchAlert/pkg/utils/cmd"
-	jwtUtils "watchAlert/pkg/utils/jwt"
+	"watchAlert/pkg/tools"
 )
 
 func AuditingLog() gin.HandlerFunc {
 	return func(context *gin.Context) {
 		// Operation user
 		var username string
-		createBy := jwtUtils.GetUser(context.Request.Header.Get("Authorization"))
+		createBy := tools.GetUser(context.Request.Header.Get("Authorization"))
 		if createBy != "" {
 			username = createBy
 		} else {
@@ -57,7 +56,7 @@ func AuditingLog() gin.HandlerFunc {
 		ps := models.PermissionsInfo()
 		auditLog := models.AuditLog{
 			TenantId:   tid,
-			ID:         "Trace" + cmd.RandId(),
+			ID:         "Trace" + tools.RandId(),
 			Username:   username,
 			IPAddress:  context.ClientIP(),
 			Method:     context.Request.Method,

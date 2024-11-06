@@ -1,26 +1,23 @@
-package cmd
+package tools
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/rs/xid"
-	"github.com/sirupsen/logrus"
+	"io"
 	"math/rand"
 	"regexp"
-	"strconv"
 	"time"
 	"watchAlert/internal/global"
 )
 
 func RandId() string {
-
 	return xid.New().String()
-
 }
 
 func RandUid() string {
-
 	limit := 8
 	gid := xid.New().String()
 
@@ -38,23 +35,18 @@ func RandUid() string {
 	}
 
 	return id
-
 }
 
 func RandUuid() string {
-
 	return uuid.NewString()
-
 }
 
 func JsonMarshal(v interface{}) string {
-
 	data, err := json.Marshal(v)
 	if err != nil {
 		return ""
 	}
 	return string(data)
-
 }
 
 // ParserVariables 处理告警内容中变量形式的字符串，替换为对应的值
@@ -119,18 +111,12 @@ func FormatJson(s string) string {
 	return ns
 }
 
-func FormatTimeToUTC(t int64) string {
-	utcTime := time.Unix(t, 0).UTC()
-	utcTimeString := utcTime.Format("2006-01-02T15:04:05.999Z")
-	return utcTimeString
-}
-
-func ParserDuration(curTime time.Time, logScope int, timeType string) time.Time {
-	duration, err := time.ParseDuration(strconv.Itoa(logScope) + timeType)
-	if err != nil {
-		logrus.Error(err.Error())
-		return time.Time{}
+// ParseReaderBody 处理请求Body
+func ParseReaderBody(body io.Reader, req interface{}) error {
+	reader := bufio.NewReader(body)
+	decoder := json.NewDecoder(reader)
+	if err := decoder.Decode(&req); err != nil {
+		return fmt.Errorf("解析 Body 失败, err: %s", err.Error())
 	}
-	startsAt := curTime.Add(-duration)
-	return startsAt
+	return nil
 }

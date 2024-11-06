@@ -1,13 +1,12 @@
 package provider
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"strconv"
 	"time"
 	"watchAlert/internal/models"
-	"watchAlert/pkg/utils/http"
+	"watchAlert/pkg/tools"
 )
 
 type JaegerDsProvider struct {
@@ -15,7 +14,7 @@ type JaegerDsProvider struct {
 }
 
 func NewJaegerClient(datasource models.AlertDataSource) (TracesFactoryProvider, error) {
-	_, err := http.Get(nil, datasource.HTTP.URL)
+	_, err := tools.Get(nil, datasource.HTTP.URL)
 	if err != nil {
 		return JaegerDsProvider{}, err
 	}
@@ -49,14 +48,15 @@ func (j JaegerDsProvider) Query(options TraceQueryOptions) ([]Traces, error) {
 
 	args := fmt.Sprintf("/api/traces?service=%s&start=%d&end=%d&limit=%d&tags=%s", options.Service, options.StartAt, options.EndAt, options.Limit, options.Tags)
 	requestURL := j.url + args
-	res, err := http.Get(nil, requestURL)
+	res, err := tools.Get(nil, requestURL)
 	if err != nil {
 		return nil, err
 	}
 
-	body, _ := io.ReadAll(res.Body)
 	var jaegerResult JaegerResult
-	_ = json.Unmarshal(body, &jaegerResult)
+	if err := tools.ParseReaderBody(res.Body, &jaegerResult); err != nil {
+		return nil, err
+	}
 
 	var data []Traces
 	for _, t := range jaegerResult.Data {
@@ -70,7 +70,7 @@ func (j JaegerDsProvider) Query(options TraceQueryOptions) ([]Traces, error) {
 }
 
 func (j JaegerDsProvider) Check() (bool, error) {
-	res, err := http.Get(nil, j.url)
+	res, err := tools.Get(nil, j.url)
 	if err != nil {
 		return false, err
 	}
@@ -87,7 +87,7 @@ type JaegerServiceData struct {
 
 func (j JaegerDsProvider) GetJaegerService() (JaegerServiceData, error) {
 	url := j.url + "/api/services"
-	res, err := http.Get(nil, url)
+	res, err := tools.Get(nil, url)
 	if err != nil {
 		return JaegerServiceData{}, err
 	}
@@ -97,10 +97,8 @@ func (j JaegerDsProvider) GetJaegerService() (JaegerServiceData, error) {
 		return JaegerServiceData{}, fmt.Errorf("后端服务请求异常, Status: %d, Msg: %s", res.StatusCode, string(b))
 	}
 
-	body, _ := io.ReadAll(res.Body)
 	var resData JaegerServiceData
-	err = json.Unmarshal(body, &resData)
-	if err != nil {
+	if err := tools.ParseReaderBody(res.Body, &resData); err != nil {
 		return JaegerServiceData{}, fmt.Errorf("json.Unmarshal failed, %s", err.Error())
 	}
 

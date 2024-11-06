@@ -1,15 +1,13 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"io"
 	"net/url"
 	middleware "watchAlert/internal/middleware"
 	"watchAlert/internal/models"
 	"watchAlert/internal/services"
-	"watchAlert/pkg/utils/http"
+	"watchAlert/pkg/tools"
 )
 
 type DatasourceController struct{}
@@ -131,18 +129,12 @@ func (dc DatasourceController) PromQuery(ctx *gin.Context) {
 		}
 
 		encodedQuery := url.QueryEscape(r.Query)
-		get, err := http.Get(nil, fmt.Sprintf("%s%s?query=%s", r.Addr, path, encodedQuery))
+		get, err := tools.Get(nil, fmt.Sprintf("%s%s?query=%s", r.Addr, path, encodedQuery))
 		if err != nil {
 			return nil, err
 		}
 
-		all, err := io.ReadAll(get.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		err = json.Unmarshal(all, &res)
-		if err != nil {
+		if err := tools.ParseReaderBody(get.Body, &res); err != nil {
 			return nil, err
 		}
 

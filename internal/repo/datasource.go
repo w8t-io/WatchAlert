@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"gorm.io/gorm"
 	"watchAlert/internal/models"
-	"watchAlert/pkg/utils/cmd"
+	"watchAlert/pkg/tools"
 )
 
 type (
@@ -81,7 +81,7 @@ func (ds DatasourceRepo) Get(r models.DatasourceQuery) (models.AlertDataSource, 
 }
 
 func (ds DatasourceRepo) Create(r models.AlertDataSource) error {
-	id := "ds-" + cmd.RandId()
+	id := "ds-" + tools.RandId()
 	data := r
 	data.Id = id
 

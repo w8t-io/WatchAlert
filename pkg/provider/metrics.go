@@ -2,7 +2,7 @@ package provider
 
 import (
 	"strconv"
-	"watchAlert/pkg/utils/hash"
+	"watchAlert/pkg/tools"
 )
 
 const (
@@ -23,14 +23,14 @@ type Metrics struct {
 
 func (m Metrics) GetFingerprint() string {
 	if len(m.Metric) == 0 {
-		return strconv.FormatUint(hash.HashNew(), 10)
+		return strconv.FormatUint(tools.HashNew(), 10)
 	}
 
 	var result uint64
 	for labelName, labelValue := range m.Metric {
-		sum := hash.HashNew()
-		sum = hash.HashAdd(sum, labelName)
-		sum = hash.HashAdd(sum, labelValue.(string))
+		sum := tools.HashNew()
+		sum = tools.HashAdd(sum, labelName)
+		sum = tools.HashAdd(sum, labelValue.(string))
 		result ^= sum
 	}
 

@@ -1,13 +1,10 @@
 package services
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
-	"watchAlert/pkg/utils/cmd"
-	"watchAlert/pkg/utils/http"
+	"watchAlert/pkg/tools"
 )
 
 type dashboardService struct {
@@ -75,7 +72,7 @@ func (ds dashboardService) Get(req interface{}) (data interface{}, error interfa
 
 func (ds dashboardService) Create(req interface{}) (data interface{}, error interface{}) {
 	r := req.(*models.Dashboard)
-	r.ID = "db" + cmd.RandId()
+	r.ID = "db" + tools.RandId()
 	err := ds.ctx.DB.Dashboard().Create(*r)
 	if err != nil {
 		return nil, err
@@ -130,7 +127,7 @@ func (ds dashboardService) GetFolder(req interface{}) (data interface{}, error i
 
 func (ds dashboardService) CreateFolder(req interface{}) (data interface{}, error interface{}) {
 	r := req.(*models.DashboardFolders)
-	r.ID = "f-" + cmd.RandId()
+	r.ID = "f-" + tools.RandId()
 	err := ctx.DB.Dashboard().CreateDashboardFolder(*r)
 	if err != nil {
 		return nil, err
@@ -161,18 +158,13 @@ func (ds dashboardService) DeleteFolder(req interface{}) (data interface{}, erro
 
 func (ds dashboardService) ListGrafanaDashboards(req interface{}) (data interface{}, error interface{}) {
 	r := req.(*models.DashboardFolders)
-	get, err := http.Get(nil, fmt.Sprintf("%s/api/search?folderIds=%d", r.GrafanaHost, r.GrafanaFolderId))
-	if err != nil {
-		return nil, err
-	}
-	body, err := io.ReadAll(get.Body)
+	get, err := tools.Get(nil, fmt.Sprintf("%s/api/search?folderIds=%d", r.GrafanaHost, r.GrafanaFolderId))
 	if err != nil {
 		return nil, err
 	}
 
 	var d []models.GrafanaDashboardInfo
-	err = json.Unmarshal(body, &d)
-	if err != nil {
+	if err := tools.ParseReaderBody(get.Body, &d); err != nil {
 		return nil, err
 	}
 
@@ -181,18 +173,13 @@ func (ds dashboardService) ListGrafanaDashboards(req interface{}) (data interfac
 
 func (ds dashboardService) GetDashboardFullUrl(req interface{}) (data interface{}, error interface{}) {
 	r := req.(*models.DashboardFolders)
-	get, err := http.Get(nil, fmt.Sprintf("%s/api/dashboards/uid/%s", r.GrafanaHost, r.GrafanaDashboardUid))
-	if err != nil {
-		return nil, err
-	}
-	body, err := io.ReadAll(get.Body)
+	get, err := tools.Get(nil, fmt.Sprintf("%s/api/dashboards/uid/%s", r.GrafanaHost, r.GrafanaDashboardUid))
 	if err != nil {
 		return nil, err
 	}
 
 	var d models.GrafanaDashboardMeta
-	err = json.Unmarshal(body, &d)
-	if err != nil {
+	if err := tools.ParseReaderBody(get.Body, &d); err != nil {
 		return nil, err
 	}
 

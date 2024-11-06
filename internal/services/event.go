@@ -7,7 +7,7 @@ import (
 	"time"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
-	"watchAlert/pkg/utils/cmd"
+	"watchAlert/pkg/tools"
 )
 
 type eventService struct {
@@ -107,7 +107,7 @@ func (e eventService) ListCurrentEvent(req interface{}) (interface{}, interface{
 				dsTypeDataList = append(dsTypeDataList, v)
 				continue
 			}
-			if strings.Contains(cmd.JsonMarshal(v.Metric), r.Query) {
+			if strings.Contains(tools.JsonMarshal(v.Metric), r.Query) {
 				dsTypeDataList = append(dsTypeDataList, v)
 				continue
 			}

@@ -1,14 +1,13 @@
 package provider
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"strconv"
 	"time"
 	"watchAlert/internal/global"
 	"watchAlert/internal/models"
-	utilsHttp "watchAlert/pkg/utils/http"
+	utilsHttp "watchAlert/pkg/tools"
 )
 
 type VictoriaMetricsProvider struct {
@@ -48,15 +47,8 @@ func (v VictoriaMetricsProvider) Query(promQL string) ([]Metrics, error) {
 		}
 	}(resp.Body)
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		global.Logger.Sugar().Error(err.Error())
-		return nil, err
-	}
-
 	var vmRespBody QueryResponse
-	err = json.Unmarshal(body, &vmRespBody)
-	if err != nil {
+	if err := utilsHttp.ParseReaderBody(resp.Body, &vmRespBody); err != nil {
 		global.Logger.Sugar().Error(err.Error())
 		return nil, err
 	}

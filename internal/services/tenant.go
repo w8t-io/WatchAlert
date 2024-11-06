@@ -5,7 +5,7 @@ import (
 	"time"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
-	"watchAlert/pkg/utils/cmd"
+	"watchAlert/pkg/tools"
 )
 
 type tenantService struct {
@@ -32,7 +32,7 @@ func newInterTenantService(ctx *ctx.Context) InterTenantService {
 
 func (ts tenantService) Create(req interface{}) (data interface{}, err interface{}) {
 	r := req.(*models.Tenant)
-	tid := "tid-" + cmd.RandId()
+	tid := "tid-" + tools.RandId()
 	nt := models.Tenant{
 		ID:               tid,
 		Name:             r.Name,

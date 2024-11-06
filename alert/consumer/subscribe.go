@@ -6,8 +6,8 @@ import (
 	"watchAlert/alert/sender"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
-	"watchAlert/pkg/utils/cmd"
-	"watchAlert/pkg/utils/templates"
+	"watchAlert/pkg/templates"
+	"watchAlert/pkg/tools"
 )
 
 type toUser struct {
@@ -40,7 +40,7 @@ func processSubscribe(ctx *ctx.Context, alert models.AlertCurEvent, notice model
 		if foundSeverity {
 			if len(s.SFilter) > 0 {
 				for _, f := range s.SFilter {
-					if strings.Contains(cmd.JsonMarshal(alert.Metric), f) || strings.Contains(alert.Annotations, f) {
+					if strings.Contains(tools.JsonMarshal(alert.Metric), f) || strings.Contains(alert.Annotations, f) {
 						foundFilter = true
 						break
 					}

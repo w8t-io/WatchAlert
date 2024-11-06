@@ -2,50 +2,12 @@ package process
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 	"time"
 	"watchAlert/alert/queue"
-	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
+	"watchAlert/pkg/tools"
 )
-
-// GetSliceDifference 获取差异key. 当slice1中存在, slice2不存在则标记为可恢复告警
-func GetSliceDifference(slice1 []string, slice2 []string) []string {
-	difference := []string{}
-
-	// 遍历缓存
-	for _, item1 := range slice1 {
-		found := false
-		// 遍历当前key
-		for _, item2 := range slice2 {
-			if item1 == item2 {
-				found = true
-				break
-			}
-		}
-		// 添加到差异切片中
-		if !found {
-			difference = append(difference, item1)
-		}
-	}
-
-	return difference
-}
-
-// GetSliceSame 获取相同key, 当slice1中存在, slice2也存在则标记为正在告警中撤销告警恢复
-func GetSliceSame(slice1 []string, slice2 []string) []string {
-	same := []string{}
-	for _, item1 := range slice1 {
-		for _, item2 := range slice2 {
-			if item1 == item2 {
-				same = append(same, item1)
-			}
-		}
-	}
-	return same
-}
 
 func BuildEvent(rule models.AlertRule) models.AlertCurEvent {
 	return models.AlertCurEvent{
@@ -68,8 +30,8 @@ func BuildEvent(rule models.AlertRule) models.AlertCurEvent {
 }
 
 func SaveEventCache(ctx *ctx.Context, event models.AlertCurEvent) {
-	ctx.Lock()
-	defer ctx.Unlock()
+	ctx.Mux.Lock()
+	defer ctx.Mux.Unlock()
 
 	firingKey := event.GetFiringAlertCacheKey()
 	pendingKey := event.GetPendingAlertCacheKey()
@@ -99,20 +61,6 @@ func SaveEventCache(ctx *ctx.Context, event models.AlertCurEvent) {
 
 }
 
-// ParserDuration 获取时间区间的开始时间
-func ParserDuration(curTime time.Time, logScope int, timeType string) time.Time {
-
-	duration, err := time.ParseDuration(strconv.Itoa(logScope) + timeType)
-	if err != nil {
-		global.Logger.Sugar().Error("解析相对时间失败 ->", err.Error())
-		return time.Time{}
-	}
-	startsAt := curTime.Add(-duration)
-
-	return startsAt
-
-}
-
 /*
 GcPendingCache
 清理 Pending 数据的缓存.
@@ -130,32 +78,32 @@ func GcPendingCache(ctx *ctx.Context, rule models.AlertRule, curKeys []string) {
 		return
 	}
 
-	gcPendingKeys := GetSliceDifference(pendingKeys, curKeys)
+	gcPendingKeys := tools.GetSliceDifference(pendingKeys, curKeys)
 	for _, key := range gcPendingKeys {
 		ctx.Redis.Event().DelCache(key)
 	}
 }
 
-func GcRecoverWaitCache(rule models.AlertRule, curKeys []string) {
+func GcRecoverWaitCache(ctx *ctx.Context, alarmRecoverStore queue.AlarmRecoverWaitStore, rule models.AlertRule, curKeys []string) {
 	// 获取等待恢复告警的keys
-	recoverWaitKeys := getRecoverWaitList(queue.RecoverWaitMap, rule)
+	recoverWaitKeys := getRecoverWaitList(alarmRecoverStore, rule)
 	// 删除正常告警的key
-	firingKeys := GetSliceSame(recoverWaitKeys, curKeys)
-	for _, key := range firingKeys {
-		delete(queue.RecoverWaitMap, key)
-	}
+	firingKeys := tools.GetSliceSame(recoverWaitKeys, curKeys)
+	deleteFiringKeys(ctx, alarmRecoverStore, firingKeys)
 }
 
-func getRecoverWaitList(m map[string]int64, rule models.AlertRule) []string {
-	var l []string
-	for k, _ := range m {
-		// 只获取当前规则组的告警。
-		keyPrefix := fmt.Sprintf("%s", models.FiringAlertCachePrefix+rule.RuleId+"-"+rule.DatasourceIdList[0]+"-")
-		if strings.HasPrefix(k, keyPrefix) {
-			l = append(l, k)
-		}
+func getRecoverWaitList(recoverStore queue.AlarmRecoverWaitStore, rule models.AlertRule) []string {
+	keyPrefix := fmt.Sprintf("%s", models.FiringAlertCachePrefix+rule.RuleId+"-"+rule.DatasourceIdList[0]+"-")
+	return recoverStore.Search(keyPrefix)
+}
+
+func deleteFiringKeys(ctx *ctx.Context, recoverStore queue.AlarmRecoverWaitStore, keys []string) {
+	ctx.Mux.Lock()
+	defer ctx.Mux.Unlock()
+
+	for _, key := range keys {
+		recoverStore.Remove(key)
 	}
-	return l
 }
 
 // GetRedisFiringKeys 获取缓存所有Firing的Keys

@@ -5,7 +5,7 @@ import (
 	"github.com/go-redis/redis"
 	"time"
 	"watchAlert/internal/models"
-	"watchAlert/pkg/utils/cmd"
+	"watchAlert/pkg/tools"
 )
 
 type (
@@ -27,7 +27,7 @@ func newSilenceCacheInterface(r *redis.Client) InterSilenceCache {
 }
 
 func (sc SilenceCache) SetCache(r models.AlertSilences, expiration time.Duration) {
-	sc.rc.Set(r.TenantId+":"+models.SilenceCachePrefix+r.Fingerprint, cmd.JsonMarshal(r), expiration)
+	sc.rc.Set(r.TenantId+":"+models.SilenceCachePrefix+r.Fingerprint, tools.JsonMarshal(r), expiration)
 }
 
 func (sc SilenceCache) DelCache(r models.AlertSilenceQuery) error {

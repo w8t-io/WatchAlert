@@ -4,7 +4,7 @@ import (
 	"time"
 	models "watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
-	"watchAlert/pkg/utils/cmd"
+	"watchAlert/pkg/tools"
 )
 
 type userRoleService struct {
@@ -38,7 +38,7 @@ func (ur userRoleService) List(req interface{}) (interface{}, interface{}) {
 func (ur userRoleService) Create(req interface{}) (interface{}, interface{}) {
 	r := req.(*models.UserRole)
 
-	r.ID = "ur-" + cmd.RandId()
+	r.ID = "ur-" + tools.RandId()
 	r.CreateAt = time.Now().Unix()
 
 	err := ur.ctx.DB.UserRole().Create(*r)

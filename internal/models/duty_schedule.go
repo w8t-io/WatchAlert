@@ -32,6 +32,7 @@ type DutyManagement struct {
 	Name        string `json:"name"`
 	Manager     Users  `json:"manager" gorm:"manager;serializer:json"`
 	Description string `json:"description"`
+	CurDutyUser string `json:"curDutyUser"`
 	CreateBy    string `json:"create_by"`
 	CreateAt    int64  `json:"create_at"`
 }

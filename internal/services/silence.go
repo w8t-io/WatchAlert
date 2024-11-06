@@ -5,7 +5,7 @@ import (
 	"time"
 	models "watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
-	"watchAlert/pkg/utils/cmd"
+	"watchAlert/pkg/tools"
 )
 
 type alertSilenceService struct {
@@ -31,7 +31,7 @@ func (ass alertSilenceService) Create(req interface{}) (interface{}, interface{}
 	createAt := time.Now().Unix()
 	silenceEvent := models.AlertSilences{
 		TenantId:       r.TenantId,
-		Id:             "s-" + cmd.RandId(),
+		Id:             "s-" + tools.RandId(),
 		Fingerprint:    r.Fingerprint,
 		Datasource:     r.Datasource,
 		DatasourceType: r.DatasourceType,

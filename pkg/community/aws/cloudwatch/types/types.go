@@ -4,7 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"time"
-	"watchAlert/pkg/utils/cmd"
+	"watchAlert/pkg/tools"
 )
 
 var NamespaceMetricsMap = map[string][]string{
@@ -45,7 +45,7 @@ func (c CloudWatchQuery) GetFingerprint() string {
 		"statistic":  c.Statistic,
 	}
 	h := md5.New()
-	streamString := cmd.JsonMarshal(newMetric)
+	streamString := tools.JsonMarshal(newMetric)
 	h.Write([]byte(streamString))
 	fingerprint := hex.EncodeToString(h.Sum(nil))
 

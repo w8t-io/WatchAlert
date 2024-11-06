@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 	models "watchAlert/internal/models"
-	"watchAlert/pkg/utils/cmd"
+	"watchAlert/pkg/tools"
 )
 
 // Template 飞书消息卡片模版
@@ -31,7 +31,7 @@ func feishuTemplate(alert models.AlertCurEvent, noticeTmpl models.NoticeTemplate
 		}
 		defaultTemplate.Card.Elements = tmplC.Elements
 		defaultTemplate.Card.Header = tmplC.Header
-		cardContentString = cmd.JsonMarshal(defaultTemplate)
+		cardContentString = tools.JsonMarshal(defaultTemplate)
 		cardContentString = ParserTemplate("Card", alert, cardContentString)
 
 	} else {
@@ -81,7 +81,7 @@ func feishuTemplate(alert models.AlertCurEvent, noticeTmpl models.NoticeTemplate
 
 		defaultTemplate.Card.Elements = cardElements
 		defaultTemplate.Card.Header = cardHeader
-		cardContentString = cmd.JsonMarshal(defaultTemplate)
+		cardContentString = tools.JsonMarshal(defaultTemplate)
 
 	}
 

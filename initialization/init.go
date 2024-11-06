@@ -9,7 +9,7 @@ import (
 	"watchAlert/internal/repo"
 	"watchAlert/internal/services"
 	"watchAlert/pkg/ctx"
-	"watchAlert/pkg/utils/logger"
+	"watchAlert/pkg/logger"
 )
 
 func InitBasic() {

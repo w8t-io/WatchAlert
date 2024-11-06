@@ -3,7 +3,7 @@ package repo
 import (
 	"gorm.io/gorm"
 	"watchAlert/internal/models"
-	"watchAlert/pkg/utils/cmd"
+	"watchAlert/pkg/tools"
 )
 
 type (
@@ -67,7 +67,7 @@ func (nr NoticeTmplRepo) Search(r models.NoticeTemplateExampleQuery) ([]models.N
 
 func (nr NoticeTmplRepo) Create(r models.NoticeTemplateExample) error {
 	nt := r
-	nt.Id = "nt-" + cmd.RandId()
+	nt.Id = "nt-" + tools.RandId()
 	err := nr.g.Create(models.NoticeTemplateExample{}, nt)
 	if err != nil {
 		return err

@@ -6,7 +6,7 @@ import (
 	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
-	"watchAlert/pkg/utils/cmd"
+	"watchAlert/pkg/tools"
 )
 
 var perms []models.UserPermissions
@@ -28,7 +28,7 @@ func InitUserRolesSQL(ctx *ctx.Context) {
 	var db = ctx.DB.DB().Model(&models.UserRole{})
 
 	roles := models.UserRole{
-		ID:          "ur-" + cmd.RandId(),
+		ID:          "ur-" + tools.RandId(),
 		Name:        "admin",
 		Description: "system",
 		Permissions: perms,

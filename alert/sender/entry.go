@@ -7,7 +7,7 @@ import (
 	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
-	"watchAlert/pkg/utils/templates"
+	"watchAlert/pkg/templates"
 )
 
 func Sender(ctx *ctx.Context, alert models.AlertCurEvent, notice models.AlertNotice) error {

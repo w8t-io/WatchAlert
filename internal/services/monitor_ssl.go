@@ -5,7 +5,7 @@ import (
 	"watchAlert/alert"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
-	"watchAlert/pkg/utils/cmd"
+	"watchAlert/pkg/tools"
 )
 
 type monitorService struct {
@@ -28,7 +28,7 @@ func newInterMonitorService(ctx *ctx.Context) InterMonitorService {
 
 func (m monitorService) Create(req interface{}) (interface{}, interface{}) {
 	r := req.(*models.MonitorSSLRule)
-	r.ID = "m-" + cmd.RandId()
+	r.ID = "m-" + tools.RandId()
 
 	if *r.Enabled {
 		alert.MonEvalTask.Submit(m.ctx, *r)

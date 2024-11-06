@@ -3,15 +3,12 @@ package client
 import (
 	"crypto/md5"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/url"
 	"strconv"
 	"time"
 	"watchAlert/internal/models"
-	"watchAlert/pkg/utils/cmd"
-	"watchAlert/pkg/utils/http"
+	"watchAlert/pkg/tools"
 )
 
 type LokiClient struct {
@@ -71,15 +68,13 @@ func (lc LokiClient) QueryRange(options QueryOptions) ([]Result, int, error) {
 
 	args := fmt.Sprintf("/loki/api/v1/query_range?query=%s&direction=%s&limit=%d&start=%s&end=%s", url.QueryEscape(options.Query), options.Direction, options.Limit, options.StartAt, options.EndAt)
 	requestURL := lc.BaseURL + args
-	res, err := http.Get(nil, requestURL)
+	res, err := tools.Get(nil, requestURL)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	body, _ := io.ReadAll(res.Body)
 	var resultData result
-	err = json.Unmarshal(body, &resultData)
-	if err != nil {
+	if err := tools.ParseReaderBody(res.Body, &resultData); err != nil {
 		return nil, 0, err
 	}
 
@@ -99,7 +94,7 @@ func (r Result) GetFingerprint() string {
 		"container": r.Stream["container"],
 	}
 	h := md5.New()
-	streamString := cmd.JsonMarshal(newMetric)
+	streamString := tools.JsonMarshal(newMetric)
 	h.Write([]byte(streamString))
 	fingerprint := hex.EncodeToString(h.Sum(nil))
 	return fingerprint
@@ -124,6 +119,6 @@ func (r Result) GetAnnotations() interface{} {
 			logValue = r.Values[0].([]interface{})[1].(string)
 		}
 	}
-	annotations = cmd.FormatJson(logValue)
+	annotations = tools.FormatJson(logValue)
 	return annotations
 }
