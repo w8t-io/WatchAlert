@@ -17,7 +17,7 @@ func Get(headers map[string]string, url string) (*http.Response, error) {
 	}
 
 	client := http.Client{
-		Timeout:   1 * time.Second,
+		Timeout:   10 * time.Second,
 		Transport: transport,
 	}
 
@@ -46,7 +46,7 @@ func Post(headers map[string]string, url string, bodyReader *bytes.Reader) (*htt
 	}
 
 	client := http.Client{
-		Timeout:   1 * time.Second,
+		Timeout:   10 * time.Second,
 		Transport: transport,
 	}
 
