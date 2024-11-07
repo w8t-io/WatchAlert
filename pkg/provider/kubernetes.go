@@ -53,10 +53,11 @@ func NewKubernetesClient(ctx context.Context, kubeConfigContent string) (Kuberne
 }
 
 func (a KubernetesClient) GetWarningEvent(reason string, scope int) (*corev1.EventList, error) {
-	warningEvents := &corev1.EventList{}
+	var warningEvents corev1.EventList
 	cutoffTime := time.Now().Add(-time.Duration(scope) * time.Minute)
 	opts := metav1.ListOptions{
-		Limit: 50, // 减少每次请求的数量，防止过多资源占用
+		Limit:         50, // 减少每次请求的数量，防止过多资源占用
+		FieldSelector: "reason=" + reason,
 	}
 
 	for {
@@ -82,5 +83,5 @@ func (a KubernetesClient) GetWarningEvent(reason string, scope int) (*corev1.Eve
 		opts.Continue = list.Continue
 	}
 
-	return warningEvents, nil
+	return &warningEvents, nil
 }
