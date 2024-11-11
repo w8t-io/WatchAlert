@@ -75,7 +75,7 @@ func (rc RuleGroupController) List(ctx *gin.Context) {
 
 func (rc RuleGroupController) Delete(ctx *gin.Context) {
 	r := new(models.RuleGroupQuery)
-	BindQuery(ctx, r)
+	BindJson(ctx, r)
 
 	tid, _ := ctx.Get("TenantID")
 	r.TenantId = tid.(string)

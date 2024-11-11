@@ -10,18 +10,28 @@ import (
 type MonitorSSLController struct{}
 
 func (m MonitorSSLController) API(gin *gin.RouterGroup) {
-	mon := gin.Group("monitor")
-	mon.Use(
+	monA := gin.Group("monitor")
+	monA.Use(
+		middleware.Auth(),
+		middleware.Permission(),
+		middleware.AuditingLog(),
+		middleware.ParseTenant(),
+	)
+	{
+		monA.POST("createMon", m.create)
+		monA.POST("updateMon", m.update)
+		monA.POST("deleteMon", m.delete)
+	}
+
+	monB := gin.Group("monitor")
+	monB.Use(
 		middleware.Auth(),
 		middleware.Permission(),
 		middleware.ParseTenant(),
 	)
 	{
-		mon.POST("createMon", m.create)
-		mon.POST("updateMon", m.update)
-		mon.POST("deleteMon", m.delete)
-		mon.GET("listMon", m.list)
-		mon.GET("getMon", m.get)
+		monB.GET("listMon", m.list)
+		monB.GET("getMon", m.get)
 	}
 }
 

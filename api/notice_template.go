@@ -58,7 +58,7 @@ func (ntc NoticeTemplateController) Update(ctx *gin.Context) {
 
 func (ntc NoticeTemplateController) Delete(ctx *gin.Context) {
 	r := new(models.NoticeTemplateExampleQuery)
-	BindQuery(ctx, r)
+	BindJson(ctx, r)
 
 	Service(ctx, func() (interface{}, interface{}) {
 		return services.NoticeTmplService.Delete(r)

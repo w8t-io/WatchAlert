@@ -48,7 +48,7 @@ func (rtg RuleTmplGroupController) Create(ctx *gin.Context) {
 
 func (rtg RuleTmplGroupController) Delete(ctx *gin.Context) {
 	r := new(models.RuleTemplateGroupQuery)
-	BindQuery(ctx, r)
+	BindJson(ctx, r)
 
 	Service(ctx, func() (interface{}, interface{}) {
 		return services.RuleTmplGroupService.Delete(r)

@@ -10,14 +10,23 @@ import (
 type SettingsController struct{}
 
 func (a SettingsController) API(gin *gin.RouterGroup) {
-	setting := gin.Group("setting")
-	setting.Use(
+	settingA := gin.Group("setting")
+	settingA.Use(
+		middleware.Auth(),
+		middleware.Permission(),
+		middleware.AuditingLog(),
+	)
+	{
+		settingA.POST("saveSystemSetting", a.Save)
+	}
+
+	settingB := gin.Group("setting")
+	settingB.Use(
 		middleware.Auth(),
 		middleware.Permission(),
 	)
 	{
-		setting.POST("saveSystemSetting", a.Save)
-		setting.GET("getSystemSetting", a.Get)
+		settingB.GET("getSystemSetting", a.Get)
 	}
 }
 

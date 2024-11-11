@@ -104,7 +104,7 @@ func (uc UserController) Update(ctx *gin.Context) {
 
 func (uc UserController) Delete(ctx *gin.Context) {
 	r := new(models.MemberQuery)
-	BindQuery(ctx, r)
+	BindJson(ctx, r)
 
 	Service(ctx, func() (interface{}, interface{}) {
 		return services.UserService.Delete(r)

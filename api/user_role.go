@@ -58,7 +58,7 @@ func (urc UserRoleController) Update(ctx *gin.Context) {
 
 func (urc UserRoleController) Delete(ctx *gin.Context) {
 	r := new(models.UserRoleQuery)
-	BindQuery(ctx, r)
+	BindJson(ctx, r)
 
 	Service(ctx, func() (interface{}, interface{}) {
 		return services.UserRoleService.Delete(r)
