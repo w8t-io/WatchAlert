@@ -67,7 +67,6 @@ func (t *AlertRule) Eval(ctx context.Context, rule models.AlertRule) {
 				switch rule.DatasourceType {
 				case "Prometheus", "VictoriaMetrics":
 					curFiringKeys, curPendingKeys = metrics(t.ctx, dsId, instance.Type, rule)
-					fmt.Println("curFiringKeys ->", curFiringKeys, "\ncurPendingKeys ->", curPendingKeys)
 				case "AliCloudSLS", "Loki", "ElasticSearch":
 					curFiringKeys = logs(t.ctx, dsId, instance.Type, rule)
 				case "Jaeger":

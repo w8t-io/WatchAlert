@@ -12,7 +12,7 @@ WORKDIR /root
 COPY . /root
 
 RUN go mod tidy && \
-    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build --ldflags="-X main.Version=${VERSION}" -o watchAlert ./main.go && \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build --ldflags="-X global.Version=${VERSION}" -o watchAlert ./main.go && \
     chmod 777 watchAlert
 
 FROM registry.js.design/base/alpine:3.16

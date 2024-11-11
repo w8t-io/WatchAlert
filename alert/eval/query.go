@@ -34,28 +34,29 @@ func metrics(ctx *ctx.Context, datasourceId, datasourceType string, rule models.
 		return
 	}
 
+	pools := ctx.Redis.ProviderPools()
 	var resQuery []provider.Metrics
 	switch datasourceType {
 	case provider.PrometheusDsProvider:
-		prometheusClient, err := provider.NewPrometheusClient(datasourceInfo)
+		cli, err := pools.GetClient(datasourceId)
 		if err != nil {
-			global.Logger.Sugar().Error(err.Error())
+			global.Logger.Sugar().Errorf(err.Error())
 			return
 		}
 
-		resQuery, err = prometheusClient.Query(rule.PrometheusConfig.PromQL)
+		resQuery, err = cli.(provider.PrometheusProvider).Query(rule.PrometheusConfig.PromQL)
 		if err != nil {
 			global.Logger.Sugar().Error(err.Error())
 			return
 		}
 	case provider.VictoriaMetricsDsProvider:
-		vmClient, err := provider.NewVictoriaMetricsClient(datasourceInfo)
+		cli, err := pools.GetClient(datasourceId)
 		if err != nil {
-			global.Logger.Sugar().Error(err.Error())
+			global.Logger.Sugar().Errorf(err.Error())
 			return
 		}
 
-		resQuery, err = vmClient.Query(rule.PrometheusConfig.PromQL)
+		resQuery, err = cli.(provider.VictoriaMetricsProvider).Query(rule.PrometheusConfig.PromQL)
 		if err != nil {
 			global.Logger.Sugar().Error(err.Error())
 			return
@@ -130,11 +131,12 @@ func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.Ale
 		return
 	}
 
+	pools := ctx.Redis.ProviderPools()
 	switch datasourceType {
 	case provider.LokiDsProviderName:
-		lokiCli, err := provider.NewLokiClient(datasourceInfo)
+		cli, err := pools.GetClient(datasourceId)
 		if err != nil {
-			global.Logger.Sugar().Error(err.Error())
+			global.Logger.Sugar().Errorf(err.Error())
 			return
 		}
 
@@ -147,7 +149,7 @@ func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.Ale
 			StartAt: startsAt.Unix(),
 			EndAt:   curAt.Unix(),
 		}
-		queryRes, count, err = lokiCli.Query(queryOptions)
+		queryRes, count, err = cli.(provider.LokiProvider).Query(queryOptions)
 		if err != nil {
 			global.Logger.Sugar().Error(err.Error())
 			return
@@ -159,9 +161,9 @@ func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.Ale
 			Value:    rule.LokiConfig.EvalCondition.Value,
 		}
 	case provider.AliCloudSLSDsProviderName:
-		slsClient, err := provider.NewAliCloudSlsClient(datasourceInfo)
+		cli, err := pools.GetClient(datasourceId)
 		if err != nil {
-			global.Logger.Sugar().Error(err.Error())
+			global.Logger.Sugar().Errorf(err.Error())
 			return
 		}
 
@@ -176,7 +178,7 @@ func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.Ale
 			StartAt: int32(startsAt.Unix()),
 			EndAt:   int32(curAt.Unix()),
 		}
-		queryRes, count, err = slsClient.Query(queryOptions)
+		queryRes, count, err = cli.(provider.AliCloudSlsDsProvider).Query(queryOptions)
 		if err != nil {
 			global.Logger.Sugar().Error(err.Error())
 			return
@@ -188,9 +190,9 @@ func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.Ale
 			Value:    rule.AliCloudSLSConfig.EvalCondition.Value,
 		}
 	case provider.ElasticSearchDsProviderName:
-		searchClient, err := provider.NewElasticSearchClient(ctx.Ctx, datasourceInfo)
+		cli, err := pools.GetClient(datasourceId)
 		if err != nil {
-			global.Logger.Sugar().Error(err.Error())
+			global.Logger.Sugar().Errorf(err.Error())
 			return
 		}
 
@@ -204,7 +206,7 @@ func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.Ale
 			StartAt: tools.FormatTimeToUTC(startsAt.Unix()),
 			EndAt:   tools.FormatTimeToUTC(curAt.Unix()),
 		}
-		queryRes, count, err = searchClient.Query(queryOptions)
+		queryRes, count, err = cli.(provider.ElasticSearchDsProvider).Query(queryOptions)
 		if err != nil {
 			global.Logger.Sugar().Error(err.Error())
 			return
@@ -265,14 +267,15 @@ func traces(ctx *ctx.Context, datasourceId, datasourceType string, rule models.A
 		return
 	}
 
+	pools := ctx.Redis.ProviderPools()
 	switch datasourceType {
 	case provider.JaegerDsProviderName:
 		curAt := time.Now().UTC()
 		startsAt := tools.ParserDuration(curAt, rule.JaegerConfig.Scope, "m")
 
-		jaegerClient, err := provider.NewJaegerClient(datasourceInfo)
+		cli, err := pools.GetClient(datasourceId)
 		if err != nil {
-			global.Logger.Sugar().Error(err.Error())
+			global.Logger.Sugar().Errorf(err.Error())
 			return
 		}
 
@@ -282,7 +285,7 @@ func traces(ctx *ctx.Context, datasourceId, datasourceType string, rule models.A
 			StartAt: startsAt.UnixMicro(),
 			EndAt:   curAt.UnixMicro(),
 		}
-		queryRes, err = jaegerClient.Query(queryOptions)
+		queryRes, err = cli.(provider.JaegerDsProvider).Query(queryOptions)
 		if err != nil {
 			global.Logger.Sugar().Error(err.Error())
 			return
@@ -306,19 +309,13 @@ func traces(ctx *ctx.Context, datasourceId, datasourceType string, rule models.A
 }
 
 func cloudWatch(ctx *ctx.Context, datasourceId string, rule models.AlertRule) (curFiringKeys []string) {
-	datasourceObj, err := ctx.DB.Datasource().GetInstance(datasourceId)
+	pools := ctx.Redis.ProviderPools()
+	cfg, err := pools.GetClient(datasourceId)
 	if err != nil {
+		global.Logger.Sugar().Errorf(err.Error())
 		return
 	}
-
-	cfg, err := provider.NewAWSCredentialCfg(datasourceObj.AWSCloudWatch.Region, datasourceObj.AWSCloudWatch.AccessKey, datasourceObj.AWSCloudWatch.SecretKey)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-
-	cli := cfg.CloudWatchCli()
-
+	cli := cfg.(provider.AwsConfig).CloudWatchCli()
 	curAt := time.Now().UTC()
 	startsAt := tools.ParserDuration(curAt, rule.CloudWatchConfig.Period, "m")
 
@@ -367,12 +364,14 @@ func kubernetesEvent(ctx *ctx.Context, datasourceId string, rule models.AlertRul
 		return
 	}
 
-	cli, err := provider.NewKubernetesClient(ctx.Ctx, datasourceObj.KubeConfig)
+	pools := ctx.Redis.ProviderPools()
+	cli, err := pools.GetClient(datasourceId)
 	if err != nil {
-		global.Logger.Sugar().Error(err.Error())
+		global.Logger.Sugar().Errorf(err.Error())
 		return
 	}
-	event, err := cli.GetWarningEvent(rule.KubernetesConfig.Reason, rule.KubernetesConfig.Scope)
+
+	event, err := cli.(provider.KubernetesClient).GetWarningEvent(rule.KubernetesConfig.Reason, rule.KubernetesConfig.Scope)
 	if err != nil {
 		global.Logger.Sugar().Error(err.Error())
 		return

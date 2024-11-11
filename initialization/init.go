@@ -6,6 +6,7 @@ import (
 	"watchAlert/config"
 	"watchAlert/internal/cache"
 	"watchAlert/internal/global"
+	"watchAlert/internal/models"
 	"watchAlert/internal/repo"
 	"watchAlert/internal/services"
 	"watchAlert/pkg/ctx"
@@ -38,9 +39,31 @@ func InitBasic() {
 	// 初始化角色数据
 	InitUserRolesSQL(ctx)
 
+	// 导入数据源 Client 到存储池
+	importClientPools(ctx)
+
 	if global.Config.Ldap.Enabled {
 		// 定时同步LDAP用户任务
 		go services.LdapService.SyncUsersCronjob()
 	}
 
+}
+
+func importClientPools(ctx *ctx.Context) {
+	list, err := ctx.DB.Datasource().List(models.DatasourceQuery{})
+	if err != nil {
+		global.Logger.Sugar().Error(err.Error())
+		return
+	}
+
+	for _, datasource := range list {
+		if !*datasource.Enabled {
+			return
+		}
+		err := services.DatasourceService.WithAddClientToProviderPools(datasource)
+		if err != nil {
+			global.Logger.Sugar().Error(err.Error())
+			return
+		}
+	}
 }
