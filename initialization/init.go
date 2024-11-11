@@ -2,6 +2,7 @@ package initialization
 
 import (
 	"context"
+	"golang.org/x/sync/errgroup"
 	"watchAlert/alert"
 	"watchAlert/config"
 	"watchAlert/internal/cache"
@@ -56,14 +57,19 @@ func importClientPools(ctx *ctx.Context) {
 		return
 	}
 
+	g := new(errgroup.Group)
 	for _, datasource := range list {
+		datasource := datasource
 		if !*datasource.Enabled {
-			return
+			continue
 		}
-		err := services.DatasourceService.WithAddClientToProviderPools(datasource)
-		if err != nil {
-			global.Logger.Sugar().Error(err.Error())
-			return
-		}
+		g.Go(func() error {
+			err := services.DatasourceService.WithAddClientToProviderPools(datasource)
+			if err != nil {
+				global.Logger.Sugar().Error("添加到 Client 存储池失败, err: %s", err.Error())
+				return err
+			}
+			return nil
+		})
 	}
 }
