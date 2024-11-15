@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/url"
+	"strconv"
+	"time"
 	middleware "watchAlert/internal/middleware"
 	"watchAlert/internal/models"
 	"watchAlert/internal/services"
+	"watchAlert/pkg/provider"
 	"watchAlert/pkg/tools"
 )
 
@@ -122,14 +125,13 @@ func (dc DatasourceController) PromQuery(ctx *gin.Context) {
 	BindQuery(ctx, r)
 
 	Service(ctx, func() (interface{}, interface{}) {
-		var res models.PromQueryRes
+		var res provider.QueryResponse
 		path := "/api/v1/query"
-		if r.DatasourceType == "VictoriaMetrics" {
-			path = "/prometheus" + path
-		}
-
-		encodedQuery := url.QueryEscape(r.Query)
-		get, err := tools.Get(nil, fmt.Sprintf("%s%s?query=%s", r.Addr, path, encodedQuery))
+		params := url.Values{}
+		params.Add("query", r.Query)
+		params.Add("time", strconv.FormatInt(time.Now().Unix(), 10))
+		fullURL := fmt.Sprintf("%s%s?%s", r.Addr, path, params.Encode())
+		get, err := tools.Get(nil, fullURL)
 		if err != nil {
 			return nil, err
 		}

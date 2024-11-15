@@ -2,7 +2,7 @@ package provider
 
 import (
 	"fmt"
-	"io"
+	"net/url"
 	"strconv"
 	"time"
 	"watchAlert/internal/global"
@@ -19,6 +19,7 @@ func NewVictoriaMetricsClient(ds models.AlertDataSource) (MetricsFactoryProvider
 }
 
 type QueryResponse struct {
+	Status string `json:"status"`
 	VMData VMData `json:"data"`
 }
 
@@ -33,19 +34,16 @@ type VMResult struct {
 }
 
 func (v VictoriaMetricsProvider) Query(promQL string) ([]Metrics, error) {
-	apiEndpoint := fmt.Sprintf("%s%s?query=%s&time=%d", v.address, "/api/v1/query", promQL, time.Now().Unix())
-
-	resp, err := utilsHttp.Get(nil, apiEndpoint)
+	params := url.Values{}
+	params.Add("query", promQL)
+	params.Add("time", strconv.FormatInt(time.Now().Unix(), 10))
+	fullURL := fmt.Sprintf("%s%s?%s", v.address, "/api/v1/query", params.Encode())
+	resp, err := utilsHttp.Get(nil, fullURL)
 	if err != nil {
 		global.Logger.Sugar().Error(err.Error())
 		return nil, err
 	}
-	defer func(Body io.ReadCloser) {
-		err = Body.Close()
-		if err != nil {
-			global.Logger.Sugar().Error(err.Error())
-		}
-	}(resp.Body)
+	defer resp.Body.Close()
 
 	var vmRespBody QueryResponse
 	if err := utilsHttp.ParseReaderBody(resp.Body, &vmRespBody); err != nil {

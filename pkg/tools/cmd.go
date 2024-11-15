@@ -1,7 +1,6 @@
 package tools
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
@@ -113,10 +112,13 @@ func FormatJson(s string) string {
 
 // ParseReaderBody 处理请求Body
 func ParseReaderBody(body io.Reader, req interface{}) error {
-	reader := bufio.NewReader(body)
-	decoder := json.NewDecoder(reader)
-	if err := decoder.Decode(&req); err != nil {
-		return fmt.Errorf("解析 Body 失败, err: %s", err.Error())
+	newBody := body
+	bodyByte, err := io.ReadAll(newBody)
+	if err != nil {
+		return fmt.Errorf("读取 Body 失败, err: %s", err.Error())
+	}
+	if err := json.Unmarshal(bodyByte, &req); err != nil {
+		return fmt.Errorf("解析 Body 失败, body: %s, err: %s", string(bodyByte), err.Error())
 	}
 	return nil
 }
