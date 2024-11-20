@@ -3,6 +3,7 @@ package services
 import (
 	"fmt"
 	"github.com/robfig/cron/v3"
+	"github.com/zeromicro/go-zero/core/logc"
 	"gopkg.in/ldap.v2"
 	"time"
 	"watchAlert/internal/global"
@@ -31,13 +32,13 @@ func newInterLdapService(ctx *ctx.Context) InterLdapService {
 func (l ldapService) getAdminAuth() (*ldap.Conn, error) {
 	ls, err := ldap.Dial("tcp", global.Config.Ldap.Address)
 	if err != nil {
-		global.Logger.Sugar().Errorf("无法连接 LDAP 服务器, Address: %s, err: %s", global.Config.Ldap.Address, err.Error())
+		logc.Errorf(l.ctx.Ctx, fmt.Sprintf("无法连接 LDAP 服务器, Address: %s, err: %s", global.Config.Ldap.Address, err.Error()))
 		return nil, err
 	}
 
 	err = ls.Bind(global.Config.Ldap.AdminUser, global.Config.Ldap.AdminPass)
 	if err != nil {
-		global.Logger.Sugar().Errorf("LDAP 管理员绑定失败 err: %s", err.Error())
+		logc.Errorf(l.ctx.Ctx, fmt.Sprintf("LDAP 管理员绑定失败 err: %s", err.Error()))
 		return nil, err
 	}
 
@@ -67,7 +68,7 @@ func (l ldapService) ListUsers() ([]ldapUser, error) {
 	defer auth.Close()
 	sr, err := auth.Search(searchRequest)
 	if err != nil {
-		global.Logger.Sugar().Errorf("LDAP 用户搜索失败, err: %s", err.Error())
+		logc.Errorf(l.ctx.Ctx, fmt.Sprintf("LDAP 用户搜索失败, err: %s", err.Error()))
 		return nil, err
 	}
 
@@ -90,7 +91,7 @@ func (l ldapService) ListUsers() ([]ldapUser, error) {
 func (l ldapService) SyncUserToW8t() {
 	users, err := l.ListUsers()
 	if err != nil {
-		global.Logger.Sugar().Errorf(err.Error())
+		logc.Errorf(l.ctx.Ctx, err.Error())
 		return
 	}
 
@@ -111,7 +112,7 @@ func (l ldapService) SyncUserToW8t() {
 		}
 		err = l.ctx.DB.User().Create(m)
 		if err != nil {
-			global.Logger.Sugar().Errorf(err.Error())
+			logc.Errorf(l.ctx.Ctx, err.Error())
 			return
 		}
 
@@ -126,7 +127,7 @@ func (l ldapService) SyncUserToW8t() {
 			},
 		})
 		if err != nil {
-			global.Logger.Sugar().Errorf(err.Error())
+			logc.Errorf(l.ctx.Ctx, err.Error())
 			return
 		}
 	}
@@ -135,14 +136,14 @@ func (l ldapService) SyncUserToW8t() {
 func (l ldapService) Login(username, password string) error {
 	auth, err := l.getAdminAuth()
 	if err != nil {
-		global.Logger.Sugar().Errorf(err.Error())
+		logc.Errorf(l.ctx.Ctx, err.Error())
 		return err
 	}
 
 	userDn := fmt.Sprintf("%s=%s,%s", global.Config.Ldap.UserPrefix, username, global.Config.Ldap.UserDN)
 	err = auth.Bind(userDn, password)
 	if err != nil {
-		global.Logger.Sugar().Errorf("LDAP 用户登陆失败, err: %s", err.Error())
+		logc.Errorf(l.ctx.Ctx, fmt.Sprintf("LDAP 用户登陆失败, err: %s", err.Error()))
 		return err
 	}
 
@@ -155,7 +156,7 @@ func (l ldapService) SyncUsersCronjob() {
 		l.SyncUserToW8t()
 	})
 	if err != nil {
-		global.Logger.Sugar().Errorf(err.Error())
+		logc.Errorf(ctx.Ctx, err.Error())
 		return
 	}
 	c.Start()

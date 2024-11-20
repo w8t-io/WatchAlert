@@ -3,6 +3,7 @@ package eval
 import (
 	"context"
 	"fmt"
+	"github.com/zeromicro/go-zero/core/logc"
 	"golang.org/x/sync/errgroup"
 	"time"
 	"watchAlert/alert/process"
@@ -61,7 +62,7 @@ func (t *AlertRule) Eval(ctx context.Context, rule models.AlertRule) {
 			for _, dsId := range rule.DatasourceIdList {
 				instance, err := t.ctx.DB.Datasource().GetInstance(dsId)
 				if err != nil {
-					global.Logger.Sugar().Error(err.Error())
+					logc.Error(t.ctx.Ctx, err.Error())
 				}
 
 				switch rule.DatasourceType {
@@ -77,12 +78,12 @@ func (t *AlertRule) Eval(ctx context.Context, rule models.AlertRule) {
 					curFiringKeys = kubernetesEvent(t.ctx, dsId, rule)
 				}
 			}
-			global.Logger.Sugar().Infof("规则评估 -> %v", tools.JsonMarshal(rule))
+			logc.Infof(t.ctx.Ctx, fmt.Sprintf("规则评估 -> %v", tools.JsonMarshal(rule)))
 
 			t.Recover(rule, curFiringKeys)
 			t.GC(rule, curFiringKeys, curPendingKeys)
 		case <-ctx.Done():
-			global.Logger.Sugar().Infof("停止 RuleId: %v, RuleName: %s 的 Watch 协程", rule.RuleId, rule.RuleName)
+			logc.Infof(t.ctx.Ctx, fmt.Sprintf("停止 RuleId: %v, RuleName: %s 的 Watch 协程", rule.RuleId, rule.RuleName))
 			return
 		}
 		timer.Reset(time.Second * time.Duration(rule.EvalInterval))
@@ -143,7 +144,7 @@ func (t *AlertRule) GC(rule models.AlertRule, curFiringKeys, curPendingKeys []st
 func (t *AlertRule) RePushTask() {
 	ruleList, err := t.getRuleList()
 	if err != nil {
-		global.Logger.Sugar().Error(err.Error())
+		logc.Error(t.ctx.Ctx, err.Error())
 		return
 	}
 
@@ -157,7 +158,7 @@ func (t *AlertRule) RePushTask() {
 	}
 
 	if err := g.Wait(); err != nil {
-		global.Logger.Sugar().Error(err.Error())
+		logc.Error(t.ctx.Ctx, err.Error())
 	}
 }
 

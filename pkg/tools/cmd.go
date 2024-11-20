@@ -1,15 +1,16 @@
 package tools
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/rs/xid"
+	"github.com/zeromicro/go-zero/core/logc"
 	"io"
 	"math/rand"
 	"regexp"
 	"time"
-	"watchAlert/internal/global"
 )
 
 func RandId() string {
@@ -92,12 +93,12 @@ func FormatJson(s string) string {
 		var data map[string]interface{}
 		err := json.Unmarshal([]byte(s), &data)
 		if err != nil {
-			global.Logger.Sugar().Errorf("Error parsing JSON: %s", err.Error())
+			logc.Errorf(context.Background(), fmt.Sprintf("Error parsing JSON: %s", err.Error()))
 		} else {
 			// 格式化JSON并输出
 			formattedJson, err := json.MarshalIndent(data, "", "  ")
 			if err != nil {
-				global.Logger.Sugar().Errorf("Error marshalling JSON: %s", err.Error())
+				logc.Errorf(context.Background(), fmt.Sprintf("Error marshalling JSON: %s", err.Error()))
 			} else {
 				ns = string(formattedJson)
 			}

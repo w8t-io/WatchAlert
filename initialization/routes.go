@@ -1,7 +1,9 @@
 package initialization
 
 import (
+	"context"
 	"github.com/gin-gonic/gin"
+	"github.com/zeromicro/go-zero/core/logc"
 	"watchAlert/internal/global"
 	"watchAlert/internal/middleware"
 	"watchAlert/internal/routers"
@@ -9,7 +11,7 @@ import (
 )
 
 func InitRoute() {
-	global.Logger.Sugar().Info("服务启动")
+	logc.Info(context.Background(), "服务启动")
 
 	mode := global.Config.Server.Mode
 	if mode == "" {
@@ -22,7 +24,6 @@ func InitRoute() {
 		// 启用CORS中间件
 		middleware.Cors(),
 		// 自定义请求日志格式
-		middleware.GinZapLogger(global.Logger),
 		gin.Recovery(),
 		//gin.LoggerWithFormatter(middleware.RequestLoggerFormatter),
 	)
@@ -30,7 +31,7 @@ func InitRoute() {
 
 	err := ginEngine.Run(":" + global.Config.Server.Port)
 	if err != nil {
-		global.Logger.Sugar().Error("服务启动失败:", err)
+		logc.Error(context.Background(), "服务启动失败:", err)
 		return
 	}
 }

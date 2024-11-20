@@ -1,9 +1,9 @@
 package initialization
 
 import (
+	"github.com/zeromicro/go-zero/core/logc"
 	"gorm.io/gorm"
 	"time"
-	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
 	"watchAlert/pkg/tools"
@@ -45,7 +45,7 @@ func InitUserRolesSQL(ctx *ctx.Context) {
 	}
 
 	if err != nil {
-		global.Logger.Sugar().Errorf(err.Error())
+		logc.Errorf(ctx.Ctx, err.Error())
 		panic(err)
 	}
 }

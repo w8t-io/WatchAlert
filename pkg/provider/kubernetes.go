@@ -2,13 +2,13 @@ package provider
 
 import (
 	"context"
+	"github.com/zeromicro/go-zero/core/logc"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"os"
 	"time"
-	"watchAlert/internal/global"
 )
 
 type KubernetesClient struct {
@@ -26,7 +26,7 @@ func NewKubernetesClient(ctx context.Context, kubeConfigContent string) (Kuberne
 	if _, err := os.Stat(kubeConfigContent); err == nil {
 		content, err := os.ReadFile(kubeConfigContent)
 		if err != nil {
-			global.Logger.Sugar().Error(err.Error())
+			logc.Error(context.Background(), err.Error())
 			return KubernetesClient{}, err
 		}
 		kubeConfigContent = string(content)
@@ -36,14 +36,14 @@ func NewKubernetesClient(ctx context.Context, kubeConfigContent string) (Kuberne
 	configBytes := []byte(kubeConfigContent)
 	config, err := clientcmd.RESTConfigFromKubeConfig(configBytes)
 	if err != nil {
-		global.Logger.Sugar().Error(err.Error())
+		logc.Error(context.Background(), err.Error())
 		return KubernetesClient{}, err
 	}
 
 	// 新建客户端
 	cs, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		global.Logger.Sugar().Error(err.Error())
+		logc.Error(context.Background(), err.Error())
 	}
 
 	return KubernetesClient{

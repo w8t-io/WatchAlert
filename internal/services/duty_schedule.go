@@ -2,9 +2,9 @@ package services
 
 import (
 	"fmt"
+	"github.com/zeromicro/go-zero/core/logc"
 	"sync"
 	"time"
-	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
 )
@@ -112,12 +112,12 @@ func (dms dutyCalendarService) CreateAndUpdate(req interface{}) (interface{}, in
 			dutyScheduleInfo := dms.ctx.DB.DutyCalendar().GetCalendarInfo(r.DutyId, v.Time)
 			if dutyScheduleInfo.Time != "" {
 				if err := dms.ctx.DB.DutyCalendar().Update(v); err != nil {
-					global.Logger.Sugar().Errorf("值班系统更新失败 %s", err)
+					logc.Errorf(dms.ctx.Ctx, fmt.Sprintf("值班系统更新失败 %s", err))
 				}
 			} else {
 				err := dms.ctx.DB.DutyCalendar().Create(v)
 				if err != nil {
-					global.Logger.Sugar().Errorf("值班系统创建失败 %s", err)
+					logc.Errorf(dms.ctx.Ctx, fmt.Sprintf("值班系统创建失败 %s", err))
 					return
 				}
 			}

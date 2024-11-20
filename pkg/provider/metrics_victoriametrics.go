@@ -1,11 +1,12 @@
 package provider
 
 import (
+	"context"
 	"fmt"
+	"github.com/zeromicro/go-zero/core/logc"
 	"net/url"
 	"strconv"
 	"time"
-	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 	utilsHttp "watchAlert/pkg/tools"
 )
@@ -40,14 +41,14 @@ func (v VictoriaMetricsProvider) Query(promQL string) ([]Metrics, error) {
 	fullURL := fmt.Sprintf("%s%s?%s", v.address, "/api/v1/query", params.Encode())
 	resp, err := utilsHttp.Get(nil, fullURL)
 	if err != nil {
-		global.Logger.Sugar().Error(err.Error())
+		logc.Error(context.Background(), err.Error())
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	var vmRespBody QueryResponse
 	if err := utilsHttp.ParseReaderBody(resp.Body, &vmRespBody); err != nil {
-		global.Logger.Sugar().Error(err.Error())
+		logc.Error(context.Background(), err.Error())
 		return nil, err
 	}
 
@@ -59,7 +60,7 @@ func vmVectors(res []VMResult) []Metrics {
 	for _, item := range res {
 		valueFloat, err := strconv.ParseFloat(item.Value[1].(string), 64)
 		if err != nil {
-			global.Logger.Sugar().Error(err.Error())
+			logc.Error(context.Background(), err.Error())
 			return nil
 		}
 		vectors = append(vectors, Metrics{

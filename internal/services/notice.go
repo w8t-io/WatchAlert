@@ -2,8 +2,8 @@ package services
 
 import (
 	"fmt"
+	"github.com/zeromicro/go-zero/core/logc"
 	"time"
-	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
 	"watchAlert/pkg/tools"
@@ -146,7 +146,7 @@ func (n noticeService) GetRecordMetric(req interface{}) (interface{}, interface{
 				Severity: s,
 			})
 			if err != nil {
-				global.Logger.Sugar().Error(err.Error())
+				logc.Error(n.ctx.Ctx, err.Error())
 			}
 			switch s {
 			case "P0":

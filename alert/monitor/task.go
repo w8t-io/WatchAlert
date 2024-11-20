@@ -3,11 +3,11 @@ package monitor
 import (
 	"context"
 	"fmt"
+	"github.com/zeromicro/go-zero/core/logc"
 	"golang.org/x/sync/errgroup"
 	"sync"
 	"time"
 	"watchAlert/alert/consumer"
-	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
 	"watchAlert/pkg/tools"
@@ -93,7 +93,7 @@ func (t *MonitorSSLEval) worker(w8tCtx *ctx.Context, rule models.MonitorSSLRule)
 	rule.TimeRemaining = event.TimeRemaining
 	rule.ResponseTime = event.ResponseTime
 	if err := w8tCtx.DB.MonitorSSL().Update(rule); err != nil {
-		global.Logger.Sugar().Error(err.Error())
+		logc.Error(ctx.Ctx, err.Error())
 		return
 	}
 
@@ -141,7 +141,7 @@ func (t *MonitorSSLEval) processRecover(ctx *ctx.Context, event models.AlertCurE
 func (t *MonitorSSLEval) RePushTask(ctx *ctx.Context, consumer *consumer.MonitorSslConsumer) {
 	var ruleList []models.MonitorSSLRule
 	if err := ctx.DB.DB().Where("enabled = ?", "1").Find(&ruleList).Error; err != nil {
-		global.Logger.Sugar().Error(err.Error())
+		logc.Error(ctx.Ctx, err.Error())
 		return
 	}
 
@@ -156,6 +156,6 @@ func (t *MonitorSSLEval) RePushTask(ctx *ctx.Context, consumer *consumer.Monitor
 	}
 
 	if err := g.Wait(); err != nil {
-		global.Logger.Sugar().Error(err.Error())
+		logc.Error(ctx.Ctx, err.Error())
 	}
 }

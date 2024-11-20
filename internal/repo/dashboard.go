@@ -1,9 +1,9 @@
 package repo
 
 import (
-	"fmt"
+	"context"
+	"github.com/zeromicro/go-zero/core/logc"
 	"gorm.io/gorm"
-	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 )
 
@@ -35,7 +35,7 @@ func newDashboardInterface(db *gorm.DB, g InterGormDBCli) InterDashboardRepo {
 func (dr DashboardRepo) Create(d models.Dashboard) error {
 	err := dr.g.Create(&models.Dashboard{}, d)
 	if err != nil {
-		global.Logger.Sugar().Error(err)
+		logc.Error(context.Background(), err)
 		return err
 	}
 	return nil
@@ -52,7 +52,7 @@ func (dr DashboardRepo) Update(d models.Dashboard) error {
 	}
 	err := dr.g.Updates(u)
 	if err != nil {
-		global.Logger.Sugar().Error(err)
+		logc.Error(context.Background(), err)
 		return err
 	}
 	return nil
@@ -68,7 +68,7 @@ func (dr DashboardRepo) Delete(d models.DashboardQuery) error {
 	}
 	err := dr.g.Delete(del)
 	if err != nil {
-		global.Logger.Sugar().Error(err)
+		logc.Error(context.Background(), err)
 		return err
 	}
 	return nil
@@ -90,17 +90,15 @@ func (dr DashboardRepo) Search(d models.DashboardQuery) ([]models.Dashboard, err
 }
 
 func (dr DashboardRepo) CreateDashboardFolder(fd models.DashboardFolders) error {
-	fmt.Println("--->", fd)
 	err := dr.g.Create(&models.DashboardFolders{}, fd)
 	if err != nil {
-		global.Logger.Sugar().Error(err)
+		logc.Error(context.Background(), err)
 		return err
 	}
 	return nil
 }
 
 func (dr DashboardRepo) UpdateDashboardFolder(fd models.DashboardFolders) error {
-	fmt.Println("--->", fd)
 	u := Updates{
 		Table: &models.DashboardFolders{},
 		Where: map[string]interface{}{
@@ -111,7 +109,7 @@ func (dr DashboardRepo) UpdateDashboardFolder(fd models.DashboardFolders) error 
 	}
 	err := dr.g.Updates(u)
 	if err != nil {
-		global.Logger.Sugar().Error(err)
+		logc.Error(context.Background(), err)
 		return err
 	}
 	return nil
@@ -127,7 +125,7 @@ func (dr DashboardRepo) DeleteDashboardFolder(fd models.DashboardFolders) error 
 	}
 	err := dr.g.Delete(d)
 	if err != nil {
-		global.Logger.Sugar().Error(err)
+		logc.Error(context.Background(), err)
 		return err
 	}
 	return nil

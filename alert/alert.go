@@ -1,6 +1,7 @@
 package alert
 
 import (
+	"github.com/zeromicro/go-zero/core/logc"
 	"watchAlert/alert/consumer"
 	"watchAlert/alert/eval"
 	"watchAlert/alert/monitor"
@@ -34,7 +35,7 @@ func Initialize(ctx *ctx.Context) {
 func initAlarmConfig(ctx *ctx.Context) {
 	get, err := ctx.DB.Setting().Get()
 	if err != nil {
-		global.Logger.Sugar().Errorf(err.Error())
+		logc.Errorf(ctx.Ctx, err.Error())
 		return
 	}
 

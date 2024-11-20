@@ -17,7 +17,6 @@ func (cc *CallbackController) FeiShuEvent(ctx *gin.Context) {
 	uuid := ctx.Query("uuid")
 
 	if err := tools.ParseReaderBody(ctx.Request.Body, &challengeInfo); err != nil {
-		global.Logger.Sugar().Error("飞书回调参数解析失败 ->", err)
 		return
 	}
 

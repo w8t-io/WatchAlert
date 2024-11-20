@@ -1,7 +1,8 @@
 package process
 
 import (
-	"watchAlert/internal/global"
+	"context"
+	"github.com/zeromicro/go-zero/core/logc"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
 )
@@ -37,10 +38,10 @@ func EvalCondition(ctx *ctx.Context, f func() models.AlertCurEvent, value float6
 				SaveAlertEvent(ctx, f())
 			}
 		default:
-			global.Logger.Sugar().Error("无效的评估条件", ec.Type, ec.Operator, ec.Value)
+			logc.Error(context.Background(), "无效的评估条件", ec.Type, ec.Operator, ec.Value)
 		}
 	default:
-		global.Logger.Sugar().Error("无效的评估类型", ec.Type)
+		logc.Error(context.Background(), "无效的评估类型", ec.Type)
 	}
 
 }

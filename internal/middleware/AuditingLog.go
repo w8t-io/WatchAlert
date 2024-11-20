@@ -3,12 +3,12 @@ package middleware
 import (
 	"bytes"
 	"github.com/gin-gonic/gin"
+	"github.com/zeromicro/go-zero/core/logc"
 	"io"
 	"io/ioutil"
 	"strings"
 	"time"
-	"watchAlert/internal/global"
-	models "watchAlert/internal/models"
+	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
 	"watchAlert/pkg/response"
 	"watchAlert/pkg/tools"
@@ -29,7 +29,7 @@ func AuditingLog() gin.HandlerFunc {
 		body := context.Request.Body
 		readBody, err := io.ReadAll(body)
 		if err != nil {
-			global.Logger.Sugar().Error(err)
+			logc.Error(ctx.DO().Ctx, err)
 			return
 		}
 		// 将 body 数据放回请求中

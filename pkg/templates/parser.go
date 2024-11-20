@@ -2,7 +2,9 @@ package templates
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"github.com/zeromicro/go-zero/core/logc"
 	"strconv"
 	"text/template"
 	"time"
@@ -37,7 +39,7 @@ func ParserTemplate(defineName string, alert models.AlertCurEvent, templateStr s
 
 	err = tmpl.ExecuteTemplate(&buf, defineName, alert)
 	if err != nil {
-		global.Logger.Sugar().Error("告警模版执行失败 ->", err.Error())
+		logc.Error(context.Background(), "告警模版执行失败 ->", err.Error())
 		return ""
 	}
 
@@ -58,7 +60,7 @@ func parserEvent(alert models.AlertCurEvent) map[string]interface{} {
 	eventJson := tools.JsonMarshal(alert)
 	err := json.Unmarshal([]byte(eventJson), &data)
 	if err != nil {
-		global.Logger.Sugar().Error("parserEvent Unmarshal failed: ", err)
+		logc.Error(context.Background(), "parserEvent Unmarshal failed: ", err)
 	}
 
 	if alert.DatasourceType == "AliCloudSLS" || alert.DatasourceType == "Loki" {

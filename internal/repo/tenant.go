@@ -1,9 +1,10 @@
 package repo
 
 import (
+	"context"
 	"fmt"
+	"github.com/zeromicro/go-zero/core/logc"
 	"gorm.io/gorm"
-	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 )
 
@@ -40,7 +41,7 @@ func newTenantInterface(db *gorm.DB, g InterGormDBCli) InterTenantRepo {
 func (tr TenantRepo) Create(t models.Tenant) error {
 	err := tr.g.Create(&models.Tenant{}, t)
 	if err != nil {
-		global.Logger.Sugar().Error(err)
+		logc.Error(context.Background(), err)
 		return err
 	}
 
@@ -103,7 +104,7 @@ func (tr TenantRepo) Update(t models.Tenant) error {
 	}
 	err := tr.g.Updates(u)
 	if err != nil {
-		global.Logger.Sugar().Error(err)
+		logc.Error(context.Background(), err)
 		return err
 	}
 	return nil
@@ -134,7 +135,7 @@ func (tr TenantRepo) Delete(t models.TenantQuery) error {
 		},
 	})
 	if err != nil {
-		global.Logger.Sugar().Error(err)
+		logc.Error(context.Background(), err)
 		return err
 	}
 	return nil
@@ -171,7 +172,7 @@ func (tr TenantRepo) Get(t models.TenantQuery) (data models.Tenant, err error) {
 func (tr TenantRepo) CreateTenantLinkedUserRecord(t models.TenantLinkedUsers) error {
 	err := tr.g.Create(&models.TenantLinkedUsers{}, t)
 	if err != nil {
-		global.Logger.Sugar().Error(err)
+		logc.Error(context.Background(), err)
 		return err
 	}
 	return nil
@@ -284,7 +285,7 @@ func (tr TenantRepo) RemoveTenantLinkedUsers(t models.TenantQuery) error {
 		}
 		*newTenants = append(*newTenants, tid)
 	}
-  
+
 	userData.Tenants = *newTenants
 	err = tr.g.Updates(Updates{
 		Table: models.Member{},
@@ -319,7 +320,7 @@ func (tr TenantRepo) DelTenantLinkedUserRecord(t models.TenantQuery) error {
 		},
 	})
 	if err != nil {
-		global.Logger.Sugar().Error(err)
+		logc.Error(context.Background(), err)
 		return err
 	}
 

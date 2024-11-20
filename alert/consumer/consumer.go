@@ -2,6 +2,7 @@ package consumer
 
 import (
 	"fmt"
+	"github.com/zeromicro/go-zero/core/logc"
 	"golang.org/x/sync/errgroup"
 	"strings"
 	"sync"
@@ -140,7 +141,7 @@ func (ec *Consume) fireAlertEvent(alertsMap map[string][]models.AlertCurEvent) {
 				ec.removeAlertFromCache(alert)
 				err := process.RecordAlertHisEvent(ec.ctx, alert)
 				if err != nil {
-					global.Logger.Sugar().Error(err.Error())
+					logc.Error(ec.ctx.Ctx, err.Error())
 					return
 				}
 			}
@@ -259,7 +260,7 @@ func (ec *Consume) handleSubscribe(alerts []models.AlertCurEvent) {
 	}
 
 	if err := g.Wait(); err != nil {
-		global.Logger.Sugar().Error(err.Error())
+		logc.Error(ec.ctx.Ctx, err.Error())
 	}
 }
 
@@ -287,7 +288,7 @@ func (ec *Consume) handleAlert(rule models.AlertRule, alerts []models.AlertCurEv
 		alert.DutyUser = process.GetDutyUser(ec.ctx, noticeData)
 		err := sender.Sender(ec.ctx, alert, noticeData)
 		if err != nil {
-			global.Logger.Sugar().Errorf(err.Error())
+			logc.Errorf(ec.ctx.Ctx, err.Error())
 			return
 		}
 	}

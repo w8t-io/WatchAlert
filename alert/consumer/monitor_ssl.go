@@ -3,11 +3,11 @@ package consumer
 import (
 	"context"
 	"fmt"
+	"github.com/zeromicro/go-zero/core/logc"
 	"sync"
 	"time"
 	"watchAlert/alert/process"
 	"watchAlert/alert/sender"
-	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
 )
@@ -68,7 +68,7 @@ func filterEvent(ctx *ctx.Context, alert models.AlertCurEvent) bool {
 		removeAlertFromCache(ctx, alert)
 		err := process.RecordAlertHisEvent(ctx, alert)
 		if err != nil {
-			global.Logger.Sugar().Error(err.Error())
+			logc.Error(ctx.Ctx, err.Error())
 		}
 		return true
 	}
@@ -96,7 +96,7 @@ func handleAlert(ctx *ctx.Context, alert models.AlertCurEvent) {
 		alert.DutyUser = process.GetDutyUser(ctx, noticeData)
 		err := sender.Sender(ctx, alert, noticeData)
 		if err != nil {
-			global.Logger.Sugar().Errorf(err.Error())
+			logc.Errorf(ctx.Ctx, err.Error())
 			return
 		}
 	}

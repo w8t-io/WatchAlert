@@ -2,9 +2,9 @@ package sender
 
 import (
 	"fmt"
+	"github.com/zeromicro/go-zero/core/logc"
 	"time"
 	"watchAlert/alert/mute"
-	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
 	"watchAlert/pkg/templates"
@@ -42,7 +42,7 @@ func Sender(ctx *ctx.Context, alert models.AlertCurEvent, notice models.AlertNot
 	}
 
 	addRecord(ctx, alert, notice, 0, n.CardContentMsg, "")
-	global.Logger.Sugar().Info("Send alarm ok, msg: ", n.CardContentMsg)
+	logc.Info(ctx.Ctx, "Send alarm ok, msg: ", n.CardContentMsg)
 	return nil
 }
 
@@ -60,6 +60,6 @@ func addRecord(ctx *ctx.Context, alert models.AlertCurEvent, notice models.Alert
 		ErrMsg:   errMsg,
 	})
 	if err != nil {
-		global.Logger.Sugar().Errorf("Add notice record failed, err: %s", err.Error())
+		logc.Errorf(ctx.Ctx, fmt.Sprintf("Add notice record failed, err: %s", err.Error()))
 	}
 }

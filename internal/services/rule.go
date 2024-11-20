@@ -2,8 +2,8 @@ package services
 
 import (
 	"fmt"
+	"github.com/zeromicro/go-zero/core/logc"
 	"watchAlert/alert"
-	"watchAlert/internal/global"
 	models "watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
 )
@@ -75,7 +75,7 @@ func (rs ruleService) Update(req interface{}) (interface{}, interface{}) {
 	// 启动协程
 	if *rule.Enabled {
 		alert.AlertRule.Submit(*rule)
-		global.Logger.Sugar().Infof("重启 RuleId 为 %s 的 Worker 进程", rule.RuleId)
+		logc.Infof(rs.ctx.Ctx, fmt.Sprintf("重启 RuleId 为 %s 的 Worker 进程", rule.RuleId))
 	} else {
 		delEvent()
 	}
@@ -104,7 +104,7 @@ func (rs ruleService) Delete(req interface{}) (interface{}, interface{}) {
 
 	// 退出该规则的协程
 	if *info.Enabled {
-		global.Logger.Sugar().Infof("停止 RuleId 为 %s 的 Worker 进程", rule.RuleId)
+		logc.Infof(rs.ctx.Ctx, fmt.Sprintf("停止 RuleId 为 %s 的 Worker 进程", rule.RuleId))
 		alert.AlertRule.Stop(rule.RuleId)
 	}
 
@@ -116,7 +116,7 @@ func (rs ruleService) Delete(req interface{}) (interface{}, interface{}) {
 	}
 
 	rs.ctx.Redis.Redis().Del(keys...)
-	global.Logger.Sugar().Infof("删除队列数据 ->%s", keys)
+	logc.Infof(rs.ctx.Ctx, fmt.Sprintf("删除队列数据 ->%s", keys))
 
 	return nil, nil
 

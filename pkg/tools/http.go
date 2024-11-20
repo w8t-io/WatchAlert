@@ -2,10 +2,12 @@ package tools
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
+	"fmt"
+	"github.com/zeromicro/go-zero/core/logc"
 	"net/http"
 	"time"
-	"watchAlert/internal/global"
 )
 
 func Get(headers map[string]string, url string) (*http.Response, error) {
@@ -26,12 +28,12 @@ func Get(headers map[string]string, url string) (*http.Response, error) {
 		request.Header.Set(k, v)
 	}
 	if err != nil {
-		global.Logger.Sugar().Error("请求建立失败: ", err)
+		logc.Error(context.Background(), fmt.Sprintf("Tools get 请求建立失败, err: %s", err.Error()))
 		return nil, err
 	}
 	resp, err := client.Do(request)
 	if err != nil {
-		global.Logger.Sugar().Error("请求发送失败: ", err)
+		logc.Error(context.Background(), fmt.Sprintf("Tools get 请求发送失败, err: %s", err.Error()))
 		return nil, err
 	}
 
@@ -56,12 +58,12 @@ func Post(headers map[string]string, url string, bodyReader *bytes.Reader) (*htt
 		request.Header.Set(k, v)
 	}
 	if err != nil {
-		global.Logger.Sugar().Error("请求建立失败: ", err)
+		logc.Error(context.Background(), fmt.Sprintf("Tools post 请求建立失败, err: %s", err.Error()))
 		return nil, err
 	}
 	resp, err := client.Do(request)
 	if err != nil {
-		global.Logger.Sugar().Error("请求发送失败: ", err)
+		logc.Error(context.Background(), fmt.Sprintf("Tools post 请求发送失败, err: %s", err.Error()))
 		return nil, err
 	}
 

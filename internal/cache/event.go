@@ -1,12 +1,14 @@
 package cache
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/go-redis/redis"
+	"github.com/zeromicro/go-zero/core/logc"
 	"log"
 	"sync"
 	"time"
-	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/client"
 )
@@ -71,7 +73,7 @@ func (ec *eventCache) DelCache(key string) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		global.Logger.Sugar().Infof("移除告警消息 -> %s\n", keysToDelete)
+		logc.Infof(context.Background(), fmt.Sprintf("移除告警消息 -> %s\n", keysToDelete))
 	}
 }
 
@@ -84,7 +86,7 @@ func (ec *eventCache) GetCache(key string) models.AlertCurEvent {
 	if err != nil {
 		return alert
 	}
-	//global.Logger.Sugar().Info(alert)
+	//logc.Info(alert)
 	return alert
 
 }

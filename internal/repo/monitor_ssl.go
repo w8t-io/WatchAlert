@@ -1,8 +1,9 @@
 package repo
 
 import (
+	"context"
+	"github.com/zeromicro/go-zero/core/logc"
 	"gorm.io/gorm"
-	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 )
 
@@ -48,7 +49,7 @@ func (m monitorSSLRepo) Update(r models.MonitorSSLRule) error {
 	}
 	err := m.g.Updates(u)
 	if err != nil {
-		global.Logger.Sugar().Error(err.Error())
+		logc.Error(context.Background(), err.Error())
 		return err
 	}
 	return nil

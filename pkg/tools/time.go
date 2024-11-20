@@ -1,10 +1,12 @@
 package tools
 
 import (
+	"context"
+	"fmt"
 	"github.com/sirupsen/logrus"
+	"github.com/zeromicro/go-zero/core/logc"
 	"strconv"
 	"time"
-	"watchAlert/internal/global"
 )
 
 // TimeTransformToWeek 时间转换成周
@@ -14,7 +16,7 @@ func TimeTransformToWeek(ct time.Time) string {
 	// 解析日期字符串为时间对象
 	date, err := time.Parse("2006-01-02", currentDate)
 	if err != nil {
-		global.Logger.Sugar().Error(err.Error())
+		logc.Error(context.Background(), fmt.Sprintf("Time Transform To Week failed, err: %s", err.Error()))
 		return ""
 	}
 	return date.Weekday().String()

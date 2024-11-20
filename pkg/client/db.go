@@ -1,7 +1,9 @@
 package client
 
 import (
+	"context"
 	"fmt"
+	"github.com/zeromicro/go-zero/core/logc"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -25,7 +27,7 @@ func InitDB() *gorm.DB {
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 
 	if err != nil {
-		global.Logger.Sugar().Errorf("failed to connect database: %s", err.Error())
+		logc.Errorf(context.Background(), "failed to connect database: %s", err.Error())
 		return nil
 	}
 
@@ -58,7 +60,7 @@ func InitDB() *gorm.DB {
 		&models.NoticeRecord{},
 	)
 	if err != nil {
-		global.Logger.Sugar().Error(err.Error())
+		logc.Error(context.Background(), err.Error())
 		return nil
 	}
 

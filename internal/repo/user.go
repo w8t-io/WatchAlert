@@ -1,10 +1,11 @@
 package repo
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/zeromicro/go-zero/core/logc"
 	"gorm.io/gorm"
-	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/client"
 	"watchAlert/pkg/tools"
@@ -161,7 +162,7 @@ func (ur UserRepo) ChangeCache(userId string) {
 	var cacheUser models.Member
 	result, err := client.Redis.Get("uid-" + userId).Result()
 	if err != nil {
-		global.Logger.Sugar().Error(err)
+		logc.Error(context.Background(), err)
 	}
 	_ = json.Unmarshal([]byte(result), &cacheUser)
 
