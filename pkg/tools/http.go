@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func Get(headers map[string]string, url string) (*http.Response, error) {
+func Get(headers map[string]string, url string, timeout int) (*http.Response, error) {
 	// 统一跳过证书检测，避免存在不安全的https
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
@@ -19,7 +19,7 @@ func Get(headers map[string]string, url string) (*http.Response, error) {
 	}
 
 	client := http.Client{
-		Timeout:   10 * time.Second,
+		Timeout:   time.Duration(timeout) * time.Second,
 		Transport: transport,
 	}
 
@@ -40,7 +40,7 @@ func Get(headers map[string]string, url string) (*http.Response, error) {
 	return resp, nil
 }
 
-func Post(headers map[string]string, url string, bodyReader *bytes.Reader) (*http.Response, error) {
+func Post(headers map[string]string, url string, bodyReader *bytes.Reader, timeout int) (*http.Response, error) {
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
@@ -48,7 +48,7 @@ func Post(headers map[string]string, url string, bodyReader *bytes.Reader) (*htt
 	}
 
 	client := http.Client{
-		Timeout:   10 * time.Second,
+		Timeout:   time.Duration(timeout) * time.Second,
 		Transport: transport,
 	}
 

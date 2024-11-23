@@ -3,18 +3,17 @@ package sender
 import (
 	"errors"
 	"fmt"
-	"watchAlert/internal/models"
 	"watchAlert/pkg/client"
 	"watchAlert/pkg/ctx"
 )
 
-func SendToEmail(alert models.AlertCurEvent, subject string, to, cc []string, msg string) error {
+func SendToEmail(IsRecovered bool, subject string, to, cc []string, msg string) error {
 	setting, err := ctx.DB.Setting().Get()
 	if err != nil {
 		return errors.New("获取系统配置失败: " + err.Error())
 	}
 	eCli := client.NewEmailClient(setting.EmailConfig.ServerAddress, setting.EmailConfig.Email, setting.EmailConfig.Token, setting.EmailConfig.Port)
-	if alert.IsRecovered {
+	if IsRecovered {
 		subject = subject + "「已恢复」"
 	} else {
 		subject = subject + "「报警中」"

@@ -32,7 +32,7 @@ func newInterDatasourceService(ctx *ctx.Context) InterDatasourceService {
 
 func (ds datasourceService) Create(req interface{}) (interface{}, interface{}) {
 	dataSource := req.(*models.AlertDataSource)
-	health := provider.CheckDatasourceHealth(*dataSource)
+	health := provider.CheckDatasourceHealth(ds.ctx, dataSource.Id)
 	if !health {
 		return nil, errors.New("数据源目标不可达!")
 	}
@@ -56,7 +56,7 @@ func (ds datasourceService) Create(req interface{}) (interface{}, interface{}) {
 
 func (ds datasourceService) Update(req interface{}) (interface{}, interface{}) {
 	dataSource := req.(*models.AlertDataSource)
-	health := provider.CheckDatasourceHealth(*dataSource)
+	health := provider.CheckDatasourceHealth(ds.ctx, dataSource.Id)
 	if !health {
 		return nil, errors.New("数据源目标不可达!")
 	}

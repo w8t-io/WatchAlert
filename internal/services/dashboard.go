@@ -158,7 +158,7 @@ func (ds dashboardService) DeleteFolder(req interface{}) (data interface{}, erro
 
 func (ds dashboardService) ListGrafanaDashboards(req interface{}) (data interface{}, error interface{}) {
 	r := req.(*models.DashboardFolders)
-	get, err := tools.Get(nil, fmt.Sprintf("%s/api/search?folderIds=%d", r.GrafanaHost, r.GrafanaFolderId))
+	get, err := tools.Get(nil, fmt.Sprintf("%s/api/search?folderIds=%d", r.GrafanaHost, r.GrafanaFolderId), 10)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +173,7 @@ func (ds dashboardService) ListGrafanaDashboards(req interface{}) (data interfac
 
 func (ds dashboardService) GetDashboardFullUrl(req interface{}) (data interface{}, error interface{}) {
 	r := req.(*models.DashboardFolders)
-	get, err := tools.Get(nil, fmt.Sprintf("%s/api/dashboards/uid/%s", r.GrafanaHost, r.GrafanaDashboardUid))
+	get, err := tools.Get(nil, fmt.Sprintf("%s/api/dashboards/uid/%s", r.GrafanaHost, r.GrafanaDashboardUid), 10)
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"watchAlert/alert"
 	service2 "watchAlert/pkg/community/aws/cloudwatch/service"
 	"watchAlert/pkg/community/aws/service"
 	"watchAlert/pkg/ctx"
@@ -30,9 +31,9 @@ var (
 	AWSCloudWatchRdsService service2.InterAwsRdsService
 	SettingService          InterSettingService
 	ClientService           InterClientService
-	MonitorService          InterMonitorService
 	LdapService             InterLdapService
 	SubscribeService        InterAlertSubscribeService
+	ProbingService          InterProbingService
 )
 
 func NewServices(ctx *ctx.Context) {
@@ -59,7 +60,7 @@ func NewServices(ctx *ctx.Context) {
 	AWSCloudWatchRdsService = service2.NewInterAWSRdsService(ctx)
 	SettingService = newInterSettingService(ctx)
 	ClientService = newInterClientService(ctx)
-	MonitorService = newInterMonitorService(ctx)
 	LdapService = newInterLdapService(ctx)
 	SubscribeService = newInterAlertSubscribe(ctx)
+	ProbingService = newInterProbingService(ctx, &alert.ProductProbing, &alert.ConsumeProbing)
 }

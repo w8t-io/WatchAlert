@@ -85,7 +85,7 @@ func (e ElasticSearchDsProvider) Query(options LogQueryOptions) ([]Logs, int, er
 }
 
 func (e ElasticSearchDsProvider) Check() (bool, error) {
-	res, err := utilsHttp.Get(nil, e.url+"/_cat/health")
+	res, err := utilsHttp.Get(nil, e.url+"/_cat/health", 10)
 	if err != nil {
 		return false, err
 	}

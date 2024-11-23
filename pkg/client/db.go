@@ -54,10 +54,10 @@ func InitDB() *gorm.DB {
 		&models.AuditLog{},
 		&models.Settings{},
 		&models.TenantLinkedUsers{},
-		&models.MonitorSSLRule{},
 		&models.DashboardFolders{},
 		&models.AlertSubscribe{},
 		&models.NoticeRecord{},
+		&models.ProbingRule{},
 	)
 	if err != nil {
 		logc.Error(context.Background(), err.Error())

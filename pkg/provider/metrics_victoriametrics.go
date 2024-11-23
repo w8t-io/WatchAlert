@@ -39,7 +39,7 @@ func (v VictoriaMetricsProvider) Query(promQL string) ([]Metrics, error) {
 	params.Add("query", promQL)
 	params.Add("time", strconv.FormatInt(time.Now().Unix(), 10))
 	fullURL := fmt.Sprintf("%s%s?%s", v.address, "/api/v1/query", params.Encode())
-	resp, err := utilsHttp.Get(nil, fullURL)
+	resp, err := utilsHttp.Get(nil, fullURL, 10)
 	if err != nil {
 		logc.Error(context.Background(), err.Error())
 		return nil, err
@@ -74,7 +74,7 @@ func vmVectors(res []VMResult) []Metrics {
 }
 
 func (v VictoriaMetricsProvider) Check() (bool, error) {
-	res, err := utilsHttp.Get(nil, v.address+"/api/v1/labels")
+	res, err := utilsHttp.Get(nil, v.address+"/api/v1/labels", 10)
 	if err != nil {
 		return false, err
 	}

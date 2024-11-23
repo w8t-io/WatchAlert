@@ -1,13 +1,15 @@
 package middleware
 
 import (
+	"context"
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
+	"github.com/zeromicro/go-zero/core/logc"
+	"github.com/zeromicro/go-zero/core/logx"
 	"time"
 )
 
 // GinZapLogger returns a gin.HandlerFunc that logs requests using zap
-func GinZapLogger(logger *zap.Logger) gin.HandlerFunc {
+func GinZapLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 开始时间
 		start := time.Now()
@@ -24,16 +26,15 @@ func GinZapLogger(logger *zap.Logger) gin.HandlerFunc {
 		method := c.Request.Method
 		path := c.Request.URL.Path
 		clientIP := c.ClientIP()
-		errorMessage := c.Errors.ByType(gin.ErrorTypePrivate).String()
+		message := c.Errors.ByType(gin.ErrorTypePrivate).String()
 
-		// 记录到 zap
-		logger.Info("",
-			zap.String("method", method),
-			zap.String("path", path),
-			zap.Int("status", status),
-			zap.String("clientIP", clientIP),
-			zap.Duration("latency", latency),
-			zap.String("errorMessage", errorMessage),
+		ctx := logx.ContextWithFields(context.Background(),
+			logx.Field("method", method),
+			logx.Field("path", path),
+			logx.Field("status", status),
+			logx.Field("clientIP", clientIP),
+			logx.Field("latency", latency),
 		)
+		logc.Info(ctx, message)
 	}
 }

@@ -11,8 +11,8 @@ import (
 type DutyController struct{}
 
 /*
-	排班管理 API
-	/api/w8t/dutyManage
+排班管理 API
+/api/w8t/dutyManage
 */
 func (dc DutyController) API(gin *gin.RouterGroup) {
 	dutyManageA := gin.Group("dutyManage")

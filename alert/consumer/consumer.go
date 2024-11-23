@@ -3,16 +3,19 @@ package consumer
 import (
 	"fmt"
 	"github.com/zeromicro/go-zero/core/logc"
-	"golang.org/x/sync/errgroup"
 	"strings"
 	"sync"
 	"time"
+	"watchAlert/alert/mute"
 	"watchAlert/alert/process"
-	"watchAlert/alert/sender"
 	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
+	"watchAlert/pkg/sender"
+	"watchAlert/pkg/templates"
 	"watchAlert/pkg/tools"
+
+	"golang.org/x/sync/errgroup"
 )
 
 type Consume struct {
@@ -286,7 +289,31 @@ func (ec *Consume) handleAlert(rule models.AlertRule, alerts []models.AlertCurEv
 
 		noticeData, _ := ec.ctx.DB.Notice().Get(r)
 		alert.DutyUser = process.GetDutyUser(ec.ctx, noticeData)
-		err := sender.Sender(ec.ctx, alert, noticeData)
+
+		mp := mute.MuteParams{
+			EffectiveTime: alert.EffectiveTime,
+			RecoverNotify: *alert.RecoverNotify,
+			IsRecovered:   alert.IsRecovered,
+		}
+		ok := mute.IsMuted(mp)
+		if ok {
+			return
+		}
+
+		n := templates.NewTemplate(ec.ctx, alert, noticeData)
+		err := sender.Sender(ec.ctx, sender.SendParmas{
+			TenantId:    alert.TenantId,
+			RuleName:    alert.RuleName,
+			Severity:    alert.Severity,
+			NoticeType:  noticeData.NoticeType,
+			NoticeId:    noticeId,
+			NoticeName:  noticeData.Name,
+			IsRecovered: alert.IsRecovered,
+			Hook:        noticeData.Hook,
+			Email:       noticeData.Email,
+			Content:     n.CardContentMsg,
+			Event:       nil,
+		})
 		if err != nil {
 			logc.Errorf(ec.ctx.Ctx, err.Error())
 			return

@@ -8,42 +8,36 @@ import (
 )
 
 // EvalCondition 评估告警条件
-func EvalCondition(ctx *ctx.Context, f func() models.AlertCurEvent, value float64, ec models.EvalCondition) {
-
-	switch ec.Type {
-	case "count", "metric":
-		switch ec.Operator {
-		case ">":
-			if value > ec.Value {
-				SaveAlertEvent(ctx, f())
-			}
-		case ">=":
-			if value >= ec.Value {
-				SaveAlertEvent(ctx, f())
-			}
-		case "<":
-			if value < ec.Value {
-				SaveAlertEvent(ctx, f())
-			}
-		case "<=":
-			if value <= ec.Value {
-				SaveAlertEvent(ctx, f())
-			}
-		case "==":
-			if value == ec.Value {
-				SaveAlertEvent(ctx, f())
-			}
-		case "!=":
-			if value != ec.Value {
-				SaveAlertEvent(ctx, f())
-			}
-		default:
-			logc.Error(context.Background(), "无效的评估条件", ec.Type, ec.Operator, ec.Value)
+func EvalCondition(ec models.EvalCondition) bool {
+	switch ec.Operator {
+	case ">":
+		if ec.QueryValue > ec.ExpectedValue {
+			return true
+		}
+	case ">=":
+		if ec.QueryValue >= ec.ExpectedValue {
+			return true
+		}
+	case "<":
+		if ec.QueryValue < ec.ExpectedValue {
+			return true
+		}
+	case "<=":
+		if ec.QueryValue <= ec.ExpectedValue {
+			return true
+		}
+	case "==":
+		if ec.QueryValue == ec.ExpectedValue {
+			return true
+		}
+	case "!=":
+		if ec.QueryValue != ec.ExpectedValue {
+			return true
 		}
 	default:
-		logc.Error(context.Background(), "无效的评估类型", ec.Type)
+		logc.Error(context.Background(), "无效的评估条件", ec.Type, ec.Operator, ec.ExpectedValue)
 	}
-
+	return false
 }
 
 func SaveAlertEvent(ctx *ctx.Context, event models.AlertCurEvent) {

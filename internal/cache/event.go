@@ -26,6 +26,11 @@ type (
 		GetFirstTime(key string) int64
 		GetLastEvalTime(key string) int64
 		GetLastSendTime(key string) int64
+		SetPECache(event models.ProbingEvent, expiration time.Duration)
+		GetPECache(key string) (models.ProbingEvent, error)
+		GetPEFirstTime(key string) int64
+		GetPELastEvalTime(key string) int64
+		GetPELastSendTime(key string) int64
 	}
 )
 
@@ -117,4 +122,49 @@ func (ec *eventCache) GetLastSendTime(key string) int64 {
 
 	return ec.GetCache(key).LastSendTime
 
+}
+
+func (ec *eventCache) SetPECache(event models.ProbingEvent, expiration time.Duration) {
+	ec.Lock()
+	defer ec.Unlock()
+
+	alertJson, _ := json.Marshal(event)
+	ec.rc.Set(event.GetFiringAlertCacheKey(), string(alertJson), expiration)
+}
+
+func (ec *eventCache) GetPECache(key string) (models.ProbingEvent, error) {
+	var alert models.ProbingEvent
+
+	d, err := ec.rc.Get(key).Result()
+	_ = json.Unmarshal([]byte(d), &alert)
+	if err != nil {
+		return alert, err
+	}
+	//global.Logger.Sugar().Info(alert)
+	return alert, nil
+}
+
+func (ec *eventCache) GetPEFirstTime(key string) int64 {
+	cache, _ := ec.GetPECache(key)
+	ft := cache.FirstTriggerTime
+	if ft == 0 {
+		return time.Now().Unix()
+	}
+	return ft
+}
+
+func (ec *eventCache) GetPELastEvalTime(key string) int64 {
+	curTime := time.Now().Unix()
+	cache, _ := ec.GetPECache(key)
+	let := cache.LastEvalTime
+	if let == 0 || let < curTime {
+		return curTime
+	}
+
+	return let
+}
+
+func (ec *eventCache) GetPELastSendTime(key string) int64 {
+	cache, _ := ec.GetPECache(key)
+	return cache.LastSendTime
 }

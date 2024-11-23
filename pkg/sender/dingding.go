@@ -14,7 +14,7 @@ type DingResponseMsg struct {
 
 func SendToDingDing(hook, msg string) error {
 	cardContentByte := bytes.NewReader([]byte(msg))
-	res, err := tools.Post(nil, hook, cardContentByte)
+	res, err := tools.Post(nil, hook, cardContentByte, 10)
 	if err != nil {
 		return err
 	}

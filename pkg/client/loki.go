@@ -68,7 +68,7 @@ func (lc LokiClient) QueryRange(options QueryOptions) ([]Result, int, error) {
 
 	args := fmt.Sprintf("/loki/api/v1/query_range?query=%s&direction=%s&limit=%d&start=%s&end=%s", url.QueryEscape(options.Query), options.Direction, options.Limit, options.StartAt, options.EndAt)
 	requestURL := lc.BaseURL + args
-	res, err := tools.Get(nil, requestURL)
+	res, err := tools.Get(nil, requestURL, 10)
 	if err != nil {
 		return nil, 0, err
 	}

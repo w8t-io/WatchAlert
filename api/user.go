@@ -11,8 +11,8 @@ import (
 type UserController struct{}
 
 /*
-	用户 API
-	/api/w8t/user
+用户 API
+/api/w8t/user
 */
 func (uc UserController) API(gin *gin.RouterGroup) {
 

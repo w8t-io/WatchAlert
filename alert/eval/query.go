@@ -18,19 +18,7 @@ import (
 
 // Metrics 包含 Prometheus、VictoriaMetrics 数据源
 func metrics(ctx *ctx.Context, datasourceId, datasourceType string, rule models.AlertRule) (curFiringKeys, curPendingKeys []string) {
-	r := models.DatasourceQuery{
-		TenantId: rule.TenantId,
-		Id:       datasourceId,
-		Type:     datasourceType,
-	}
-	datasourceInfo, err := ctx.DB.Datasource().Get(r)
-	if err != nil {
-		logc.Error(ctx.Ctx, err.Error())
-		return
-	}
-
-	health := provider.CheckDatasourceHealth(datasourceInfo)
-	if !health {
+	if !provider.CheckDatasourceHealth(ctx, datasourceId) {
 		return
 	}
 
@@ -76,7 +64,7 @@ func metrics(ctx *ctx.Context, datasourceId, datasourceType string, rule models.
 			matches := re.FindStringSubmatch(ruleExpr.Expr)
 			t, _ := strconv.ParseFloat(matches[2], 64)
 
-			f := func() models.AlertCurEvent {
+			event := func() models.AlertCurEvent {
 				event := process.BuildEvent(rule)
 				event.DatasourceId = datasourceId
 				event.Fingerprint = v.GetFingerprint()
@@ -95,12 +83,14 @@ func metrics(ctx *ctx.Context, datasourceId, datasourceType string, rule models.
 			}
 
 			option := models.EvalCondition{
-				Type:     "metric",
-				Operator: matches[1],
-				Value:    t,
+				Operator:      matches[1],
+				QueryValue:    v.Value,
+				ExpectedValue: t,
 			}
 
-			process.EvalCondition(ctx, f, v.Value, option)
+			if process.EvalCondition(option) {
+				process.SaveAlertEvent(ctx, event())
+			}
 		}
 	}
 
@@ -112,22 +102,10 @@ func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.Ale
 	var (
 		queryRes    []provider.Logs
 		count       int
-		err         error
 		evalOptions models.EvalCondition
 	)
 
-	r := models.DatasourceQuery{
-		TenantId: rule.TenantId,
-		Id:       datasourceId,
-		Type:     datasourceType,
-	}
-	datasourceInfo, err := ctx.DB.Datasource().Get(r)
-	if err != nil {
-		return
-	}
-
-	health := provider.CheckDatasourceHealth(datasourceInfo)
-	if !health {
+	if !provider.CheckDatasourceHealth(ctx, datasourceId) {
 		return
 	}
 
@@ -156,9 +134,9 @@ func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.Ale
 		}
 
 		evalOptions = models.EvalCondition{
-			Type:     rule.LokiConfig.EvalCondition.Type,
-			Operator: rule.LokiConfig.EvalCondition.Operator,
-			Value:    rule.LokiConfig.EvalCondition.Value,
+			Operator:      rule.LokiConfig.EvalCondition.Operator,
+			QueryValue:    float64(count),
+			ExpectedValue: rule.LokiConfig.EvalCondition.ExpectedValue,
 		}
 	case provider.AliCloudSLSDsProviderName:
 		cli, err := pools.GetClient(datasourceId)
@@ -185,9 +163,9 @@ func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.Ale
 		}
 
 		evalOptions = models.EvalCondition{
-			Type:     rule.AliCloudSLSConfig.EvalCondition.Type,
-			Operator: rule.AliCloudSLSConfig.EvalCondition.Operator,
-			Value:    rule.AliCloudSLSConfig.EvalCondition.Value,
+			Operator:      rule.AliCloudSLSConfig.EvalCondition.Operator,
+			QueryValue:    float64(count),
+			ExpectedValue: rule.AliCloudSLSConfig.EvalCondition.ExpectedValue,
 		}
 	case provider.ElasticSearchDsProviderName:
 		cli, err := pools.GetClient(datasourceId)
@@ -213,9 +191,9 @@ func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.Ale
 		}
 
 		evalOptions = models.EvalCondition{
-			Type:     "count",
-			Operator: ">",
-			Value:    1,
+			Operator:      ">",
+			QueryValue:    float64(count),
+			ExpectedValue: 1,
 		}
 	}
 
@@ -238,7 +216,9 @@ func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.Ale
 		}
 
 		// 评估告警条件
-		process.EvalCondition(ctx, event, float64(count), evalOptions)
+		if process.EvalCondition(evalOptions) {
+			process.SaveAlertEvent(ctx, event())
+		}
 	}
 
 	return
@@ -248,22 +228,9 @@ func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.Ale
 func traces(ctx *ctx.Context, datasourceId, datasourceType string, rule models.AlertRule) (curFiringKeys []string) {
 	var (
 		queryRes []provider.Traces
-		err      error
 	)
 
-	r := models.DatasourceQuery{
-		TenantId: rule.TenantId,
-		Id:       datasourceId,
-		Type:     datasourceType,
-	}
-	datasourceInfo, err := ctx.DB.Datasource().Get(r)
-	if err != nil {
-		logc.Error(ctx.Ctx, err.Error())
-		return
-	}
-
-	health := provider.CheckDatasourceHealth(datasourceInfo)
-	if !health {
+	if !provider.CheckDatasourceHealth(ctx, datasourceId) {
 		return
 	}
 
@@ -297,7 +264,7 @@ func traces(ctx *ctx.Context, datasourceId, datasourceType string, rule models.A
 		event.DatasourceId = datasourceId
 		event.Fingerprint = v.GetFingerprint()
 		event.Metric = v.GetMetric()
-		event.Annotations = v.GetAnnotations(rule, datasourceInfo)
+		event.Annotations = fmt.Sprintf("服务: %s 链路中存在异常状态码接口, TraceId: %s", rule.JaegerConfig.Service, v.TraceId)
 
 		key := event.GetFiringAlertCacheKey()
 		curFiringKeys = append(curFiringKeys, key)
@@ -346,12 +313,14 @@ func cloudWatch(ctx *ctx.Context, datasourceId string, rule models.AlertRule) (c
 		}
 
 		options := models.EvalCondition{
-			Type:     "metric",
-			Operator: rule.CloudWatchConfig.Expr,
-			Value:    float64(rule.CloudWatchConfig.Threshold),
+			Operator:      rule.CloudWatchConfig.Expr,
+			QueryValue:    values[0],
+			ExpectedValue: float64(rule.CloudWatchConfig.Threshold),
 		}
 
-		process.EvalCondition(ctx, event, values[0], options)
+		if process.EvalCondition(options) {
+			process.SaveAlertEvent(ctx, event())
+		}
 	}
 
 	return

@@ -131,7 +131,7 @@ func (dc DatasourceController) PromQuery(ctx *gin.Context) {
 		params.Add("query", r.Query)
 		params.Add("time", strconv.FormatInt(time.Now().Unix(), 10))
 		fullURL := fmt.Sprintf("%s%s?%s", r.Addr, path, params.Encode())
-		get, err := tools.Get(nil, fullURL)
+		get, err := tools.Get(nil, fullURL, 10)
 		if err != nil {
 			return nil, err
 		}

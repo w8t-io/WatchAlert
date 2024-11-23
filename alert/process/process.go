@@ -3,7 +3,7 @@ package process
 import (
 	"fmt"
 	"time"
-	"watchAlert/alert/queue"
+	"watchAlert/alert/storage"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
 	"watchAlert/pkg/tools"
@@ -84,7 +84,7 @@ func GcPendingCache(ctx *ctx.Context, rule models.AlertRule, curKeys []string) {
 	}
 }
 
-func GcRecoverWaitCache(ctx *ctx.Context, alarmRecoverStore queue.AlarmRecoverWaitStore, rule models.AlertRule, curKeys []string) {
+func GcRecoverWaitCache(ctx *ctx.Context, alarmRecoverStore storage.AlarmRecoverWaitStore, rule models.AlertRule, curKeys []string) {
 	// 获取等待恢复告警的keys
 	recoverWaitKeys := getRecoverWaitList(alarmRecoverStore, rule)
 	// 删除正常告警的key
@@ -92,12 +92,12 @@ func GcRecoverWaitCache(ctx *ctx.Context, alarmRecoverStore queue.AlarmRecoverWa
 	deleteFiringKeys(ctx, alarmRecoverStore, firingKeys)
 }
 
-func getRecoverWaitList(recoverStore queue.AlarmRecoverWaitStore, rule models.AlertRule) []string {
+func getRecoverWaitList(recoverStore storage.AlarmRecoverWaitStore, rule models.AlertRule) []string {
 	keyPrefix := fmt.Sprintf("%s", models.FiringAlertCachePrefix+rule.RuleId+"-"+rule.DatasourceIdList[0]+"-")
 	return recoverStore.Search(keyPrefix)
 }
 
-func deleteFiringKeys(ctx *ctx.Context, recoverStore queue.AlarmRecoverWaitStore, keys []string) {
+func deleteFiringKeys(ctx *ctx.Context, recoverStore storage.AlarmRecoverWaitStore, keys []string) {
 	ctx.Mux.Lock()
 	defer ctx.Mux.Unlock()
 

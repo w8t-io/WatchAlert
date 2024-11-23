@@ -45,6 +45,8 @@ type AlertRule struct {
 
 	ElasticSearchConfig ElasticSearchConfig `json:"elasticSearchConfig" gorm:"elasticSearchConfig;serializer:json"`
 
+	NetworkEndpointConfig ProbingEndpointConfig `json:"networkEndpointConfig" gorm:"networkEndpointConfig;serializer:json"`
+
 	NoticeId         string      `json:"noticeId"`
 	NoticeGroup      NoticeGroup `json:"noticeGroup" gorm:"noticeGroup;serializer:json"`
 	RecoverNotify    *bool       `json:"recoverNotify"`
@@ -122,9 +124,13 @@ type CloudWatchConfig struct {
 
 // EvalCondition 日志评估条件
 type EvalCondition struct {
-	Type     string  `json:"type"`
-	Operator string  `json:"operator"`
-	Value    float64 `json:"value"`
+	Type string `json:"type"`
+	// 运算
+	Operator string `json:"operator"`
+	// 查询值
+	QueryValue float64 `json:"queryValue"`
+	// 预期值
+	ExpectedValue float64 `json:"value"`
 }
 
 type Fingerprint uint64

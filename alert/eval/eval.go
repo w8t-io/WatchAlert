@@ -4,24 +4,38 @@ import (
 	"context"
 	"fmt"
 	"github.com/zeromicro/go-zero/core/logc"
-	"golang.org/x/sync/errgroup"
 	"time"
 	"watchAlert/alert/process"
-	"watchAlert/alert/queue"
+	"watchAlert/alert/storage"
 	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
 	"watchAlert/pkg/tools"
+
+	"golang.org/x/sync/errgroup"
 )
 
-type AlertRule struct {
-	ctx                   *ctx.Context
-	watchCtxMap           map[string]context.CancelFunc
-	alarmRecoverWaitStore queue.AlarmRecoverWaitStore
-}
+type (
+	// AlertRuleEval 告警规则评估
+	AlertRuleEval interface {
+		Submit(rule models.AlertRule)
+		Stop(ruleId string)
+		Eval(ctx context.Context, rule models.AlertRule)
+		Recover(rule models.AlertRule, curKeys []string)
+		GC(rule models.AlertRule, curFiringKeys, curPendingKeys []string)
+		RePushTask()
+	}
 
-func NewAlertRuleEval(ctx *ctx.Context, alarmRecoverWaitStore queue.AlarmRecoverWaitStore) AlertRule {
-	return AlertRule{
+	// AlertRule 告警规则
+	AlertRule struct {
+		ctx                   *ctx.Context
+		watchCtxMap           map[string]context.CancelFunc
+		alarmRecoverWaitStore storage.AlarmRecoverWaitStore
+	}
+)
+
+func NewAlertRuleEval(ctx *ctx.Context, alarmRecoverWaitStore storage.AlarmRecoverWaitStore) AlertRuleEval {
+	return &AlertRule{
 		ctx:                   ctx,
 		watchCtxMap:           make(map[string]context.CancelFunc),
 		alarmRecoverWaitStore: alarmRecoverWaitStore,

@@ -1,4 +1,4 @@
-package queue
+package storage
 
 import (
 	"context"
@@ -61,7 +61,7 @@ func (a *AlertsCurEventCache) gc() {
 }
 
 /*
-	获取告警指纹是否存在
+获取告警指纹是否存在
 */
 func (a *AlertsCurEventCache) Get(fingerprint string) (models.AlertCurEvent, error) {
 

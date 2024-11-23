@@ -14,7 +14,7 @@ type JaegerDsProvider struct {
 }
 
 func NewJaegerClient(datasource models.AlertDataSource) (TracesFactoryProvider, error) {
-	_, err := tools.Get(nil, datasource.HTTP.URL)
+	_, err := tools.Get(nil, datasource.HTTP.URL, 10)
 	if err != nil {
 		return JaegerDsProvider{}, err
 	}
@@ -48,7 +48,7 @@ func (j JaegerDsProvider) Query(options TraceQueryOptions) ([]Traces, error) {
 
 	args := fmt.Sprintf("/api/traces?service=%s&start=%d&end=%d&limit=%d&tags=%s", options.Service, options.StartAt, options.EndAt, options.Limit, options.Tags)
 	requestURL := j.url + args
-	res, err := tools.Get(nil, requestURL)
+	res, err := tools.Get(nil, requestURL, 10)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func (j JaegerDsProvider) Query(options TraceQueryOptions) ([]Traces, error) {
 }
 
 func (j JaegerDsProvider) Check() (bool, error) {
-	res, err := tools.Get(nil, j.url)
+	res, err := tools.Get(nil, j.url, 10)
 	if err != nil {
 		return false, err
 	}
@@ -87,7 +87,7 @@ type JaegerServiceData struct {
 
 func (j JaegerDsProvider) GetJaegerService() (JaegerServiceData, error) {
 	url := j.url + "/api/services"
-	res, err := tools.Get(nil, url)
+	res, err := tools.Get(nil, url, 10)
 	if err != nil {
 		return JaegerServiceData{}, err
 	}

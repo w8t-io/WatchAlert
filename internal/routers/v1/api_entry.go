@@ -28,6 +28,6 @@ var (
 	AWSRds         = api.ApiGroupApp.AWSCloudWatchRDSController
 	Setting        = api.ApiGroupApp.SettingsController
 	KubeEvent      = api.ApiGroupApp.KubernetesTypesController
-	Monitor        = api.ApiGroupApp.MonitorSSLController
 	Subscribe      = api.ApiGroupApp.SubscribeController
+	Probing        = api.ApiGroupApp.ProbingController
 )

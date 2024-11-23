@@ -58,7 +58,7 @@ func (l LokiProvider) Query(options LogQueryOptions) ([]Logs, int, error) {
 
 	args := fmt.Sprintf("/loki/api/v1/query_range?query=%s&direction=%s&limit=%d&start=%d&end=%d", url.QueryEscape(options.Loki.Query), options.Loki.Direction, options.Loki.Limit, options.StartAt.(int64), options.EndAt.(int64))
 	requestURL := l.url + args
-	res, err := tools.Get(nil, requestURL)
+	res, err := tools.Get(nil, requestURL, 10)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -95,7 +95,7 @@ func (l LokiProvider) Query(options LogQueryOptions) ([]Logs, int, error) {
 }
 
 func (l LokiProvider) Check() (bool, error) {
-	res, err := tools.Get(nil, l.url+"/loki/api/v1/labels")
+	res, err := tools.Get(nil, l.url+"/loki/api/v1/labels", 10)
 	if err != nil {
 		return false, err
 	}

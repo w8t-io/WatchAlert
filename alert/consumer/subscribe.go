@@ -3,9 +3,9 @@ package consumer
 import (
 	"fmt"
 	"strings"
-	"watchAlert/alert/sender"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
+	"watchAlert/pkg/sender"
 	"watchAlert/pkg/templates"
 	"watchAlert/pkg/tools"
 )
@@ -64,7 +64,7 @@ func processSubscribe(ctx *ctx.Context, alert models.AlertCurEvent, notice model
 			notice.NoticeTmplId = u.NoticeTemplateId
 			emailTemp := templates.NewTemplate(ctx, alert, notice)
 
-			err = sender.SendToEmail(alert, u.NoticeSubject, []string{u.Email}, nil, emailTemp.CardContentMsg)
+			err = sender.SendToEmail(alert.IsRecovered, u.NoticeSubject, []string{u.Email}, nil, emailTemp.CardContentMsg)
 			if err != nil {
 				return fmt.Errorf("邮件发送失败, err: %s", err.Error())
 			}

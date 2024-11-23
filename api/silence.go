@@ -11,8 +11,8 @@ import (
 type SilenceController struct{}
 
 /*
-	告警静默 API
-	/api/w8t/silence
+告警静默 API
+/api/w8t/silence
 */
 func (sc SilenceController) API(gin *gin.RouterGroup) {
 	silenceA := gin.Group("silence")
