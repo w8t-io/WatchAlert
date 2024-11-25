@@ -63,6 +63,6 @@ jobs:
           # 给清单打上多个标签
           tags: |
             cairry/watchalert:latest
-            cairry/watchalert::${{ steps.date.outputs.today }}
+            cairry/watchalert:${{ steps.date.outputs.today }}
             registry.cn-hangzhou.aliyuncs.com/opsre/watchalert:latest
-            registry.cn-hangzhou.aliyuncs.com/opsre/watchalert::${{ steps.date.outputs.today }}
+            registry.cn-hangzhou.aliyuncs.com/opsre/watchalert:${{ steps.date.outputs.today }}
