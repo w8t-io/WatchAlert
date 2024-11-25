@@ -52,10 +52,10 @@ jobs:
           # 镜像推送时间
           push: ${{ github.event_name != 'pull_request' }}
           build-args: |
-            VERSION=$BRANCH_NAME.$DATE.$SHORT_SHA
+            VERSION=${{ BRANCH_NAME }}.${{ DATE }}.${{ SHORT_SHA }}
           # 给清单打上多个标签
           tags: |
             cairry/watchalert:latest
-            cairry/watchalert:$BRANCH_NAME.$DATE.$SHORT_SHA
+            cairry/watchalert:${{ BRANCH_NAME }}.${{ DATE }}.${{ SHORT_SHA }}
             registry.cn-hangzhou.aliyuncs.com/opsre/watchalert:latest
-            registry.cn-hangzhou.aliyuncs.com/opsre/watchalert:$BRANCH_NAME.$DATE.$SHORT_SHA
+            registry.cn-hangzhou.aliyuncs.com/opsre/watchalert:${{ BRANCH_NAME }}.${{ DATE }}.${{ SHORT_SHA }}
