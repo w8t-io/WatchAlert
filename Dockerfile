@@ -1,21 +1,21 @@
-FROM golang:1.21-alpine3.20 AS build
+FROM registry.cn-hangzhou.aliyuncs.com/opsre/golang:1.21.9-alpine3.19 AS build
+
 ARG VERSION
 
-ENV GO111MODULE=on \
-    CGO_ENABLED=0 \
-    GOOS=linux \
-    GOARCH=amd64 \
-    GOPROXY=https://goproxy.cn,direct
+ENV GOPROXY=https://goproxy.cn,direct
 
 WORKDIR /root
 
 COPY . /root
 
-RUN go mod tidy && \
-    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build --ldflags="-X main.Version=${VERSION}" -o watchAlert ./main.go && \
-    chmod 777 watchAlert
+RUN sed -i "s/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g" /etc/apk/repositories \
+    && apk upgrade && apk add --no-cache --virtual .build-deps \
+    ca-certificates upx
 
-FROM alpine:3.20
+RUN go build --ldflags="-X main.Version=${VERSION}" -o watchAlert . \
+  && upx -9 watchAlert && chmod +x watchAlert
+
+FROM registry.cn-hangzhou.aliyuncs.com/opsre/alpine:3.19
 
 COPY --from=build /root/watchAlert /app/watchAlert
 
