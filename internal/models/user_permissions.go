@@ -395,5 +395,9 @@ func PermissionsInfo() map[string]UserPermissions {
 			Key: "获取通知记录指标",
 			API: "/api/w8t/notice/noticeRecordMetric",
 		},
+		"dataSourcePing": {
+			Key: "数据源连接测试",
+			API: "/api/w8t/datasource/dataSourcePing",
+		},
 	}
 }

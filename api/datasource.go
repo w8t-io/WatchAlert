@@ -44,6 +44,7 @@ func (dc DatasourceController) API(gin *gin.RouterGroup) {
 		datasourceB.GET("dataSourceGet", dc.Get)
 		datasourceB.GET("dataSourceSearch", dc.Search)
 		datasourceB.GET("promQuery", dc.PromQuery)
+		datasourceB.POST("dataSourcePing", dc.Ping)
 	}
 
 }
@@ -141,5 +142,18 @@ func (dc DatasourceController) PromQuery(ctx *gin.Context) {
 		}
 
 		return res, nil
+	})
+}
+
+func (dc DatasourceController) Ping(ctx *gin.Context) {
+	r := new(models.AlertDataSource)
+	BindJson(ctx, r)
+
+	Service(ctx, func() (interface{}, interface{}) {
+		ok := provider.CheckDatasourceHealth(*r)
+		if !ok {
+			return "", fmt.Errorf("数据源不可达!")
+		}
+		return "", nil
 	})
 }

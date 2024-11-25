@@ -18,10 +18,6 @@ import (
 
 // Metrics 包含 Prometheus、VictoriaMetrics 数据源
 func metrics(ctx *ctx.Context, datasourceId, datasourceType string, rule models.AlertRule) (curFiringKeys, curPendingKeys []string) {
-	if !provider.CheckDatasourceHealth(ctx, datasourceId) {
-		return
-	}
-
 	pools := ctx.Redis.ProviderPools()
 	var resQuery []provider.Metrics
 	switch datasourceType {
@@ -104,10 +100,6 @@ func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.Ale
 		count       int
 		evalOptions models.EvalCondition
 	)
-
-	if !provider.CheckDatasourceHealth(ctx, datasourceId) {
-		return
-	}
 
 	pools := ctx.Redis.ProviderPools()
 	switch datasourceType {
@@ -229,10 +221,6 @@ func traces(ctx *ctx.Context, datasourceId, datasourceType string, rule models.A
 	var (
 		queryRes []provider.Traces
 	)
-
-	if !provider.CheckDatasourceHealth(ctx, datasourceId) {
-		return
-	}
 
 	pools := ctx.Redis.ProviderPools()
 	switch datasourceType {

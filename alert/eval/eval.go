@@ -10,6 +10,7 @@ import (
 	"watchAlert/internal/global"
 	"watchAlert/internal/models"
 	"watchAlert/pkg/ctx"
+	"watchAlert/pkg/provider"
 	"watchAlert/pkg/tools"
 
 	"golang.org/x/sync/errgroup"
@@ -77,6 +78,10 @@ func (t *AlertRule) Eval(ctx context.Context, rule models.AlertRule) {
 				instance, err := t.ctx.DB.Datasource().GetInstance(dsId)
 				if err != nil {
 					logc.Error(t.ctx.Ctx, err.Error())
+				}
+
+				if !provider.CheckDatasourceHealth(instance) {
+					continue
 				}
 
 				switch rule.DatasourceType {
