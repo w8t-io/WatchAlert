@@ -6,7 +6,7 @@ services:
     environment:
       - TZ=Asia/Shanghai
     volumes:
-      - ./config:/app/config
+      - ../../config:/app/config
     restart: always
     privileged: true
     ports:
