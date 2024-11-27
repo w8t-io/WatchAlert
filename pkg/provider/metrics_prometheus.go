@@ -11,7 +11,8 @@ import (
 )
 
 type PrometheusProvider struct {
-	apiV1 v1.API
+	ExternalLabels map[string]interface{}
+	apiV1          v1.API
 }
 
 func NewPrometheusClient(source models.AlertDataSource) (MetricsFactoryProvider, error) {
@@ -25,7 +26,8 @@ func NewPrometheusClient(source models.AlertDataSource) (MetricsFactoryProvider,
 	apiV1 := v1.NewAPI(client)
 
 	return PrometheusProvider{
-		apiV1: apiV1,
+		apiV1:          apiV1,
+		ExternalLabels: source.Labels,
 	}, nil
 }
 
@@ -72,4 +74,8 @@ func (p PrometheusProvider) Check() (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (p PrometheusProvider) GetExternalLabels() map[string]interface{} {
+	return p.ExternalLabels
 }

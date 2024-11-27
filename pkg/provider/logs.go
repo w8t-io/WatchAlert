@@ -18,6 +18,7 @@ const (
 type LogsFactoryProvider interface {
 	Query(options LogQueryOptions) ([]Logs, int, error)
 	Check() (bool, error)
+	GetExternalLabels() map[string]interface{}
 }
 
 type LogQueryOptions struct {

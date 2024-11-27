@@ -12,11 +12,15 @@ import (
 )
 
 type VictoriaMetricsProvider struct {
-	address string
+	ExternalLabels map[string]interface{}
+	address        string
 }
 
 func NewVictoriaMetricsClient(ds models.AlertDataSource) (MetricsFactoryProvider, error) {
-	return VictoriaMetricsProvider{address: ds.HTTP.URL}, nil
+	return VictoriaMetricsProvider{
+		address:        ds.HTTP.URL,
+		ExternalLabels: ds.Labels,
+	}, nil
 }
 
 type QueryResponse struct {
@@ -83,4 +87,8 @@ func (v VictoriaMetricsProvider) Check() (bool, error) {
 		return false, err
 	}
 	return true, nil
+}
+
+func (v VictoriaMetricsProvider) GetExternalLabels() map[string]interface{} {
+	return v.ExternalLabels
 }

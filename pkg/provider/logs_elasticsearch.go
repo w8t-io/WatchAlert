@@ -9,8 +9,9 @@ import (
 )
 
 type ElasticSearchDsProvider struct {
-	cli *elastic.Client
-	url string
+	cli            *elastic.Client
+	url            string
+	ExternalLabels map[string]interface{}
 }
 
 func NewElasticSearchClient(ctx context.Context, ds models.AlertDataSource) (LogsFactoryProvider, error) {
@@ -24,8 +25,9 @@ func NewElasticSearchClient(ctx context.Context, ds models.AlertDataSource) (Log
 	}
 
 	return ElasticSearchDsProvider{
-		client,
-		ds.ElasticSearch.Url,
+		cli:            client,
+		url:            ds.ElasticSearch.Url,
+		ExternalLabels: ds.Labels,
 	}, nil
 }
 
@@ -94,4 +96,8 @@ func (e ElasticSearchDsProvider) Check() (bool, error) {
 		return false, err
 	}
 	return true, nil
+}
+
+func (e ElasticSearchDsProvider) GetExternalLabels() map[string]interface{} {
+	return e.ExternalLabels
 }

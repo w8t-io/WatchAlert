@@ -10,7 +10,8 @@ import (
 )
 
 type AliCloudSlsDsProvider struct {
-	client *sls20201230.Client
+	client         *sls20201230.Client
+	ExternalLabels map[string]interface{}
 }
 
 func NewAliCloudSlsClient(source models.AlertDataSource) (LogsFactoryProvider, error) {
@@ -24,7 +25,10 @@ func NewAliCloudSlsClient(source models.AlertDataSource) (LogsFactoryProvider, e
 		return AliCloudSlsDsProvider{}, err
 	}
 
-	return AliCloudSlsDsProvider{client: result}, nil
+	return AliCloudSlsDsProvider{
+		client:         result,
+		ExternalLabels: source.Labels,
+	}, nil
 }
 
 func (a AliCloudSlsDsProvider) Query(query LogQueryOptions) ([]Logs, int, error) {
@@ -72,4 +76,8 @@ func (a AliCloudSlsDsProvider) Query(query LogQueryOptions) ([]Logs, int, error)
 func (a AliCloudSlsDsProvider) Check() (bool, error) {
 
 	return true, nil
+}
+
+func (a AliCloudSlsDsProvider) GetExternalLabels() map[string]interface{} {
+	return a.ExternalLabels
 }

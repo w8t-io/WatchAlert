@@ -1,19 +1,20 @@
 package models
 
 type AlertDataSource struct {
-	TenantId         string        `json:"tenantId"`
-	Id               string        `json:"id"`
-	Name             string        `json:"name"`
-	Type             string        `json:"type"`
-	HTTP             HTTP          `json:"http" gorm:"http;serializer:json"`
-	AliCloudEndpoint string        `json:"alicloudEndpoint"`
-	AliCloudAk       string        `json:"alicloudAk"`
-	AliCloudSk       string        `json:"alicloudSk"`
-	AWSCloudWatch    AWSCloudWatch `json:"awsCloudwatch" gorm:"awsCloudwatch;serializer:json"`
-	Description      string        `json:"description"`
-	KubeConfig       string        `json:"kubeConfig"`
-	ElasticSearch    ElasticSearch `json:"elasticSearch" gorm:"elasticSearch;serializer:json"`
-	Enabled          *bool         `json:"enabled" `
+	TenantId         string                 `json:"tenantId"`
+	Id               string                 `json:"id"`
+	Name             string                 `json:"name"`
+	Labels           map[string]interface{} `json:"labels" gorm:"labels;serializer:json"` // 额外标签，会添加到事件Metric中，可用于区分数据来源；
+	Type             string                 `json:"type"`
+	HTTP             HTTP                   `json:"http" gorm:"http;serializer:json"`
+	AliCloudEndpoint string                 `json:"alicloudEndpoint"`
+	AliCloudAk       string                 `json:"alicloudAk"`
+	AliCloudSk       string                 `json:"alicloudSk"`
+	AWSCloudWatch    AWSCloudWatch          `json:"awsCloudwatch" gorm:"awsCloudwatch;serializer:json"`
+	Description      string                 `json:"description"`
+	KubeConfig       string                 `json:"kubeConfig"`
+	ElasticSearch    ElasticSearch          `json:"elasticSearch" gorm:"elasticSearch;serializer:json"`
+	Enabled          *bool                  `json:"enabled" `
 }
 
 type ElasticSearch struct {

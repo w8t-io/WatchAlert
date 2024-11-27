@@ -25,7 +25,7 @@ func CheckDatasourceHealth(datasource models.AlertDataSource) bool {
 			check, err = vmClient.Check()
 		}
 	case "Kubernetes":
-		cli, err := NewKubernetesClient(context.Background(), datasource.KubeConfig)
+		cli, err := NewKubernetesClient(context.Background(), datasource.KubeConfig, datasource.Labels)
 		if err == nil {
 			_, err = cli.GetWarningEvent("", 1)
 			check = (err == nil)

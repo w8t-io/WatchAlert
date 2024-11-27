@@ -11,11 +11,15 @@ import (
 )
 
 type LokiProvider struct {
-	url string
+	url            string
+	ExternalLabels map[string]interface{}
 }
 
 func NewLokiClient(datasource models.AlertDataSource) (LogsFactoryProvider, error) {
-	return LokiProvider{url: datasource.HTTP.URL}, nil
+	return LokiProvider{
+		url:            datasource.HTTP.URL,
+		ExternalLabels: datasource.Labels,
+	}, nil
 }
 
 type result struct {
@@ -104,4 +108,8 @@ func (l LokiProvider) Check() (bool, error) {
 		return false, err
 	}
 	return true, nil
+}
+
+func (l LokiProvider) GetExternalLabels() map[string]interface{} {
+	return l.ExternalLabels
 }

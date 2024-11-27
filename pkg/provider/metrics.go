@@ -13,6 +13,7 @@ const (
 type MetricsFactoryProvider interface {
 	Query(promQL string) ([]Metrics, error)
 	Check() (bool, error)
+	GetExternalLabels() map[string]interface{}
 }
 
 type Metrics struct {

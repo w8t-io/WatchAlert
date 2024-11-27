@@ -19,7 +19,11 @@ import (
 // Metrics 包含 Prometheus、VictoriaMetrics 数据源
 func metrics(ctx *ctx.Context, datasourceId, datasourceType string, rule models.AlertRule) (curFiringKeys, curPendingKeys []string) {
 	pools := ctx.Redis.ProviderPools()
-	var resQuery []provider.Metrics
+	var (
+		resQuery       []provider.Metrics
+		externalLabels map[string]interface{}
+	)
+
 	switch datasourceType {
 	case provider.PrometheusDsProvider:
 		cli, err := pools.GetClient(datasourceId)
@@ -33,6 +37,8 @@ func metrics(ctx *ctx.Context, datasourceId, datasourceType string, rule models.
 			logc.Error(ctx.Ctx, err.Error())
 			return
 		}
+
+		externalLabels = cli.(provider.PrometheusProvider).GetExternalLabels()
 	case provider.VictoriaMetricsDsProvider:
 		cli, err := pools.GetClient(datasourceId)
 		if err != nil {
@@ -45,6 +51,8 @@ func metrics(ctx *ctx.Context, datasourceId, datasourceType string, rule models.
 			logc.Error(ctx.Ctx, err.Error())
 			return
 		}
+
+		externalLabels = cli.(provider.VictoriaMetricsProvider).GetExternalLabels()
 	default:
 		logc.Errorf(ctx.Ctx, fmt.Sprintf("Unsupported metrics type, type: %s", datasourceType))
 		return
@@ -66,6 +74,9 @@ func metrics(ctx *ctx.Context, datasourceId, datasourceType string, rule models.
 				event.Fingerprint = v.GetFingerprint()
 				event.Metric = v.GetMetric()
 				event.Metric["severity"] = ruleExpr.Severity
+				for ek, ev := range externalLabels {
+					event.Metric[ek] = ev
+				}
 				event.Severity = ruleExpr.Severity
 				event.Annotations = tools.ParserVariables(rule.PrometheusConfig.Annotations, event.Metric)
 
@@ -96,9 +107,10 @@ func metrics(ctx *ctx.Context, datasourceId, datasourceType string, rule models.
 // Logs 包含 AliSLS、Loki、ElasticSearch 数据源
 func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.AlertRule) (curFiringKeys []string) {
 	var (
-		queryRes    []provider.Logs
-		count       int
-		evalOptions models.EvalCondition
+		queryRes       []provider.Logs
+		count          int
+		evalOptions    models.EvalCondition
+		externalLabels map[string]interface{}
 	)
 
 	pools := ctx.Redis.ProviderPools()
@@ -124,6 +136,8 @@ func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.Ale
 			logc.Error(ctx.Ctx, err.Error())
 			return
 		}
+
+		externalLabels = cli.(provider.LokiProvider).GetExternalLabels()
 
 		evalOptions = models.EvalCondition{
 			Operator:      rule.LokiConfig.EvalCondition.Operator,
@@ -154,6 +168,8 @@ func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.Ale
 			return
 		}
 
+		externalLabels = cli.(provider.AliCloudSlsDsProvider).GetExternalLabels()
+
 		evalOptions = models.EvalCondition{
 			Operator:      rule.AliCloudSLSConfig.EvalCondition.Operator,
 			QueryValue:    float64(count),
@@ -182,6 +198,8 @@ func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.Ale
 			return
 		}
 
+		externalLabels = cli.(provider.ElasticSearchDsProvider).GetExternalLabels()
+
 		evalOptions = models.EvalCondition{
 			Operator:      ">",
 			QueryValue:    float64(count),
@@ -199,6 +217,9 @@ func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.Ale
 			event.DatasourceId = datasourceId
 			event.Fingerprint = v.GetFingerprint()
 			event.Metric = v.GetMetric()
+			for ek, ev := range externalLabels {
+				event.Metric[ek] = ev
+			}
 			event.Annotations = fmt.Sprintf("统计日志条数: %d 条\n%s", count, tools.FormatJson(v.GetAnnotations()[0].(string)))
 
 			key := event.GetPendingAlertCacheKey()
@@ -219,7 +240,8 @@ func logs(ctx *ctx.Context, datasourceId, datasourceType string, rule models.Ale
 // Traces 包含 Jaeger 数据源
 func traces(ctx *ctx.Context, datasourceId, datasourceType string, rule models.AlertRule) (curFiringKeys []string) {
 	var (
-		queryRes []provider.Traces
+		queryRes       []provider.Traces
+		externalLabels map[string]interface{}
 	)
 
 	pools := ctx.Redis.ProviderPools()
@@ -245,6 +267,8 @@ func traces(ctx *ctx.Context, datasourceId, datasourceType string, rule models.A
 			logc.Error(ctx.Ctx, err.Error())
 			return
 		}
+
+		externalLabels = cli.(provider.JaegerDsProvider).GetExternalLabels()
 	}
 
 	for _, v := range queryRes {
@@ -252,6 +276,9 @@ func traces(ctx *ctx.Context, datasourceId, datasourceType string, rule models.A
 		event.DatasourceId = datasourceId
 		event.Fingerprint = v.GetFingerprint()
 		event.Metric = v.GetMetric()
+		for ek, ev := range externalLabels {
+			event.Metric[ek] = ev
+		}
 		event.Annotations = fmt.Sprintf("服务: %s 链路中存在异常状态码接口, TraceId: %s", rule.JaegerConfig.Service, v.TraceId)
 
 		key := event.GetFiringAlertCacheKey()
@@ -264,12 +291,16 @@ func traces(ctx *ctx.Context, datasourceId, datasourceType string, rule models.A
 }
 
 func cloudWatch(ctx *ctx.Context, datasourceId string, rule models.AlertRule) (curFiringKeys []string) {
+	var externalLabels map[string]interface{}
 	pools := ctx.Redis.ProviderPools()
 	cfg, err := pools.GetClient(datasourceId)
 	if err != nil {
 		logc.Errorf(ctx.Ctx, err.Error())
 		return
 	}
+
+	externalLabels = cfg.(provider.AwsConfig).GetExternalLabels()
+
 	cli := cfg.(provider.AwsConfig).CloudWatchCli()
 	curAt := time.Now().UTC()
 	startsAt := tools.ParserDuration(curAt, rule.CloudWatchConfig.Period, "m")
@@ -295,6 +326,9 @@ func cloudWatch(ctx *ctx.Context, datasourceId string, rule models.AlertRule) (c
 			event.DatasourceId = datasourceId
 			event.Fingerprint = query.GetFingerprint()
 			event.Metric = query.GetMetrics()
+			for ek, ev := range externalLabels {
+				event.Metric[ek] = ev
+			}
 			event.Annotations = fmt.Sprintf("%s %s %s %s %d", query.Namespace, query.MetricName, query.Statistic, rule.CloudWatchConfig.Expr, rule.CloudWatchConfig.Threshold)
 
 			return event
@@ -315,6 +349,7 @@ func cloudWatch(ctx *ctx.Context, datasourceId string, rule models.AlertRule) (c
 }
 
 func kubernetesEvent(ctx *ctx.Context, datasourceId string, rule models.AlertRule) (curFiringKeys []string) {
+	var externalLabels map[string]interface{}
 	datasourceObj, err := ctx.DB.Datasource().GetInstance(datasourceId)
 	if err != nil {
 		logc.Error(ctx.Ctx, err.Error())
@@ -334,6 +369,8 @@ func kubernetesEvent(ctx *ctx.Context, datasourceId string, rule models.AlertRul
 		return
 	}
 
+	externalLabels = cli.(provider.KubernetesClient).GetExternalLabels()
+
 	if len(event.Items) < rule.KubernetesConfig.Value {
 		return []string{}
 	}
@@ -347,6 +384,9 @@ func kubernetesEvent(ctx *ctx.Context, datasourceId string, rule models.AlertRul
 		alertEvent.DatasourceId = datasourceId
 		alertEvent.Fingerprint = k8sItem.GetFingerprint()
 		alertEvent.Metric = k8sItem.GetMetrics()
+		for ek, ev := range externalLabels {
+			alertEvent.Metric[ek] = ev
+		}
 		alertEvent.Annotations = fmt.Sprintf("- 环境: %s\n- 命名空间: %s\n- 资源类型: %s\n- 资源名称: %s\n- 事件类型: %s\n- 事件详情: %s\n",
 			datasourceObj.Name, item.Namespace, item.InvolvedObject.Kind,
 			item.InvolvedObject.Name, item.Reason, eventMapping[item.InvolvedObject.Name],
