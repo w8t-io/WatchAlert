@@ -64,7 +64,13 @@ func (t *AlertRule) Stop(ruleId string) {
 
 func (t *AlertRule) Eval(ctx context.Context, rule models.AlertRule) {
 	timer := time.NewTicker(time.Second * time.Duration(rule.EvalInterval))
-	defer timer.Stop()
+	defer func() {
+		timer.Stop()
+		if r := recover(); r != nil {
+			logc.Error(t.ctx.Ctx, fmt.Sprintf("Recovered from rule eval goroutine panic: %s", r))
+		}
+	}()
+
 	for {
 		select {
 		case <-timer.C:

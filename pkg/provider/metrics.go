@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"fmt"
 	"strconv"
 	"watchAlert/pkg/tools"
 )
@@ -31,7 +32,7 @@ func (m Metrics) GetFingerprint() string {
 	for labelName, labelValue := range m.Metric {
 		sum := tools.HashNew()
 		sum = tools.HashAdd(sum, labelName)
-		sum = tools.HashAdd(sum, labelValue.(string))
+		sum = tools.HashAdd(sum, fmt.Sprintf("%v", labelValue))
 		result ^= sum
 	}
 
