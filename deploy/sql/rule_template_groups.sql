@@ -1,7 +1,7 @@
 use watchalert;
 INSERT ignore INTO watchalert.rule_template_groups (name,`number`,description,`type`) VALUES
 	 ('APISIX',0,'APISIX指标监控','Metrics'),
-	 ('APISIX日志监控',0,'APISIX日志监控','Logs'),
+	 ('服务日志监控',0,'服务日志监控','Logs'),
 	 ('Docker',0,'Docker容器监控','Metrics'),
 	 ('ElasticSearch',0,'ElasticSearch资源监控','Metrics'),
 	 ('ETCD',0,'ETCD','Metrics'),
