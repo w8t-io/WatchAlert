@@ -123,3 +123,30 @@ func ParseReaderBody(body io.Reader, req interface{}) error {
 	}
 	return nil
 }
+
+func ParseTime(month string) (int, time.Month, int) {
+	parsedTime, err := time.Parse("2006-01", month)
+	if err != nil {
+		return 0, time.Month(0), 0
+	}
+	curYear, curMonth, curDay := parsedTime.Date()
+	return curYear, curMonth, curDay
+}
+
+func GetWeekday(date string) (time.Weekday, error) {
+	t, err := time.Parse("2006-1-2", date)
+	if err != nil {
+		return 0, err
+	}
+
+	weekday := t.Weekday()
+	return weekday, nil
+}
+
+func IsEndOfWeek(dateStr string) bool {
+	date, err := time.Parse("2006-1-2", dateStr)
+	if err != nil {
+		return false
+	}
+	return date.Weekday() == time.Sunday
+}

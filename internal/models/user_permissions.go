@@ -19,6 +19,10 @@ func PermissionsInfo() map[string]UserPermissions {
 			Key: "搜索日历表",
 			API: "/api/w8t/calendar/calendarSearch",
 		},
+		"getCalendarUsers": {
+			Key: "获取值班表用户列表",
+			API: "/api/w8t/calendar/getCalendarUsers",
+		},
 		"calendarUpdate": {
 			Key: "更新日历表",
 			API: "/api/w8t/calendar/calendarUpdate",

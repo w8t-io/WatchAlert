@@ -18,6 +18,7 @@ type (
 		Create(r models.DutySchedule) error
 		Update(r models.DutySchedule) error
 		Search(r models.DutyScheduleQuery) ([]models.DutySchedule, error)
+		GetCalendarUsers(r models.DutyScheduleQuery) ([]models.Users, error)
 	}
 )
 
@@ -97,4 +98,19 @@ func (dc DutyCalendarRepo) Search(r models.DutyScheduleQuery) ([]models.DutySche
 	}
 
 	return dutyScheduleList, nil
+}
+
+func (dc DutyCalendarRepo) GetCalendarUsers(r models.DutyScheduleQuery) ([]models.Users, error) {
+	var users []models.Users
+	db := dc.db.Model(&models.DutySchedule{})
+	db.Where("tenant_id = ? AND duty_id = ?", r.TenantId, r.DutyId)
+	db.Distinct("user_id", "username")
+	if err := db.Find(&users).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return users, nil
 }
