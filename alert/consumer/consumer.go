@@ -294,6 +294,8 @@ func (ec *Consume) handleAlert(rule models.AlertRule, alerts []models.AlertCurEv
 			EffectiveTime: alert.EffectiveTime,
 			RecoverNotify: *alert.RecoverNotify,
 			IsRecovered:   alert.IsRecovered,
+			TenantId:      alert.TenantId,
+			Fingerprint:   alert.Fingerprint,
 		}
 		ok := mute.IsMuted(mp)
 		if ok {
@@ -325,49 +327,31 @@ func (ec *Consume) handleAlert(rule models.AlertRule, alerts []models.AlertCurEv
 
 // 聚合告警
 func (ec *Consume) groupAlert(timeInt int64, alerts []models.AlertCurEvent) []models.AlertCurEvent {
-	var (
-		alertOne []models.AlertCurEvent
-		content  string
-	)
-
-	if len(alerts) > 1 {
-		content = fmt.Sprintf("聚合 %d 条告警\n", len(alerts))
+	if len(alerts) == 0 {
+		return nil
 	}
 
-	for _, alert := range alerts {
-		if !ec.isSilence(alert) {
-			alertOne = []models.AlertCurEvent{alert}
-			alertOne[0].Annotations += "\n" + content
-		}
+	// 如果只有一条告警，直接返回
+	if len(alerts) == 1 {
+		return alerts
+	}
 
+	// 处理每条告警
+	var alertOnce models.AlertCurEvent
+	for i := range alerts {
+		alert := &alerts[i]
+		// 检查是否需要静默
+		if mute.IsSilence(mute.MuteParams{TenantId: alert.TenantId, Fingerprint: alert.Fingerprint}) {
+			continue
+		}
+		alert.Annotations += "\n" + fmt.Sprintf("聚合 %d 条告警\n", len(alerts))
+		alertOnce = *alert
+
+		// 更新告警状态
 		if !alert.IsRecovered {
 			alert.LastSendTime = timeInt
-			ctx.Redis.Event().SetCache("Firing", alert, 0)
+			ctx.Redis.Event().SetCache("Firing", *alert, 0)
 		}
 	}
-
-	return alertOne
-}
-
-// 判断是否静默
-func (ec *Consume) isSilence(alert models.AlertCurEvent) bool {
-	_, ok := ctx.Redis.Silence().GetCache(models.AlertSilenceQuery{
-		TenantId:    alert.TenantId,
-		Fingerprint: alert.Fingerprint,
-	})
-
-	if ok {
-		return true
-	} else {
-		ttl, _ := ctx.Redis.Redis().TTL(alert.TenantId + ":" + models.SilenceCachePrefix + alert.Fingerprint).Result()
-		// 如果剩余生存时间小于0，表示键已过期
-		if ttl < 0 {
-			// 过期后标记为1
-			ctx.DB.DB().Model(models.AlertSilences{}).
-				Where("fingerprint = ? and status = ?", alert.Fingerprint, 0).
-				Update("status", 1)
-		}
-	}
-
-	return false
+	return []models.AlertCurEvent{alertOnce}
 }

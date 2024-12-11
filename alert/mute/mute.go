@@ -3,6 +3,7 @@ package mute
 import (
 	"time"
 	models "watchAlert/internal/models"
+	"watchAlert/pkg/ctx"
 	"watchAlert/pkg/tools"
 )
 
@@ -10,9 +11,15 @@ type MuteParams struct {
 	EffectiveTime models.EffectiveTime
 	RecoverNotify bool
 	IsRecovered   bool
+	TenantId      string
+	Fingerprint   string
 }
 
 func IsMuted(mute MuteParams) bool {
+	if IsSilence(mute) {
+		return true
+	}
+
 	if InTheEffectiveTime(mute) {
 		return true
 	}
@@ -60,6 +67,29 @@ func RecoverNotify(mp MuteParams) bool {
 	// 如果是恢复告警，并且 恢复通知 == 1，即关闭恢复通知
 	if mp.IsRecovered && !mp.RecoverNotify {
 		return true
+	}
+
+	return false
+}
+
+// IsSilence 判断是否静默
+func IsSilence(mute MuteParams) bool {
+	_, ok := ctx.Redis.Silence().GetCache(models.AlertSilenceQuery{
+		TenantId:    mute.TenantId,
+		Fingerprint: mute.Fingerprint,
+	})
+
+	if ok {
+		return true
+	} else {
+		ttl, _ := ctx.Redis.Redis().TTL(mute.TenantId + ":" + models.SilenceCachePrefix + mute.Fingerprint).Result()
+		// 如果剩余生存时间小于0，表示键已过期
+		if ttl < 0 {
+			// 过期后标记为1
+			ctx.DB.DB().Model(models.AlertSilences{}).
+				Where("fingerprint = ? and status = ?", mute.Fingerprint, 0).
+				Update("status", 1)
+		}
 	}
 
 	return false
