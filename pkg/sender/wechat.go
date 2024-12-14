@@ -8,27 +8,27 @@ import (
 )
 
 type (
-	// FeiShuSender 飞书发送策略
-	FeiShuSender struct{}
+	// WeChatSender 企业微信发送策略
+	WeChatSender struct{}
 
-	FeiShuResponse struct {
-		Code int    `json:"code"`
-		Msg  string `json:"msg"`
+	WeChatResponse struct {
+		Code int    `json:"errcode"`
+		Msg  string `json:"errmsg"`
 	}
 )
 
-func NewFeiShuSender() SendInter {
-	return &FeiShuSender{}
+func NewWeChatSender() SendInter {
+	return &WeChatSender{}
 }
 
-func (f *FeiShuSender) Send(params SendParams) error {
+func (w *WeChatSender) Send(params SendParams) error {
 	cardContentByte := bytes.NewReader([]byte(params.Content))
 	res, err := tools.Post(nil, params.Hook, cardContentByte, 10)
 	if err != nil {
 		return err
 	}
 
-	var response FeiShuResponse
+	var response WeChatResponse
 	if err := tools.ParseReaderBody(res.Body, &response); err != nil {
 		return errors.New(fmt.Sprintf("Error unmarshalling Feishu response: %s", err.Error()))
 	}

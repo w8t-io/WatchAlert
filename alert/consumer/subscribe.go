@@ -64,7 +64,15 @@ func processSubscribe(ctx *ctx.Context, alert models.AlertCurEvent, notice model
 			notice.NoticeTmplId = u.NoticeTemplateId
 			emailTemp := templates.NewTemplate(ctx, alert, notice)
 
-			err = sender.SendToEmail(alert.IsRecovered, u.NoticeSubject, []string{u.Email}, nil, emailTemp.CardContentMsg)
+			err = sender.NewEmailSender().Send(sender.SendParams{
+				IsRecovered: alert.IsRecovered,
+				Email: models.Email{
+					Subject: u.NoticeSubject,
+					To:      []string{u.Email},
+					CC:      nil,
+				},
+				Content: emailTemp.CardContentMsg,
+			})
 			if err != nil {
 				return fmt.Errorf("邮件发送失败, err: %s", err.Error())
 			}

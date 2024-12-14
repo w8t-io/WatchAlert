@@ -9,6 +9,7 @@ import (
 	"watchAlert/pkg/ctx"
 	"watchAlert/pkg/sender"
 	"watchAlert/pkg/templates"
+	"watchAlert/pkg/tools"
 )
 
 type ConsumeProbing struct {
@@ -69,8 +70,13 @@ func (m *ConsumeProbing) handleAlert(alert models.ProbingEvent) {
 		noticeData, _ := ctx.DB.Notice().Get(r)
 		alert.DutyUser = process.GetDutyUser(m.ctx, noticeData)
 
-		n := templates.NewTemplate(m.ctx, buildEvent(alert), noticeData)
-		err := sender.Sender(m.ctx, sender.SendParmas{
+		var content string
+		if noticeData.NoticeType == "CustomHook" {
+			content = tools.JsonMarshal(alert)
+		} else {
+			content = templates.NewTemplate(m.ctx, buildEvent(alert), noticeData).CardContentMsg
+		}
+		err := sender.Sender(m.ctx, sender.SendParams{
 			TenantId:    alert.TenantId,
 			Severity:    alert.Severity,
 			NoticeType:  noticeData.NoticeType,
@@ -79,7 +85,7 @@ func (m *ConsumeProbing) handleAlert(alert models.ProbingEvent) {
 			IsRecovered: alert.IsRecovered,
 			Hook:        noticeData.Hook,
 			Email:       noticeData.Email,
-			Content:     n.CardContentMsg,
+			Content:     content,
 			Event:       nil,
 		})
 		if err != nil {

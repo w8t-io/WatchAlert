@@ -14,7 +14,7 @@ type (
 
 	InterDutyCalendar interface {
 		GetCalendarInfo(dutyId, time string) models.DutySchedule
-		GetDutyUserInfo(dutyId, time string) models.Member
+		GetDutyUserInfo(dutyId, time string) (models.Member, bool)
 		Create(r models.DutySchedule) error
 		Update(r models.DutySchedule) error
 		Search(r models.DutyScheduleQuery) ([]models.DutySchedule, error)
@@ -43,16 +43,19 @@ func (dc DutyCalendarRepo) GetCalendarInfo(dutyId, time string) models.DutySched
 }
 
 // GetDutyUserInfo 获取值班用户信息
-func (dc DutyCalendarRepo) GetDutyUserInfo(dutyId, time string) models.Member {
+func (dc DutyCalendarRepo) GetDutyUserInfo(dutyId, time string) (models.Member, bool) {
 	var user models.Member
-
 	schedule := dc.GetCalendarInfo(dutyId, time)
+	db := dc.db.Model(models.Member{}).
+		Where("user_id = ?", schedule.UserId)
+	if err := db.First(&user).Error; err != nil {
+		return user, false
+	}
+	if user.JoinDuty == "true" {
+		return user, true
+	}
 
-	dc.db.Model(models.Member{}).
-		Where("user_id = ?", schedule.UserId).
-		First(&user)
-
-	return user
+	return user, false
 }
 
 func (dc DutyCalendarRepo) Create(r models.DutySchedule) error {

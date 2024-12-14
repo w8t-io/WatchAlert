@@ -302,8 +302,13 @@ func (ec *Consume) handleAlert(rule models.AlertRule, alerts []models.AlertCurEv
 			return
 		}
 
-		n := templates.NewTemplate(ec.ctx, alert, noticeData)
-		err := sender.Sender(ec.ctx, sender.SendParmas{
+		var content string
+		if noticeData.NoticeType == "CustomHook" {
+			content = tools.JsonMarshal(alert)
+		} else {
+			content = templates.NewTemplate(ec.ctx, alert, noticeData).CardContentMsg
+		}
+		err := sender.Sender(ec.ctx, sender.SendParams{
 			TenantId:    alert.TenantId,
 			RuleName:    alert.RuleName,
 			Severity:    alert.Severity,
@@ -313,7 +318,7 @@ func (ec *Consume) handleAlert(rule models.AlertRule, alerts []models.AlertCurEv
 			IsRecovered: alert.IsRecovered,
 			Hook:        noticeData.Hook,
 			Email:       noticeData.Email,
-			Content:     n.CardContentMsg,
+			Content:     content,
 			Event:       nil,
 		})
 		if err != nil {

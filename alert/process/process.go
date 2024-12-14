@@ -161,20 +161,19 @@ func GetNoticeGroupId(alert models.AlertCurEvent) string {
 }
 
 func GetDutyUser(ctx *ctx.Context, noticeData models.AlertNotice) string {
-	user := ctx.DB.DutyCalendar().GetDutyUserInfo(noticeData.DutyId, time.Now().Format("2006-1-2"))
-	switch noticeData.NoticeType {
-	case "FeiShu":
-		// 判断是否有安排值班人员
-		if len(user.DutyUserId) > 1 {
+	user, ok := ctx.DB.DutyCalendar().GetDutyUserInfo(noticeData.DutyId, time.Now().Format("2006-1-2"))
+	if ok {
+		switch noticeData.NoticeType {
+		case "FeiShu":
 			return fmt.Sprintf("<at id=%s></at>", user.DutyUserId)
-		}
-	case "DingDing":
-		if len(user.DutyUserId) > 1 {
+		case "DingDing":
 			return fmt.Sprintf("%s", user.DutyUserId)
+		case "Email", "WeChat", "CustomHook":
+			return fmt.Sprintf("@%s", user.UserName)
 		}
 	}
 
-	return ""
+	return "暂无"
 }
 
 // RecordAlertHisEvent 记录历史告警
