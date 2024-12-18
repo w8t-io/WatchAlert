@@ -16,6 +16,7 @@ func Get(headers map[string]string, url string, timeout int) (*http.Response, er
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
 		},
+		Proxy: http.ProxyFromEnvironment,
 	}
 
 	client := http.Client{
@@ -45,6 +46,7 @@ func Post(headers map[string]string, url string, bodyReader *bytes.Reader, timeo
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
 		},
+		Proxy: http.ProxyFromEnvironment,
 	}
 
 	client := http.Client{
