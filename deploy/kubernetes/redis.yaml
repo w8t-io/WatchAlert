@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: redis
+  name: w8t-redis
   namespace: default
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: redis
+      app: w8t-redis
   template:
     metadata:
       labels:
-        app: redis
+        app: w8t-redis
     spec:
       containers:
-        - name: redis
+        - name: w8t-redis
           image: redis:latest
           ports:
             - containerPort: 6379
@@ -31,11 +31,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis
+  name: w8t-redis
   namespace: default
 spec:
   selector:
-    app: redis
+    app: w8t-redis
   ports:
     - protocol: TCP
       port: 6379
